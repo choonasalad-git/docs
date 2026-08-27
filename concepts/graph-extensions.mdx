@@ -1,5 +1,5 @@
 ---
-title: "Graph Extensions: Customize Existing ERP Screens"
+title: "Graph Extensions: Customize Existing ERP Screens Safely"
 sidebarTitle: "Graph Extensions"
 description: "Use PXGraphExtension to add views, actions, and event handlers to any existing ERP screen without touching or copying the base graph's source code."
 ---
@@ -80,6 +80,89 @@ The key structural elements are:
 | `PXSelect<>` fields | New data views available on the screen |
 | `PXAction<>` fields | New toolbar/action buttons |
 | `protected virtual void _(Events.*)` | Delegate-style event handler syntax (preferred over named methods) |
+
+## Row-Level Event Handlers
+
+Graph extensions respond to the same row-level cache events as the base graph. The four most commonly used events — `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — let you react at each stage of a record's lifecycle. Declare them as `protected virtual void _` methods using the delegate-style syntax shown below; the framework discovers and wires them up automatically.
+
+<Tabs>
+  <Tab title="RowSelected">
+    Fires every time a record is loaded into the form or grid for display. Use it to control field visibility, enable/disable actions, and set dynamic defaults based on the current record's state. Keep this handler fast — it executes once per displayed row.
+
+    ```csharp
+    protected virtual void _(Events.RowSelected<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+
+        bool isOnHold = row.Status == SOOrderStatus.hold;
+        SendForApproval.SetEnabled(isOnHold);
+        PXUIFieldAttribute.SetRequired<SOOrderExt.usrPoNumber>(e.Cache, isOnHold);
+    }
+    ```
+  </Tab>
+  <Tab title="RowInserted">
+    Fires after a new record has been inserted into the `PXCache` (before it is persisted). Use it to set default values that depend on other fields or on external data that `PXDefault` cannot express.
+
+    ```csharp
+    protected virtual void _(Events.RowInserted<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+
+        // Stamp the extension field with an initial approval status
+        e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
+            row, ApprovalStatus.notSubmitted);
+    }
+    ```
+  </Tab>
+  <Tab title="RowUpdated">
+    Fires after an existing in-cache record has been modified. Use it to keep derived or related fields in sync whenever the user changes the primary record.
+
+    ```csharp
+    protected virtual void _(Events.RowUpdated<SOOrder> e)
+    {
+        SOOrder newRow = e.Row;
+        SOOrder oldRow = e.OldRow;
+        if (newRow == null) return;
+
+        // Reset approval status whenever the order amount changes
+        if (newRow.OrderTotal != oldRow.OrderTotal)
+        {
+            e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
+                newRow, ApprovalStatus.notSubmitted);
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="RowDeleted">
+    Fires after a record has been marked for deletion in the cache (before the `DELETE` statement runs). Use it to cascade soft-deletes to child records or to enforce referential integrity rules beyond what the database schema provides.
+
+    ```csharp
+    protected virtual void _(Events.RowDeleted<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+
+        // Mark all related custom records as cancelled
+        foreach (MyCustomRecord detail in
+            PXSelect<MyCustomRecord,
+                Where<MyCustomRecord.orderNbr,
+                      Equal<Required<MyCustomRecord.orderNbr>>>>
+            .Select(Base, row.OrderNbr))
+        {
+            MyCustomRecord copy = (MyCustomRecord)Base.Caches<MyCustomRecord>().CreateCopy(detail);
+            copy.Status = CustomRecordStatus.cancelled;
+            Base.Caches<MyCustomRecord>().Update(copy);
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  All four handlers use the same `protected virtual void _(Events.EventName<TDAC> e)` signature pattern. The `e.Cache` property gives you direct access to the `PXCache` for the DAC, and `e.Row` gives you the current record. In `RowUpdated`, `e.OldRow` provides the previous state of the record before the change.
+</Note>
 
 ## Extension Initialization and the Base Property
 

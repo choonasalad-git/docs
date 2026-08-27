@@ -82,7 +82,31 @@ public class SOOrderExtension : PXGraphExtension<SOOrderEntry>
     // views, or actions are registered — zero overhead at runtime.
     public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
 
-    // ... views, actions, and event handlers
+    // Data view — pulls custom records linked to the current order.
+    public PXSelect<
+        MyCustomRecord,
+        Where<MyCustomRecord.refNbr, Equal<Current<SOOrder.orderNbr>>>>
+        CustomRecords;
+
+    // Action — appears as a toolbar button on the Sales Orders screen.
+    public PXAction<SOOrder> ValidateCustomData;
+
+    [PXButton(CommitChanges = true)]
+    [PXUIField(DisplayName = "Validate Custom Data")]
+    protected virtual IEnumerable validateCustomData(PXAdapter adapter)
+    {
+        // Business logic here.
+        yield return adapter.Get().First();
+    }
+
+    // Event handler — controls field editability based on order status.
+    protected void _(Events.RowSelected<SOOrder> e)
+    {
+        SOOrder order = e.Row;
+        if (order == null) return;
+        bool isOnHold = order.Status == SOOrderStatus.Hold;
+        PXUIFieldAttribute.SetEnabled<SOOrderExt.usrCustomReference>(e.Cache, order, isOnHold);
+    }
 }
 ```
 
@@ -102,6 +126,12 @@ If you omit `IsActive()`, the extension is always active. For extensions that sh
   </Card>
   <Card title="Actions" icon="play" href="/extensions/graph-extensions#adding-a-custom-action">
     Custom toolbar buttons, adapters, and committing changes before execution.
+  </Card>
+  <Card title="Customization Projects" icon="folder" href="/concepts/customization-project">
+    How the XML project manifest bundles DACs, graphs, and screens into a deployable unit.
+  </Card>
+  <Card title="Publishing & Deployment" icon="rocket" href="/deployment/publishing">
+    Compile code, migrate the database schema, and deploy your project using the publish CLI.
   </Card>
 </CardGroup>
 

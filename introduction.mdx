@@ -1,5 +1,5 @@
 ---
-title: "Customization Platform Developer Documentation"
+title: "Customization Platform — Developer Reference Guide"
 sidebarTitle: "Introduction"
 description: "Build and deploy custom tables, screens, and business logic on top of your ERP application using the Customization Platform's C#/.NET toolkit."
 ---
@@ -50,11 +50,11 @@ Welcome to the Customization Platform documentation. Whether you're extending an
     Design and publish new UI screens using the layout designer, and bind them to your graphs and DACs.
   </Card>
   <Card
-    title="Graph Extensions"
+    title="Graph & DAC Extensions"
     icon="puzzle-piece"
     href="/extensions/overview"
   >
-    Add business logic to existing ERP screens by writing Graph Extensions that attach event handlers and override actions.
+    Add business logic to existing ERP screens via `PXGraphExtension`, or extend existing tables with `PXCacheExtension` — no core code changes required.
   </Card>
   <Card
     title="Publishing"
@@ -84,7 +84,7 @@ The four steps below describe the end-to-end workflow you'll follow for virtuall
     Open the ERP application's **Customization Projects** screen and create a new project. The project acts as a container for every artifact you build — DACs, graphs, screens, and scripts — and tracks which version of each artifact is deployed to each environment.
   </Step>
   <Step title="Build Custom Tables and Screens">
-    Define Data Access Classes to model any new database tables you need, then query them with BQL inside a `PXGraph`. Build out the user interface by adding new screens in the layout designer or extending existing ones via `PXGraphExtension`. Add event handlers (`RowSelected`, `RowInserted`, `RowUpdated`, `RowDeleted`) to enforce business rules at the right moment in the data lifecycle.
+    Define Data Access Classes (DACs) to model any new database tables you need, annotating fields with attributes such as `PXDBString`, `PXDBInt`, and `PXDBDecimal` to control database mapping and UI behavior. Query your DACs with `PXSelect` and Business Query Language (BQL) inside a `PXGraph`. Build out the user interface by adding new screens or extending existing ones via `PXGraphExtension` or `PXCacheExtension`. Add event handlers — `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — to enforce business rules at the right moment in the data lifecycle.
   </Step>
   <Step title="Deploy and Publish">
     Compile your project, add the output assembly to your Customization Project, and click **Publish**. The platform validates the package, applies any database schema changes, and makes your customization live — with a full rollback available if anything goes wrong.

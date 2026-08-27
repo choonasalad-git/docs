@@ -1,7 +1,7 @@
 ---
-title: "Data Access Graphs and BQL Queries Explained"
+title: "PXGraph and BQL: Data Access in the Platform Guide"
 sidebarTitle: "DAG & BQL"
-description: "Understand how PXGraph orchestrates screen data operations and how Business Query Language gives you type-safe, compile-time-verified database queries in C#."
+description: "Understand how PXGraph drives screen data, how BQL gives you type-safe compile-time queries in C#, and how PXCache tracks in-memory record state."
 ---
 
 Every screen in the ERP is backed by a **Data Access Graph** (DAG) — a C# class that owns all of the data views, business logic, and persistence behavior for that screen. When you customize an existing screen or build a new one, you are working with graphs. Alongside graphs, the platform provides **Business Query Language (BQL)**, a fluent, type-safe query API that replaces raw SQL strings with C# generics you can refactor, rename, and verify at compile time. Together, graphs and BQL form the backbone of everything you build on the platform.
@@ -11,15 +11,15 @@ Every screen in the ERP is backed by a **Data Access Graph** (DAG) — a C# clas
 A Data Access Graph is a class that inherits from `PXGraph` (or one of its typed subclasses like `PXGraph<TGraph, TPrimary>`). It is the controller layer for a single screen: it declares the data views that populate the screen's grids and forms, the actions that appear as toolbar buttons, and the event handlers that react to user input.
 
 ```csharp
-public class MyInvoiceEntry : PXGraph<MyInvoiceEntry, MyInvoice>
+public class SOOrderEntry : PXGraph<SOOrderEntry, SOOrder>
 {
     // Primary data view — drives the main form
-    public PXSelect<MyInvoice> Documents;
+    public PXSelect<SOOrder> Document;
 
-    // Detail data view — linked to the primary record
-    public PXSelect<MyInvoiceLine,
-        Where<MyInvoiceLine.invoiceNbr,
-              Equal<Current<MyInvoice.invoiceNbr>>>> Lines;
+    // Detail data view — linked to the current order
+    public PXSelect<SOLine,
+        Where<SOLine.orderNbr,
+              Equal<Current<SOOrder.orderNbr>>>> Transactions;
 }
 ```
 
@@ -42,11 +42,11 @@ The generic parameter `TPrimary` tells the framework which DAC is the "master" r
     Use this form for **processing screens** and inquiry screens where there is no single primary record. You manage all toolbar actions manually.
 
     ```csharp
-    public class ReleaseInvoices : PXGraph<ReleaseInvoices>
+    public class ReleaseOrders : PXGraph<ReleaseOrders>
     {
-        public PXProcessing<MyInvoice,
-            Where<MyInvoice.status, Equal<InvoiceStatus.pendingRelease>>>
-            InvoicesToRelease;
+        public PXProcessing<SOOrder,
+            Where<SOOrder.status, Equal<SOOrderStatus.pendingProcessing>>>
+            OrdersToRelease;
     }
     ```
   </Tab>

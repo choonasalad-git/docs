@@ -36,6 +36,38 @@ Compile errors prevent the publish from completing. They appear immediately in t
 
 ---
 
+### DAC field attribute mismatch after an ERP upgrade
+
+**What causes it:** A DAC field attribute such as `PXDBString`, `PXDBInt`, or `PXDBDecimal` specifies a length or precision that conflicts with the updated column definition in the new ERP version, or a Graph Extension (`PXGraphExtension`) or DAC Extension (`PXCacheExtension`) references a base field whose name or type changed.
+
+**How to fix it:**
+1. Compare the attribute on your custom field against the current base DAC definition:
+   ```csharp
+   // DAC Extension field — verify attribute length matches DB column
+   public class SOOrderExtension : PXCacheExtension<SOOrder>
+   {
+       [PXDBString(50, IsUnicode = true)]   // Must match your DB column definition
+       [PXUIField(DisplayName = "Custom Reference")]
+       public virtual string UsrCustomReference { get; set; }
+       public abstract class usrCustomReference : PX.Data.BQL.BqlString.Field<usrCustomReference> { }
+   }
+
+   // Graph Extension — verify overridden method signatures match updated base
+   public class SOOrderEntryExtension : PXGraphExtension<SOOrderEntry>
+   {
+       protected void SOOrder_RowSelected(PXCache cache, PXRowSelectedEventArgs e)
+       {
+           SOOrder row = e.Row as SOOrder;
+           if (row == null) return;
+           // handler body
+       }
+   }
+   ```
+2. For `PXDBDecimal`, verify that the `precision` argument matches the column precision in the database. A mismatch causes silent rounding errors at runtime even if it does not generate a compile error.
+3. For `PXDBInt` and `PXDBString`, confirm the field's C# property type (`int?` vs `string`) matches the attribute. An `int?` property decorated with `[PXDBString]` will compile but fail at runtime when the cache tries to map the column value.
+
+---
+
 ### CS0104 — Ambiguous name reference
 
 **What causes it:** Two different namespaces in your `using` directives both define a type with the same name. For example, both `PX.Data` and a third-party library define a class called `Attribute`.
@@ -52,7 +84,7 @@ Compile errors prevent the publish from completing. They appear immediately in t
 
 <Accordion title="Publish Errors">
 
-Publish errors occur after compilation succeeds, during the schema migration or sitemap update phases. They appear in the publish log after the compile output.
+Publish errors occur after compilation succeeds, during the database schema update or sitemap registration step. They appear in the publish log after the compile output.
 
 ### DB conflict — Column already exists with incompatible type
 
@@ -155,11 +187,18 @@ BQL (Business Query Language) is the strongly-typed query language used to retri
 1. Find the DAC definition for the field involved and confirm its `IBqlField` type (the inner interface type, such as `BqlString` or `BqlInt`).
 2. Ensure your constant or parameter uses the matching BQL type:
    ```csharp
-   // Incorrect: comparing an int field with a string constant
-   .Where<SOOrder.status.IsEqual<PX.Data.BQL.BqlString.Constant<"N">>>
+   // Incorrect: using a hard-coded string literal as a BQL constant directly
+   // (BQL constants must be typed class members, not inline string literals)
+   .Where<SOOrder.orderType.IsEqual<PX.Data.BQL.BqlInt.Constant<1>>>
 
-   // Correct: status is a string field, so BqlString is correct
-   .Where<SOOrder.status.IsEqual<SOOrder.status.AsField>>
+   // Correct: declare a typed BQL constant and use it in the Where clause
+   public class OpenStatus : PX.Data.BQL.BqlString.Constant<OpenStatus>
+   {
+       public OpenStatus() : base("N") { }
+   }
+
+   // Then reference it in the query:
+   .Where<SOOrder.status.IsEqual<OpenStatus>>
    ```
 3. Use fluent BQL where possible—it provides better compile-time type checking than classic BQL syntax.
 

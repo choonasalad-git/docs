@@ -30,7 +30,7 @@ When you *create* a custom screen you define everything from the ground up: a ne
 
 Every custom screen is built from three coordinated pieces registered inside a single Customization Project.
 
-**Graph (C#)** — A class that inherits from `PXGraph<TGraph, TPrimary>`. It declares the data views (`PXSelect` queries), save/cancel actions, and any custom business logic methods. The graph is the brains of the screen.
+**Graph (C#)** — A class that inherits from `PXGraph<TGraph, TPrimary>`. It declares the data views (`PXSelect` queries), save/cancel actions, and any custom business logic methods. The graph is the brains of the screen. It also owns event handler methods — such as `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — that fire when the `PXCache` raises lifecycle events for your DAC records.
 
 **Screen definition (XML/ASPX)** — An XML document that describes the visual layout: which containers to use (`PXFormView`, `PXGrid`, `PXTab`), which controls to place inside them (`PXTextEdit`, `PXSelector`, `PXButton`), and how each control binds to a field on the DAC. The Screen Editor in the ERP UI provides a visual designer so you can build this file without writing raw XML by hand.
 
@@ -39,9 +39,17 @@ Every custom screen is built from three coordinated pieces registered inside a s
 ```
 Customization Project
 ├── Graph          MyScreenGraph.cs       (C# business logic)
-├── Screen         XX000000.aspx          (XML layout definition)
-└── Sitemap node   XX000000               (menu placement + access rights)
+├── Screen         AC000001.aspx          (XML layout definition)
+└── Sitemap node   AC000001               (menu placement + access rights)
 ```
+
+<Note>
+  Screen IDs follow the format `XX000000`, where the first two letters are your company's assigned prefix and the remaining six digits uniquely identify the screen (for example, `AC000001` or `ZZ990010`). The placeholder `XX000000` shown in format examples throughout this documentation represents the pattern — replace `XX` with your actual prefix and choose a unique number for each screen you create.
+</Note>
+
+### Extending existing screens vs. building new ones
+
+When you need to add fields or logic to a screen that already exists, you use a **PXGraphExtension** (to extend the graph's business logic) and a **PXCacheExtension** (to add fields to the existing DAC) rather than creating a new screen from scratch. Custom screens and screen extensions are complementary tools — the architecture section above describes the custom screen path, while the [Customization Projects](/concepts/customization-project) guide covers both approaches in full.
 
 ## Common use cases
 

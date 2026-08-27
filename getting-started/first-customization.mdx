@@ -1,5 +1,5 @@
 ---
-title: "Build Your First ERP Customization from Scratch"
+title: "Build Your First ERP Customization: DAC to Deployment"
 sidebarTitle: "First Customization"
 description: "Create a Customization Project, define a DAC, extend an existing graph with event handlers, then publish and test your customization end to end."
 ---
@@ -40,7 +40,7 @@ This guide takes you from a blank slate to a published, working ERP customizatio
     {
         /// <summary>
         /// Represents a custom support ticket linked to a customer account.
-        /// Maps to the database table [dbo].[MyCompany_SupportTicket].
+        /// Maps to the database table MyCompany_SupportTicket.
         /// </summary>
         [Serializable]
         [PXCacheName("Support Ticket")]
@@ -93,6 +93,15 @@ This guide takes you from a blank slate to a published, working ERP customizatio
             [TicketStatus.List]
             public virtual string? Status { get; set; }
             public abstract class status : PX.Data.BQL.BqlString.Field<status> { }
+            #endregion
+
+            #region EstimatedHours
+            /// <summary>Estimated hours to resolve this ticket (decimal precision 2).</summary>
+            [PXDBDecimal(2)]
+            [PXDefault(TypeCode.Decimal, "0.0")]
+            [PXUIField(DisplayName = "Estimated Hours")]
+            public virtual decimal? EstimatedHours { get; set; }
+            public abstract class estimatedHours : PX.Data.BQL.BqlDecimal.Field<estimatedHours> { }
             #endregion
 
             #region CreatedDateTime
@@ -237,6 +246,36 @@ This guide takes you from a blank slate to a published, working ERP customizatio
     }
     ```
 
+    **Part C — Extend an existing DAC with a DAC Extension:**
+
+    A `PXCacheExtension` lets you add new fields to an existing ERP table without modifying its original DAC. The example below adds an internal priority score field to the built-in `BAccount` (customer) record — visible only on your custom screen.
+
+    Add `BAccountExt.cs`:
+
+    ```csharp
+    using PX.Data;
+
+    namespace MyCompany.Customization
+    {
+        // PXCacheExtension<TDAC> attaches new fields to the BAccount table.
+        public class BAccountExt : PXCacheExtension<PX.Objects.CR.BAccount>
+        {
+            #region UsrSupportPriority
+            /// <summary>Custom support priority score added by this customization.</summary>
+            [PXDBInt]
+            [PXDefault(0, PersistingCheck = PXPersistingCheck.Nothing)]
+            [PXUIField(DisplayName = "Support Priority")]
+            public virtual int? UsrSupportPriority { get; set; }
+            public abstract class usrSupportPriority : PX.Data.BQL.BqlInt.Field<usrSupportPriority> { }
+            #endregion
+        }
+    }
+    ```
+
+    <Note>
+      Prefix custom fields in DAC extensions with `Usr` to avoid naming collisions with fields added by future ERP updates. The `PXCacheExtension` is automatically associated with the target DAC by the generic type parameter — no registration step is required.
+    </Note>
+
     <Note>
       The four event handler signatures — `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — cover the full data lifecycle. `RowSelected` fires every time a record is loaded into the UI and is the correct place for UI state logic (enabling/disabling fields). The other three fire during the save pipeline and are the right place for data validation and side effects.
     </Note>
@@ -268,7 +307,7 @@ This guide takes you from a blank slate to a published, working ERP customizatio
     Click **Publish** in the Customization Project Editor toolbar. The platform will:
 
     - Validate all artifacts in the project.
-    - Run the database migration script (creating the `MyCompany_SupportTicket` table).
+    - Run the database schema script (creating the `MyCompany_SupportTicket` table).
     - Deploy the assembly to the ERP application's `bin` directory.
     - Restart the application pool.
 
@@ -290,5 +329,5 @@ This guide takes you from a blank slate to a published, working ERP customizatio
 </Steps>
 
 <Note>
-  You've now completed the full customization lifecycle — project creation, DAC definition, graph extension, and deployment. To go deeper on any of these topics, see the dedicated concept guides: [Customization Projects](/concepts/customization-project), [Custom Tables & DACs](/custom-tables/overview), [Graph Extensions](/extensions/overview), and [Publishing & Deployment](/deployment/publishing).
+  You've now completed the full customization lifecycle — project creation, DAC definition, DAC extension, graph extension, and deployment. To go deeper on any of these topics, see the dedicated concept guides: [Customization Projects](/concepts/customization-project), [Custom Tables & DACs](/custom-tables/overview), [Extensions Overview](/extensions/overview), [DAC Extensions](/extensions/dac-extensions), and [Publishing & Deployment](/deployment/publishing).
 </Note>

@@ -210,6 +210,22 @@ UI controls are the interactive elements users see and type into. Every control 
         Width="100px" />
     ```
 
+    On the DAC, back decimal fields with `PXDBDecimal` and integer fields with `PXDBInt`:
+
+    ```csharp
+    // Decimal field — two decimal places stored as decimal(19,2)
+    [PXDBDecimal(2)]
+    [PXUIField(DisplayName = "Unit Price")]
+    [PXDefault(TypeCode.Decimal, "0.0")]
+    public decimal? UnitPrice { get; set; }
+
+    // Integer field — whole-number quantities
+    [PXDBInt]
+    [PXUIField(DisplayName = "Quantity")]
+    [PXDefault(0)]
+    public int? Qty { get; set; }
+    ```
+
     Set `CommitChanges="True"` when changing the quantity or price should immediately recalculate a dependent total field.
   </Accordion>
 

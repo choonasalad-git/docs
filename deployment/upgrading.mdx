@@ -4,7 +4,7 @@ sidebarTitle: "Upgrading"
 description: "Prepare, migrate, and re-validate your customization projects after upgrading the base ERP application to a new version, avoiding data and compile issues."
 ---
 
-Every ERP version update brings changes to the base application—new DAC fields, renamed graph methods, refactored business logic, and occasionally the removal of deprecated features. Your customizations depend on the ERP's public API surface, so an upgrade that looks routine from an infrastructure perspective can silently break compile-time references or, worse, introduce subtle data issues that only appear at runtime. Following a structured upgrade process keeps your customizations healthy and your users productive after every ERP release.
+Every ERP version update brings changes to the base application—new DAC fields, renamed graph methods, refactored business logic, and occasionally the removal of deprecated features. Your customizations depend on the ERP's public API surface, so an upgrade that looks routine from the application administrator's perspective can silently break compile-time references or, worse, introduce subtle data issues that only appear at runtime. Following a structured upgrade process keeps your customizations healthy and your users productive after every ERP release.
 
 ## Pre-upgrade checklist
 
@@ -12,7 +12,7 @@ Complete all of the following steps on your development instance **before** appl
 
 <Steps>
   <Step title="Export and archive the current customization package">
-    Navigate to **Customization > Customization Projects**, select each project, and export a package (`.zip`) for every project. Store these archives in a safe location—your version control system is ideal. These snapshots let you recover the exact pre-upgrade state if the migration goes badly.
+    Navigate to **Customization > Customization Projects**, select each project, and export a package (`.zip`) for every project. Each package contains a `ProjectMetadata.xml` manifest that records the complete list of artifacts and their version at the time of export. Store these archives in a safe location—your version control system is ideal. These snapshots let you recover the exact pre-upgrade state if things go wrong.
   </Step>
 
   <Step title="Read the ERP release notes for breaking changes">

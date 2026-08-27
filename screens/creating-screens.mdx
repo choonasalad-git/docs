@@ -13,10 +13,76 @@ Building a custom screen involves writing a C# graph that manages your data, des
 ## Step-by-step guide
 
 <Steps>
-  <Step title="Create the PXGraph for the screen">
-    Every custom screen is backed by a **PXGraph** — the C# class that owns the data views, actions, and business logic. Create a new code file in your Customization Project and define your graph.
+  <Step title="Define the DAC (data access class) for your screen">
+    Before writing the graph, define the **DAC** — the C# class that maps to your database table. Each property corresponds to one column and is decorated with a field attribute that describes its storage type, length, and UI behaviour.
 
-    A minimal graph for a single-entity maintenance screen looks like this:
+    ```csharp
+    using PX.Data;
+
+    [PXCacheName("My Record")]
+    public class MyRecord : IBqlTable
+    {
+        // Auto-increment integer primary key
+        [PXDBIdentity]
+        public int? RecordID { get; set; }
+        public abstract class recordID : PX.Data.BQL.BqlInt.Field<recordID> { }
+
+        // Human-readable business key
+        [PXDBString(15, IsKey = true, IsUnicode = true)]
+        [PXUIField(DisplayName = "Record ID", Visibility = PXUIVisibility.SelectorVisible)]
+        public string RecordCD { get; set; }
+        public abstract class recordCD : PX.Data.BQL.BqlString.Field<recordCD> { }
+
+        // Free-text description
+        [PXDBString(256, IsUnicode = true)]
+        [PXUIField(DisplayName = "Description")]
+        public string Description { get; set; }
+        public abstract class description : PX.Data.BQL.BqlString.Field<description> { }
+
+        // Decimal amount stored with 2 decimal places
+        [PXDBDecimal(2)]
+        [PXUIField(DisplayName = "Amount")]
+        [PXDefault(TypeCode.Decimal, "0.0")]
+        public decimal? Amount { get; set; }
+        public abstract class amount : PX.Data.BQL.BqlDecimal.Field<amount> { }
+
+        // Integer foreign-key reference
+        [PXDBInt]
+        [PXUIField(DisplayName = "Category")]
+        public int? CategoryID { get; set; }
+        public abstract class categoryID : PX.Data.BQL.BqlInt.Field<categoryID> { }
+
+        // Boolean flag
+        [PXDBBool]
+        [PXUIField(DisplayName = "Active")]
+        [PXDefault(true)]
+        public bool? IsActive { get; set; }
+        public abstract class isActive : PX.Data.BQL.BqlBool.Field<isActive> { }
+
+        // Framework-managed audit timestamp
+        [PXDBCreatedDateTime]
+        public DateTime? CreatedDateTime { get; set; }
+        public abstract class createdDateTime : PX.Data.BQL.BqlDateTime.Field<createdDateTime> { }
+    }
+    ```
+
+    Common DAC field attributes and what they store:
+
+    | Attribute | SQL type | Typical use |
+    |---|---|---|
+    | `PXDBString(n)` | `nvarchar(n)` | Text codes, names, descriptions |
+    | `PXDBInt` | `int` | Integer keys, counters, foreign keys |
+    | `PXDBDecimal(n)` | `decimal(19,n)` | Quantities, amounts, rates |
+    | `PXDBBool` | `bit` | Flags and toggles |
+    | `PXDBIdentity` | `int IDENTITY` | Auto-increment primary key |
+    | `PXDBCreatedDateTime` | `datetime` | Framework-managed audit timestamp |
+
+  </Step>
+
+  <Step title="Create the PXGraph for the screen">
+    Every custom screen is backed by a **PXGraph** — the C# class that owns the data views, actions, and business logic. The graph works with a **PXCache** for each DAC it references: the cache holds the current in-memory state of records and raises lifecycle events that your event handler methods subscribe to.
+
+    A graph for a single-entity maintenance screen looks like this:
 
     ```csharp
     using PX.Data;
@@ -29,6 +95,39 @@ Building a custom screen involves writing a C# graph that manages your data, des
         // Standard toolbar actions wired up automatically by the framework
         public PXSave<MyRecord> Save;
         public PXCancel<MyRecord> Cancel;
+
+        // RowSelected fires every time a record is loaded into the form.
+        // Use it to adjust field visibility and editability based on record state.
+        protected void _(Events.RowSelected<MyRecord> e)
+        {
+            MyRecord row = e.Row;
+            if (row == null) return;
+
+            // Make Amount read-only once the record is inactive
+            PXUIFieldAttribute.SetEnabled<MyRecord.amount>(
+                e.Cache, row, row.IsActive == true);
+        }
+
+        // RowInserted fires after a new record is added to the cache.
+        protected void _(Events.RowInserted<MyRecord> e)
+        {
+            e.Cache.SetValueExt<MyRecord.amount>(e.Row, 0m);
+        }
+
+        // RowUpdated fires after an existing record's values change in the cache.
+        protected void _(Events.RowUpdated<MyRecord> e)
+        {
+            if (!Equals(e.Row.Amount, e.OldRow.Amount))
+            {
+                // recalculate derived fields here
+            }
+        }
+
+        // RowDeleted fires after a record is marked for deletion in the cache.
+        protected void _(Events.RowDeleted<MyRecord> e)
+        {
+            // validate that child records have been removed before allowing delete
+        }
     }
     ```
 
@@ -36,6 +135,7 @@ Building a custom screen involves writing a C# graph that manages your data, des
     - `PXGraph<TGraph, TPrimary>` — the second type parameter tells the framework which DAC is the "primary" record for the screen's navigation keys.
     - `PXSelect<MyRecord>` — declares a data view that returns all rows of `MyRecord`. You can restrict this with a `Where` clause when needed.
     - `PXSave` and `PXCancel` — these two action declarations are enough for the framework to render the standard Save and Cancel toolbar buttons automatically.
+    - **PXCache** — you never instantiate a cache directly. The graph exposes one per DAC through `Records.Cache` (or `Caches[typeof(MyRecord)]`). Event handlers receive it as `e.Cache` and use it to read and write field values and UI metadata.
 
     If your screen needs a detail grid (a master/detail layout), add a second data view filtered by the primary record's key:
 

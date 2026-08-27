@@ -1,7 +1,7 @@
 ---
 title: "Frequently asked questions about the Customization Platform"
 sidebarTitle: "FAQ"
-description: "Answers to the most common questions about building, deploying, and maintaining ERP customizations—from DAC extensions to cross-screen data passing and upgrades."
+description: "Answers to the most common questions about ERP customizations—covering DAC extensions, graph logic, toolbar buttons, cross-screen data, and upgrades."
 ---
 
 The following questions are drawn from real scenarios that developers encounter when working with the ERP Customization Platform for the first time or when tackling more advanced integration and deployment challenges. Each answer is written to give you the conceptual grounding you need as well as the practical steps to act on immediately.
@@ -188,20 +188,18 @@ public class MyCustomDac : IBqlTable
 
 <Accordion title="How do I run custom code on application startup?">
 
-Implement a custom `PXCustomizeHookBase`-derived class or register an `IPXCustomizer` implementation to run code when the ERP application initializes. The most straightforward approach is to use the `PXApplicationContext` initialization hook.
+The recommended pattern for attaching logic that runs early in the application lifecycle is to use `PXGraph.InstanceCreated` — a static event that fires every time any graph instance is created. You register your handler in the static constructor of a Graph Extension so that it is wired up as soon as the assembly is loaded.
 
 ```csharp
 using PX.Data;
 
-public class MyStartupInitializer : PXCustomizeHookBase
+// Graph Extension for SOOrderEntry — registers a global handler
+// via the static constructor, which runs when the type is first loaded.
+public class SOOrderEntryStartupExtension : PXGraphExtension<SOOrderEntry>
 {
-    public override void Initialize()
+    static SOOrderEntryStartupExtension()
     {
-        // Code here runs once when the application domain starts.
-        // Keep it fast — startup hooks block the first request.
-        PXTrace.WriteInformation("MyStartupInitializer: initialization complete.");
-
-        // Example: register a global event subscription
+        // Runs once per application domain when SOOrderEntry is first instantiated.
         PXGraph.InstanceCreated.AddHandler<SOOrderEntry>(graph =>
         {
             graph.RowPersisted.AddHandler<SOOrder>(SOOrder_RowPersisted);
@@ -211,12 +209,20 @@ public class MyStartupInitializer : PXCustomizeHookBase
     private static void SOOrder_RowPersisted(
         PXCache cache, PXRowPersistedEventArgs e)
     {
-        // Handler logic
+        SOOrder row = e.Row as SOOrder;
+        if (row == null || e.TranStatus != PXTranStatus.Open) return;
+
+        PXTrace.WriteInformation(
+            "SOOrder persisted: {0}, status {1}", row.OrderNbr, row.Status);
     }
 }
 ```
 
-Register the class in your Customization Project's **Code** section. Keep startup hooks lightweight—they execute synchronously on the first request after the application pool starts, and any exception here will prevent the site from loading.
+If you need logic that runs once regardless of which graph is involved — for example, registering a global audit handler — place the `PXGraph.InstanceCreated` subscription in the static constructor of any Graph Extension that ships with your customization. Keep this code fast and side-effect-free: it runs on every graph instantiation, and any exception will propagate to the caller and can break unrelated screens.
+
+<Note>
+  If you need to execute one-time initialization that is truly independent of any graph (for example, seeding reference data), use a `RowInserted` or `RowPersisted` event in a dedicated setup screen rather than a static constructor, so the logic is testable and does not risk blocking the application startup.
+</Note>
 
 </Accordion>
 

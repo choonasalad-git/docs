@@ -28,7 +28,7 @@ A properly configured development environment is the foundation of every success
   <Step title="Configure ERP Instance Access">
     Your development machine needs a stable network path to your ERP sandbox instance. Collect the following information from your system administrator before proceeding:
 
-    - **Base URL** of the ERP instance, for example `https://erp-dev.yourcompany.com`.
+    - **Base URL** of the ERP instance, for example `https://erp-sandbox.example.com`.
     - **Admin credentials** (or a dedicated developer account) with the Developer role.
     - **Company / tenant name** if your instance hosts multiple companies.
 
@@ -36,7 +36,7 @@ A properly configured development environment is the foundation of every success
 
     ```bash
     # Windows — run once in an elevated PowerShell session
-    [System.Environment]::SetEnvironmentVariable("ERP_BASE_URL", "https://erp-dev.yourcompany.com", "User")
+    [System.Environment]::SetEnvironmentVariable("ERP_BASE_URL", "https://erp-sandbox.example.com", "User")
     [System.Environment]::SetEnvironmentVariable("ERP_TENANT", "MyCompany", "User")
     ```
 
@@ -87,7 +87,7 @@ A properly configured development environment is the foundation of every success
     <configuration>
       <packageSources>
         <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-        <add key="ERPFeed" value="https://nuget.yourcompany.com/v3/index.json" />
+        <add key="ERPFeed" value="https://nuget.example.com/v3/index.json" />
       </packageSources>
     </configuration>
     ```

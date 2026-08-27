@@ -1,7 +1,7 @@
 ---
 title: "Define relationships and lookups between DAC tables"
 sidebarTitle: "Relationships"
-description: "Learn how to use PXSelector, PXParent, and PXDBDefault to build foreign-key lookups, master-detail hierarchies, and many-to-many join patterns between DAC tables."
+description: "Wire up foreign-key lookups, master-detail hierarchies, and cascade deletes between DACs using PXSelector, PXParent, and PXDBDefault attributes."
 ---
 
 Relational data lives in multiple tables that reference each other through keys. The platform gives you a rich set of attributes to express those relationships directly in your DAC declarations — no separate configuration file or mapping layer required. `PXSelector` turns a foreign key integer into a user-facing lookup control. `PXParent` establishes a parent-child hierarchy with optional cascade-delete behavior. `PXDBDefault` automatically copies a value from a parent record into a child field so users never have to enter it manually. Together these three attributes cover the vast majority of relationship patterns you will need when building custom tables.

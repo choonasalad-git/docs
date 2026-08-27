@@ -1,5 +1,5 @@
 ---
-title: "Publish your customization to an ERP environment"
+title: "Publish your customization to your ERP environment"
 sidebarTitle: "Publishing"
 description: "Learn how to publish a customization project to compile C# code, migrate the database schema, and deploy screen changes to your ERP environment."
 ---
@@ -40,7 +40,7 @@ Make sure you have saved all pending changes in the Customization Project editor
 
 ## What happens during a publish
 
-Understanding the internal publish pipeline helps you interpret errors and predict side effects.
+Each project is described by a `ProjectMetadata.xml` manifest—the Customization Project XML file that lists every artifact in the project and its version. When you trigger a publish, the platform reads this manifest to determine what to compile, which DB scripts to run, and which screen definitions to deploy. Understanding each stage helps you interpret errors and predict side effects.
 
 <CardGroup cols={2}>
   <Card title="C# Compilation" icon="code">

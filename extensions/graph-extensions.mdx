@@ -27,7 +27,12 @@ public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
     public override void Initialize()
     {
         base.Initialize();
-        // one-time initialization logic here
+
+        // Example: append a custom column to an existing selector so it
+        // appears in the field chooser and in lookup pop-ups.
+        PXUIFieldAttribute.SetDisplayName<SOOrderExt.usrCustomReference>(
+            Base.Caches[typeof(SOOrder)],
+            "Custom Reference");
     }
 
     // The Base property gives you the fully-initialized base graph instance.
@@ -43,7 +48,7 @@ The framework injects the `Base` property automatically — you never need to de
 
 ## Adding a custom data view
 
-A data view inside a graph extension works exactly like one in a native graph. Declare a public field of a `PXSelect` type and the framework registers it as part of the graph's view collection.
+A data view inside a graph extension works exactly like one in a native graph. Declare a public field of a `PXSelect` type — using BQL (Business Query Language) type-safe query expressions — and the framework registers it as part of the graph's view collection.
 
 ```csharp
 public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>

@@ -1,7 +1,7 @@
 ---
 title: "Debug your ERP customization with logging and breakpoints"
 sidebarTitle: "Debugging"
-description: "Attach Visual Studio to the ERP IIS process, use PXTrace for structured logging, and read the publish and trace logs to diagnose customization issues effectively."
+description: "Attach Visual Studio to the IIS worker process, use PXTrace for structured logging, and read publish and trace logs to diagnose customization issues."
 ---
 
 Debugging a customization running inside an ERP web application is different from debugging a standalone console app—you cannot simply press F5 and step through code. The ERP runtime is hosted inside IIS, business logic executes in response to HTTP requests, and errors that look cryptic in the UI often have clear root causes when you examine them through the right lens. This guide covers the three primary tools at your disposal: Visual Studio's remote debugger for breakpoint-level inspection, `PXTrace` for structured runtime logging, and the application's built-in trace and publish logs for diagnosing errors without a live debug session.
