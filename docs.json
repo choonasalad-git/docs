@@ -96,17 +96,10 @@
       "linkedin": "https://www.linkedin.com/company/acumatica"
     }
   },
-  "background": {
-    "decoration": "gradient"
-  },
   "icons": {
-    "library": "lucide"
+    "library": "tabler"
   },
   "fonts": {
     "family": "Roboto"
-  },
-  "banner": {
-    "content": "7jtyr",
-    "dismissible": true
   }
 }
