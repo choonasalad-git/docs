@@ -1,13 +1,4 @@
 ---
-<<<<<<< HEAD
-title: "Layouts and controls"
-description: "Bind controls to fields and create usable Acumatica layouts."
----
-
-Group fields by task, keep required inputs visible, and use tabs for secondary information. Bind controls to the correct data member and field name.
-
-<Tip>Test the screen with realistic labels and data. Empty test records can hide spacing and overflow problems.</Tip>
-=======
 title: "Screen layout containers and UI controls reference"
 sidebarTitle: "Layouts & Controls"
 description: "Complete reference for PXFormView, PXGrid, PXTab, PXPanel, PXLayoutRule, and every UI control available in the ERP screen designer."
@@ -384,4 +375,3 @@ All UI controls share a set of properties that you will configure regularly, reg
 <Tip>
   Use `CommitChanges="True"` on any control whose value affects the visibility, editability, or default value of other controls on the same form. Without it, those dependent changes only appear after the user manually saves or navigates away. For example, if changing a **Document Type** dropdown should immediately hide or reveal a **Reference Number** field, set `CommitChanges="True"` on the dropdown — and handle the `RowSelected` event on the graph to adjust the target field's `PXUIFieldAttribute` state accordingly.
 </Tip>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

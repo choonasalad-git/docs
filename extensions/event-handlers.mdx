@@ -75,23 +75,6 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       SOOrder order = e.Row;
       if (order == null) return;
-<<<<<<< HEAD
-  
-      // Read the extension fields for this record.
-      SOOrderExt ext = order.GetExtension<SOOrderExt>();
-  
-      // The surcharge field is only editable when the order is on hold.
-      bool isOnHold = order.Status == SOOrderStatus.Hold;
-      PXUIFieldAttribute.SetEnabled<SOOrderExt.usrSurchargeAmt>(e.Cache, order, isOnHold);
-  
-      // Show the custom reference field only for a specific order type.
-      bool showCustomRef = order.OrderType == "ZZ";
-      PXUIFieldAttribute.SetVisible<SOOrderExt.usrCustomReference>(e.Cache, order, showCustomRef);
-  
-      // Mark the field as required (red asterisk) when a condition is met.
-      PXUIFieldAttribute.SetRequired<SOOrderExt.usrCustomReference>(e.Cache, showCustomRef);
-  
-=======
 
       // Read the extension fields for this record.
       SOOrderExt ext = order.GetExtension<SOOrderExt>();
@@ -107,7 +90,6 @@ Understanding the order in which events fire helps you place logic in the right 
       // Mark the field as required (red asterisk) when a condition is met.
       PXUIFieldAttribute.SetRequired<SOOrderExt.usrCustomReference>(e.Cache, showCustomRef);
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Surface a persistent warning if the surcharge seems unusually high.
       if (ext.UsrSurchargeAmt > 1000m)
       {
@@ -129,11 +111,7 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       MyCustomRecord row = e.Row;
       if (row == null) return;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Prevent inserting a custom record when the parent order is closed.
       SOOrder parentOrder = Base.Document.Current;
       if (parentOrder?.Status == SOOrderStatus.Completed)
@@ -144,11 +122,7 @@ Understanding the order in which events fire helps you place logic in the right 
               new PXSetPropertyException(
                   "Cannot add records to a completed order.",
                   PXErrorLevel.Error));
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
           e.Cancel = true;
       }
   }
@@ -163,11 +137,7 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       SOOrder order = e.Row;
       if (order == null) return;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Automatically create a default custom record for every new order.
       MyCustomRecord defaultRecord = new MyCustomRecord
       {
@@ -175,11 +145,7 @@ Understanding the order in which events fire helps you place logic in the right 
           RecordType = "DEFAULT",
           CreatedOn  = DateTime.UtcNow
       };
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Insert through the extension's view so the record participates
       // in the same unit of work and is saved with the parent order.
       Base.GetExtension<SOOrderEntryExt>().CustomRecords.Insert(defaultRecord);
@@ -196,17 +162,10 @@ Understanding the order in which events fire helps you place logic in the right 
       SOOrder oldRow = e.OldRow;
       SOOrder newRow = e.NewRow;
       if (oldRow == null || newRow == null) return;
-<<<<<<< HEAD
-  
-      SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
-      SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
-  
-=======
 
       SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
       SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Prevent changing the custom reference once the order has shipped.
       if (oldRow.Status == SOOrderStatus.Shipping &&
           newExt.UsrCustomReference != oldExt.UsrCustomReference)
@@ -217,11 +176,7 @@ Understanding the order in which events fire helps you place logic in the right 
               new PXSetPropertyException(
                   "Custom Reference cannot be changed after shipping begins.",
                   PXErrorLevel.Error));
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
           e.Cancel = true;
       }
   }
@@ -237,26 +192,15 @@ Understanding the order in which events fire helps you place logic in the right 
       SOOrder oldRow = e.OldRow;
       SOOrder newRow = e.Row;
       if (oldRow == null || newRow == null) return;
-<<<<<<< HEAD
-  
-      SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
-      SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
-  
-=======
 
       SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
       SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Recalculate the adjusted total whenever the surcharge changes.
       if (newExt.UsrSurchargeAmt != oldExt.UsrSurchargeAmt)
       {
           decimal adjustedTotal = (newRow.OrderTotal ?? 0m) + (newExt.UsrSurchargeAmt ?? 0m);
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
           // Update a formula-driven unbound field by raising FieldUpdating,
           // which will trigger FieldUpdated and then RowSelected in sequence.
           e.Cache.SetValueExt<SOOrderExt.usrIsHighPriority>(
@@ -275,22 +219,14 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       SOOrder order = e.Row;
       if (order == null) return;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Check whether any approved custom records exist for this order.
       MyCustomRecord approvedRecord = PXSelect<
           MyCustomRecord,
           Where<MyCustomRecord.refNbr,   Equal<Required<MyCustomRecord.refNbr>>,
             And<MyCustomRecord.status, Equal<Required<MyCustomRecord.status>>>>>
           .SelectSingleBound(Base, null, order.OrderNbr, "Approved");
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       if (approvedRecord != null)
       {
           throw new PXException(
@@ -314,11 +250,7 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       SOOrder order = e.Row;
       if (order == null) return;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Delete all custom records linked to the deleted order.
       // Fetching and deleting through the view ensures they go through
       // the full event pipeline (including their own RowDeleting checks).
@@ -339,11 +271,7 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       string newValue = (string)e.NewValue;
       if (string.IsNullOrWhiteSpace(newValue)) return;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Custom references must follow the pattern PREFIX-NNNNNN.
       if (!System.Text.RegularExpressions.Regex.IsMatch(newValue, @"^[A-Z]{2,6}-\d{4,8}$"))
       {
@@ -352,22 +280,14 @@ Understanding the order in which events fire helps you place logic in the right 
           throw new PXSetPropertyException<SOOrderExt.usrCustomReference>(
               "Custom Reference must match the format PREFIX-NNNNNN (e.g., ORD-001234).");
       }
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Check for uniqueness across all orders.
       SOOrder duplicate = PXSelect<
           SOOrder,
           Where<SOOrderExt.usrCustomReference, Equal<Required<SOOrderExt.usrCustomReference>>,
             And<SOOrder.orderNbr, NotEqual<Required<SOOrder.orderNbr>>>>>
           .SelectSingleBound(Base, null, newValue, Base.Document.Current?.OrderNbr);
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       if (duplicate != null)
           throw new PXSetPropertyException<SOOrderExt.usrCustomReference>(
               "Custom Reference '{0}' is already used by order {1}.",
@@ -384,20 +304,12 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       // Look up the default surcharge from a setup table.
       MyCustomSetup setup = PXSetup<MyCustomSetup>.Select(Base);
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       if (setup?.DefaultSurcharge != null)
           e.NewValue = setup.DefaultSurcharge;
       else
           e.NewValue = 0m;
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Setting e.Cancel = true prevents any further defaulting logic
       // (attribute defaults, formula evaluation) from overwriting your value.
       e.Cancel = true;
@@ -413,18 +325,6 @@ Understanding the order in which events fire helps you place logic in the right 
   {
       SOOrder order = e.Row;
       if (order == null) return;
-<<<<<<< HEAD
-  
-      string newType  = (string)e.NewValue;
-      string oldType  = (string)e.OldValue;
-  
-      if (newType == oldType) return;
-  
-      // When the order type changes, clear the custom reference so the
-      // user must re-enter one appropriate for the new type.
-      e.Cache.SetValueExt<SOOrderExt.usrCustomReference>(order, null);
-  
-=======
 
       string newType  = (string)e.NewValue;
       string oldType  = (string)e.OldValue;
@@ -435,7 +335,6 @@ Understanding the order in which events fire helps you place logic in the right 
       // user must re-enter one appropriate for the new type.
       e.Cache.SetValueExt<SOOrderExt.usrCustomReference>(order, null);
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       // Also update the high-priority flag based on the new order type.
       bool isHighPriority = newType == "RUSH" || newType == "CRIT";
       e.Cache.SetValueExt<SOOrderExt.usrIsHighPriority>(order, isHighPriority);
@@ -445,11 +344,7 @@ Understanding the order in which events fire helps you place logic in the right 
 
 ## Surfacing validation errors in the UI
 
-<<<<<<< HEAD
-Use `e.Cache.RaiseExceptionHandling` to attach an inline error or warning to a specific field on the form. This method is preferable to throwing a `PXException` directly when you want the user to see _which field_ has the problem rather than just a generic dialog.
-=======
 Use `e.Cache.RaiseExceptionHandling` to attach an inline error or warning to a specific field on the form. This method is preferable to throwing a `PXException` directly when you want the user to see *which field* has the problem rather than just a generic dialog.
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 
 ```csharp
 // Attach a field-level error (red highlight, error icon next to the field).
@@ -477,8 +372,4 @@ e.Cache.RaiseExceptionHandling<SOOrderExt.usrCustomReference>(
 
 <Warning>
   Do not throw a `PXException` inside `RowDeleted`. The row has already been removed from the cache by the time this event fires, so throwing there leaves the cache in an inconsistent state without actually preventing the delete. Use `RowDeleting` to block unwanted deletions — it fires before the row is removed, and setting `e.Cancel = true` cleanly aborts the operation.
-<<<<<<< HEAD
 </Warning>
-=======
-</Warning>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

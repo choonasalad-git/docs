@@ -24,10 +24,7 @@ A properly configured development environment is the foundation of every success
 
     If you prefer **Visual Studio Code**, install it from [code.visualstudio.com](https://code.visualstudio.com) and then add the **C# Dev Kit** extension from the Extensions Marketplace. The .NET CLI (`dotnet`) handles all build and restore operations in that workflow.
   </Step>
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Step title="Configure ERP Instance Access">
     Your development machine needs a stable network path to your ERP sandbox instance. Collect the following information from your system administrator before proceeding:
 
@@ -49,10 +46,7 @@ A properly configured development environment is the foundation of every success
       Never store ERP credentials in source-controlled files such as `appsettings.json` or `.csproj`. Use environment variables, a secrets manager, or the Visual Studio credential store instead.
     </Warning>
   </Step>
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Step title="Install the Customization Platform SDK via NuGet">
     Create a new **Class Library (.NET Framework)** project targeting **net48** in Visual Studio, then add the Customization Platform NuGet packages. The two core packages are `PX.Data` (framework primitives: `PXGraph`, `PXCache`, BQL engine) and `PX.Objects` (the ERP application's built-in DACs and graphs).
 
@@ -60,11 +54,7 @@ A properly configured development environment is the foundation of every success
 
     ```xml
     <Project Sdk="Microsoft.NET.Sdk">
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       <PropertyGroup>
         <TargetFramework>net48</TargetFramework>
         <Nullable>enable</Nullable>
@@ -73,11 +63,7 @@ A properly configured development environment is the foundation of every success
         <!-- Required for ERP customization assemblies -->
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
       </PropertyGroup>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       <ItemGroup>
         <!-- Core platform framework -->
         <PackageReference Include="PX.Data" Version="23.212.*" />
@@ -86,11 +72,7 @@ A properly configured development environment is the foundation of every success
         <!-- Common extensions and helpers -->
         <PackageReference Include="PX.Common" Version="23.212.*" />
       </ItemGroup>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
     </Project>
     ```
 
@@ -118,10 +100,7 @@ A properly configured development environment is the foundation of every success
 
     A successful restore produces a `packages.lock.json` (if lock files are enabled) and populates the NuGet cache with the `PX.*` assemblies.
   </Step>
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Step title="Verify Your Setup with a Test Build">
     Create a minimal DAC class to confirm that IntelliSense resolves the `PX.Data` namespace and that the project compiles cleanly.
 
@@ -129,11 +108,7 @@ A properly configured development environment is the foundation of every success
 
     ```csharp
     using PX.Data;
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
     namespace MyCompany.Customization
     {
         // Minimal DAC — used only to verify that PX.Data resolves correctly.
@@ -146,11 +121,7 @@ A properly configured development environment is the foundation of every success
             public virtual int? TestID { get; set; }
             public abstract class testID : PX.Data.BQL.BqlInt.Field<testID> { }
             #endregion
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
             #region TestName
             [PXDBString(255, IsUnicode = true)]
             [PXUIField(DisplayName = "Test Name")]
@@ -169,11 +140,7 @@ A properly configured development environment is the foundation of every success
 
     A successful output looks like:
 
-<<<<<<< HEAD
-    ```text
-=======
     ```
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
     Build succeeded.
         0 Warning(s)
         0 Error(s)
@@ -185,8 +152,4 @@ A properly configured development environment is the foundation of every success
 
 <Tip>
   Ready to write something real? Head to the [First Customization](/getting-started/first-customization) guide to build and publish a complete working customization — a custom DAC, a graph extension, and a published package — in under an hour.
-<<<<<<< HEAD
 </Tip>
-=======
-</Tip>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

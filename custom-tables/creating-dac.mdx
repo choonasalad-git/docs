@@ -6,7 +6,6 @@ description: "Declare a DAC class, define field attributes, and publish your cus
 
 A Data Access Class (DAC) is the single source of truth for a custom table: it defines the database schema, the field-level validation rules, the UI display names, and the relationships to other entities — all in one C# class file. Once you add the DAC to your customization project and publish, the platform creates the corresponding SQL table automatically. This guide walks you through every step from creating the file to verifying the table in the database.
 
-<<<<<<< HEAD
 =======
 <Steps>
 
@@ -202,7 +201,6 @@ If the table exists and the `SELECT` returns without error, the platform success
 
 </Steps>
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 ## Complete DAC example
 
 Here is the full `RSSVRepairOrder` DAC assembled from the steps above, ready to copy into your project:
@@ -328,10 +326,6 @@ If you created the file outside the Customization Project editor (for example, d
 4. Save the project. The file now appears in the project manifest and will be included in every publish and package export.
 
 <Note>
-<<<<<<< HEAD
   The Customization Framework stores runtime DAC files under `App_RuntimeCode` in the web application directory. If you edit the file directly in the Code Editor inside the platform UI, it is automatically tracked in the project — you do not need to add it manually.
 </Note>
-=======
-The Customization Framework stores runtime DAC files under `App_RuntimeCode` in the web application directory. If you edit the file directly in the Code Editor inside the platform UI, it is automatically tracked in the project — you do not need to add it manually.
-</Note>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
+

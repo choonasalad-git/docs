@@ -11,11 +11,7 @@ Packaging lets you capture the complete state of a Customization Project—sourc
 A package `.zip` contains a structured set of files that fully describe the customization:
 
 | Artifact | Description |
-<<<<<<< HEAD
-| --- | --- |
-=======
 |---|---|
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 | `ProjectMetadata.xml` | The Customization Project manifest listing every item in the package and its version |
 | `*.cs` source files | All C# code files, organized into subfolders by type |
 | Screen layout files | ASPX page definitions for every custom or modified screen |
@@ -32,16 +28,6 @@ A package `.zip` contains a structured set of files that fully describe the cust
 
 <Steps>
   <Step title="Open the Customization Projects screen">
-<<<<<<< HEAD
-    Navigate to **Customization \> Customization Projects**. Confirm the project you want to export is listed and shows the correct version in the **Package Level** field. If you have unpublished edits, consider publishing to a dev instance first to verify the project is in a known-good state before packaging.
-  </Step>
-  <Step title="Select the project">
-    Click the project row to select it. You can only export one project at a time. If you need to distribute multiple projects together, consider merging them into a single project first, or distribute the individual packages separately and document the install order.
-  </Step>
-  <Step title="Export to a package file">
-    Click **Actions \> Export to Package** in the toolbar (some versions of the ERP surface this as a button labeled **Export Package**). The platform bundles all project artifacts into a `.zip` archive and prepares it for download.
-  </Step>
-=======
     Navigate to **Customization > Customization Projects**. Confirm the project you want to export is listed and shows the correct version in the **Package Level** field. If you have unpublished edits, consider publishing to a dev instance first to verify the project is in a known-good state before packaging.
   </Step>
 
@@ -53,7 +39,6 @@ A package `.zip` contains a structured set of files that fully describe the cust
     Click **Actions > Export to Package** in the toolbar (some versions of the ERP surface this as a button labeled **Export Package**). The platform bundles all project artifacts into a `.zip` archive and prepares it for download.
   </Step>
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Step title="Save the file">
     Your browser will prompt you to save a `.zip` file named after the project (for example, `MyCompanyCustomization.zip`). Save it to a known location. Rename it to include the version number before distributing it—for example, `MyCompanyCustomization_v2.3.zip`—so recipients can track which build they received.
   </Step>
@@ -63,19 +48,6 @@ A package `.zip` contains a structured set of files that fully describe the cust
 
 <Steps>
   <Step title="Open the Customization Projects screen">
-<<<<<<< HEAD
-    On the target ERP instance, navigate to **Customization \> Customization Projects**.
-  </Step>
-  <Step title="Open the Import Package dialog">
-    Click **Import Package** in the toolbar. A file-picker dialog opens.
-  </Step>
-  <Step title="Select the .zip file">
-    Browse to the `.zip` package file you received and click **Open**. The platform reads the `ProjectMetadata.xml` manifest inside the archive and lists all artifacts it found.
-  </Step>
-  <Step title="Review the package contents">
-    The **Import Package** dialog shows every item in the package alongside its status on the current instance. Pay close attention to items marked as **Conflict**—these indicate that the target instance already has a modified version of the same artifact. Decide for each conflicting item whether to accept the incoming version (overwrite) or keep the existing version (skip). See [Handling package conflicts on import](#handling-package-conflicts-on-import) for guidance.
-  </Step>
-=======
     On the target ERP instance, navigate to **Customization > Customization Projects**.
   </Step>
 
@@ -91,7 +63,6 @@ A package `.zip` contains a structured set of files that fully describe the cust
     The **Import Package** dialog shows every item in the package alongside its status on the current instance. Pay close attention to items marked as **Conflict**—these indicate that the target instance already has a modified version of the same artifact. Decide for each conflicting item whether to accept the incoming version (overwrite) or keep the existing version (skip). See [Handling package conflicts on import](#handling-package-conflicts-on-import) for guidance.
   </Step>
 
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Step title="Complete the import and publish">
     Click **Import** to load the package contents into a new (or existing) Customization Project on the target instance. The project is created in **Unpublished** state. Navigate to the project, review its contents one more time, then follow the standard [publishing workflow](./publishing) to compile and deploy the customization.
   </Step>
@@ -116,11 +87,7 @@ A conflict occurs when the package contains an artifact that already exists on t
 For each conflict, the import dialog gives you three choices:
 
 | Option | Effect |
-<<<<<<< HEAD
-| --- | --- |
-=======
 |---|---|
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 | **Use Package Version** | Overwrites the target version with the incoming artifact. Choose this when the package is the authoritative source of truth. |
 | **Keep Current Version** | Ignores the incoming artifact and keeps what is on the target instance. Choose this when local changes must be preserved. |
 | **Merge (manual)** | Imports both versions side by side so you can manually reconcile them in the Customization Project editor. Use this for complex conflicts involving code files. |
@@ -133,8 +100,4 @@ For each conflict, the import dialog gives you three choices:
 
 <Tip>
   Treat package export as a **release artifact**, not as your primary version control mechanism. Store your raw project source files (the contents of the Customization Project editor) in a Git repository and use package export only when you need to deliver a tested build to another instance. Commit after every meaningful change, tag commits that correspond to exported packages, and include the Package Level in your tag name (for example, `v2.3-pkg23`). This gives you a full history of changes with the ability to produce a distributable package from any tagged commit.
-<<<<<<< HEAD
 </Tip>
-=======
-</Tip>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

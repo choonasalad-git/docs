@@ -8,11 +8,7 @@ Relational data lives in multiple tables that reference each other through keys.
 
 ## PXSelector — foreign key lookups
 
-<<<<<<< HEAD
-`PXSelector` decorates a foreign key field and tells the platform how to resolve the raw key value (usually an integer ID) into something meaningful for users. It specifies which DAC to search, which columns to display in the lookup popup, and optionally a _substitute key_ — a human-readable code that appears in the field instead of the numeric ID.
-=======
 `PXSelector` decorates a foreign key field and tells the platform how to resolve the raw key value (usually an integer ID) into something meaningful for users. It specifies which DAC to search, which columns to display in the lookup popup, and optionally a *substitute key* — a human-readable code that appears in the field instead of the numeric ID.
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 
 ### Basic syntax
 
@@ -284,10 +280,5 @@ When you build a three-level hierarchy — for example, a header, a section, and
 ```
 
 <Warning>
-<<<<<<< HEAD
-  Avoid circular `PXParent` references. If DAC A declares a `PXParent` to DAC B and DAC B declares a `PXParent` back to DAC A, the cascade-delete logic will enter an infinite loop and crash the publish or save operation. Always ensure the parent-child relationship forms a directed acyclic graph (a tree, not a cycle).
-</Warning>
-=======
 Avoid circular `PXParent` references. If DAC A declares a `PXParent` to DAC B and DAC B declares a `PXParent` back to DAC A, the cascade-delete logic will enter an infinite loop and crash the publish or save operation. Always ensure the parent-child relationship forms a directed acyclic graph (a tree, not a cycle).
 </Warning>
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
