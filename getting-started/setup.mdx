@@ -1,0 +1,152 @@
+---
+title: "Set Up Your Customization Platform Dev Environment"
+sidebarTitle: "Setup"
+description: "Install development tools, configure your ERP instance connection, add the SDK NuGet packages, and verify your environment with a test build."
+---
+
+A properly configured development environment is the foundation of every successful customization project. This guide walks you through installing the right tools, pointing your project at a running ERP instance, pulling in the Customization Platform SDK packages from NuGet, and running a quick build to confirm everything is wired together correctly. Complete these steps once per machine; after that, creating new customization projects is fast.
+
+<Steps>
+  <Step title="Install Development Tools">
+    Install **Visual Studio 2022** (Community edition or higher) with the following workloads selected in the installer:
+
+    - **.NET desktop development** — provides the .NET Framework 4.8 targeting pack and MSBuild toolchain.
+    - **ASP.NET and web development** — required if you plan to customize web-tier components or use the HTTP API.
+
+    After the Visual Studio installation completes, install the **.NET Framework 4.8 Developer Pack** separately if the Visual Studio installer did not include it. You can verify the install by running the following in a Developer Command Prompt:
+
+    ```bash
+    msbuild -version
+    dotnet --version
+    ```
+
+    Both commands should return without errors. MSBuild version 17 or higher and .NET SDK 8 or higher are recommended.
+
+    If you prefer **Visual Studio Code**, install it from [code.visualstudio.com](https://code.visualstudio.com) and then add the **C# Dev Kit** extension from the Extensions Marketplace. The .NET CLI (`dotnet`) handles all build and restore operations in that workflow.
+  </Step>
+  <Step title="Configure ERP Instance Access">
+    Your development machine needs a stable network path to your ERP sandbox instance. Collect the following information from your system administrator before proceeding:
+
+    - **Base URL** of the ERP instance, for example `https://erp-sandbox.example.com`.
+    - **Admin credentials** (or a dedicated developer account) with the Developer role.
+    - **Company / tenant name** if your instance hosts multiple companies.
+
+    Store the base URL in a local environment variable so your build scripts and integration tests can read it without hard-coding credentials:
+
+    ```bash
+    # Windows — run once in an elevated PowerShell session
+    [System.Environment]::SetEnvironmentVariable("ERP_BASE_URL", "https://erp-sandbox.example.com", "User")
+    [System.Environment]::SetEnvironmentVariable("ERP_TENANT", "MyCompany", "User")
+    ```
+
+    Confirm connectivity by opening the ERP base URL in a browser and logging in successfully. If you see the **Customization Projects** screen under the **System** menu, your account has the correct permissions.
+
+    <Warning>
+      Never store ERP credentials in source-controlled files such as `appsettings.json` or `.csproj`. Use environment variables, a secrets manager, or the Visual Studio credential store instead.
+    </Warning>
+  </Step>
+  <Step title="Install the Customization Platform SDK via NuGet">
+    Create a new **Class Library (.NET Framework)** project targeting **net48** in Visual Studio, then add the Customization Platform NuGet packages. The two core packages are `PX.Data` (framework primitives: `PXGraph`, `PXCache`, BQL engine) and `PX.Objects` (the ERP application's built-in DACs and graphs).
+
+    Add the following `PackageReference` entries to your `.csproj` file:
+
+    ```xml
+    <Project Sdk="Microsoft.NET.Sdk">
+    
+      <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <Nullable>enable</Nullable>
+        <AssemblyName>MyCompany.Customization</AssemblyName>
+        <RootNamespace>MyCompany.Customization</RootNamespace>
+        <!-- Required for ERP customization assemblies -->
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+      </PropertyGroup>
+    
+      <ItemGroup>
+        <!-- Core platform framework -->
+        <PackageReference Include="PX.Data" Version="23.212.*" />
+        <!-- ERP application DACs and graphs -->
+        <PackageReference Include="PX.Objects" Version="23.212.*" />
+        <!-- Common extensions and helpers -->
+        <PackageReference Include="PX.Common" Version="23.212.*" />
+      </ItemGroup>
+    
+    </Project>
+    ```
+
+    <Note>
+      Replace `23.212.*` with the version that matches your ERP instance. You can find the exact version on the **About** screen inside the ERP application. Using a mismatched SDK version is the most common cause of `MissingMethodException` errors at runtime.
+    </Note>
+
+    If your organization hosts a private NuGet feed for ERP packages, add the feed URL to a `nuget.config` file at the solution root:
+
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <configuration>
+      <packageSources>
+        <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+        <add key="ERPFeed" value="https://nuget.example.com/v3/index.json" />
+      </packageSources>
+    </configuration>
+    ```
+
+    Restore packages with:
+
+    ```bash
+    dotnet restore
+    ```
+
+    A successful restore produces a `packages.lock.json` (if lock files are enabled) and populates the NuGet cache with the `PX.*` assemblies.
+  </Step>
+  <Step title="Verify Your Setup with a Test Build">
+    Create a minimal DAC class to confirm that IntelliSense resolves the `PX.Data` namespace and that the project compiles cleanly.
+
+    Add a new file called `TestDAC.cs` to your project with the following content:
+
+    ```csharp
+    using PX.Data;
+    
+    namespace MyCompany.Customization
+    {
+        // Minimal DAC — used only to verify that PX.Data resolves correctly.
+        // Delete this file before committing your real customization code.
+        [PXCacheName("Test Record")]
+        public class TestDAC : IBqlTable
+        {
+            #region TestID
+            [PXDBIdentity]
+            public virtual int? TestID { get; set; }
+            public abstract class testID : PX.Data.BQL.BqlInt.Field<testID> { }
+            #endregion
+    
+            #region TestName
+            [PXDBString(255, IsUnicode = true)]
+            [PXUIField(DisplayName = "Test Name")]
+            public virtual string? TestName { get; set; }
+            public abstract class testName : PX.Data.BQL.BqlString.Field<testName> { }
+            #endregion
+        }
+    }
+    ```
+
+    Build the project:
+
+    ```bash
+    dotnet build --configuration Release
+    ```
+
+    A successful output looks like:
+
+    ```text
+    Build succeeded.
+        0 Warning(s)
+        0 Error(s)
+    ```
+
+    If the build succeeds, your environment is correctly configured. Delete `TestDAC.cs` — it was only a validation step — and you're ready to build real customizations.
+  </Step>
+</Steps>
+
+<Tip>
+  Ready to write something real? Head to the [First Customization](/getting-started/first-customization) guide to build and publish a complete working customization — a custom DAC, a graph extension, and a published package — in under an hour.
+</Tip>

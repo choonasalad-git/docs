@@ -1,0 +1,101 @@
+---
+title: "Understanding Customization Projects in the Platform"
+sidebarTitle: "Customization Projects"
+description: "Learn how Customization Projects bundle DACs, graphs, screens, and reports into a single deployable unit that layers cleanly on top of your ERP."
+---
+
+A Customization Project is the fundamental unit of work in the Customization Platform. Before you write a single line of code, you create a project — it becomes the container that holds every artifact you build and controls exactly what gets deployed to each environment. Understanding how projects are structured and how they interact with the underlying ERP is essential before you start building.
+
+## What Is a Customization Project?
+
+A Customization Project is a versioned container that groups all related customization artifacts — DACs, graph extensions, screen definitions, reports, and supporting files — so they can be published, migrated, and rolled back as a single atomic unit.
+
+Think of a project as a named package. When you publish it, the platform compiles all of its code, applies all of its screen modifications, and makes every piece of it live at once. When you unpublish it, all of those changes are cleanly removed. Nothing in the base ERP installation is permanently altered.
+
+<CardGroup cols={2}>
+  <Card title="Code Artifacts" icon="code">
+    C# source files for DACs, graph extensions, and business logic classes that the platform compiles on publish.
+  </Card>
+
+  <Card title="Screen Definitions" icon="layout-panel-top">
+    ASPX page customizations and control-level changes stored as XML diff records rather than full page replacements.
+  </Card>
+
+  <Card title="Data Scripts" icon="database">
+    SQL update scripts and import scenarios that run during publish to seed or migrate data alongside your code changes.
+  </Card>
+
+  <Card title="Supporting Files" icon="file">
+    Reports (RDLC), static resources, localization strings, and push notifications bundled with the rest of the project.
+  </Card>
+</CardGroup>
+
+## Project Structure
+
+On disk, a Customization Project is represented as a directory exported to a `.zip` archive. Inside that archive the platform maintains a well-defined layout:
+
+```text
+MyProject/
+├── ProjectMetadata.xml      # Manifest: name, version, dependencies
+├── App_RuntimeCode/
+│   ├── MyCustomRecord.cs    # DAC definitions
+│   └── SOOrderEntryExt.cs   # Graph extensions
+├── Pages/
+│   └── SO/
+│       └── SO301000.aspx    # Screen customization diffs
+└── CustomFiles/
+    └── Reports/
+        └── MyCustomReport.rpx
+```
+
+### XML Manifest
+
+`ProjectMetadata.xml` is the authoritative description of your project. It records the project name, schema version, the list of customization items (each item maps to one artifact), and any declared dependencies on other projects. The platform reads this manifest during publish to determine what to compile, what to apply, and in what order.
+
+### C# Code Files
+
+All C# source files live under `App_RuntimeCode/`. The platform compiles these files together at publish time using the same compiler version as the host ERP application. You can organize files into subdirectories for readability, but all files share a single compilation context — there are no nested assemblies within a project.
+
+### Screen Definitions
+
+Screen customizations are stored as **XML diff records**, not full page copies. Each record describes a specific change to a specific control on a specific screen (for example, "set the `Visible` property of field `UsrCustomField` on `SO301000` to `true`"). This diff-based approach means your project carries only your changes, not an entire copy of every screen you touched.
+
+## How Projects Interact with the ERP
+
+The Customization Platform operates on a **layered, non-destructive** model. Your project's code and screen changes are applied on top of the base ERP installation without modifying any base files. The platform achieves this through two mechanisms:
+
+1. **Runtime code injection** — Your compiled extension assemblies are loaded alongside the base application assemblies. The framework's dependency injection and graph extension pipeline make your code execute in the correct order relative to base logic.
+2. **Screen diff application** — On each request, the platform merges your screen diff records with the base ASPX page definition in memory before rendering. The base page file on disk is never changed.
+
+This means you can upgrade the base ERP to a new version, re-publish your project on top of it, and (assuming no breaking API changes) your customization continues to work without any file-level merge conflicts.
+
+## Versioning and Source Control
+
+Treat your Customization Project export (the `.zip` file) as a build artifact, not a source control artifact. Instead, commit the **unpacked project directory** to your version control system. This gives you meaningful diffs at the file level:
+
+- Changes to a DAC show up as C# diffs in `App_RuntimeCode/`.
+- Screen control changes show up as XML diffs in the manifest.
+- New reports are tracked as binary files you can diff with your reporting tool.
+
+A typical team workflow looks like this:
+
+<Steps>
+  <Step title="Develop locally">
+    Make changes in your local Customization Platform environment. The platform writes changes to your local project directory in real time.
+  </Step>
+  <Step title="Commit to a feature branch">
+    Commit the updated project files to a feature branch. Include both code files and the updated manifest so reviewers can see the full scope of the change.
+  </Step>
+  <Step title="Review and merge">
+    Open a pull request. Reviewers inspect C# and XML diffs normally. Merge to your main branch when approved.
+  </Step>
+  <Step title="Export and deploy">
+    On your CI/CD pipeline or manually, package the project directory into a `.zip` and publish it to the target environment through the Customization Projects screen.
+  </Step>
+</Steps>
+
+<Note>
+  **Project dependencies and merge conflicts** — If your project depends on another project (for example, a shared library project that defines common DACs), declare that dependency in `ProjectMetadata.xml`. The platform will enforce publish order, ensuring the dependency is live before your project compiles against it.
+
+  Merge conflicts in the XML manifest are the trickiest part of multi-developer workflows. Two developers adding different customization items to the same project will produce conflicting manifest XML. To minimize this, keep projects small and focused on a single business domain, and use short-lived feature branches. When conflicts do occur, resolve them by carefully merging the `<Items>` list in the manifest — do not let your merge tool simply accept one side wholesale or you will silently drop the other developer's items.
+</Note>

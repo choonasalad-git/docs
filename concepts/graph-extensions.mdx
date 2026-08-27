@@ -1,0 +1,233 @@
+---
+title: "Graph Extensions: Customize Existing ERP Screens Safely"
+sidebarTitle: "Graph Extensions"
+description: "Use PXGraphExtension to add views, actions, and event handlers to any existing ERP screen without touching or copying the base graph's source code."
+---
+
+Graph extensions are the primary mechanism for customizing behavior on existing ERP screens. Instead of modifying the base graph's source code — which would be overwritten on every ERP upgrade — you create a `PXGraphExtension<TGraph>` subclass that sits alongside the base graph and adds or overrides only what you need. The framework wires your extension in automatically at runtime, so from the user's perspective the screen behaves as one cohesive unit.
+
+## What a Graph Extension Does
+
+A graph extension can do everything the base graph can do, scoped to a specific base graph type:
+
+- **Add new data views** — declare additional `PXSelect<>` properties to display new grids or form panels on the screen.
+- **Add new actions** — declare `PXAction<>` properties to introduce new toolbar buttons with their own permission controls.
+- **Override or supplement event handlers** — respond to the same `RowSelected`, `RowInserted`, `FieldVerifying`, and other cache events that the base graph handles, either in addition to or instead of the base logic.
+- **Add DAC cache extensions** — reference `PXCacheExtension` fields that extend the screen's primary DAC.
+
+None of this requires access to the base graph's source code, and nothing you write in an extension modifies the base graph's compiled assembly.
+
+## Anatomy of a PXGraphExtension
+
+```csharp
+public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
+{
+    // 1. Additional data view linked to the current sales order
+    public PXSelect<MyCustomRecord,
+        Where<MyCustomRecord.orderNbr,
+              Equal<Current<SOOrder.orderNbr>>>>
+        CustomRecords;
+
+    // 2. Custom action added to the toolbar
+    public PXAction<SOOrder> SendForApproval;
+
+    [PXButton(CommitChanges = true)]
+    [PXUIField(DisplayName = "Send for Approval", MapEnableRights = PXCacheRights.Update)]
+    protected virtual IEnumerable sendForApproval(PXAdapter adapter)
+    {
+        SOOrder order = Base.Document.Current;
+        if (order == null) return adapter.Get();
+
+        // Custom approval routing logic
+        SOOrderEntryExtHelper.SendApprovalRequest(Base, order);
+
+        Base.Document.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
+            order, ApprovalStatus.pending);
+        Base.Save.Press();
+
+        return adapter.Get();
+    }
+
+    // 3. Event handler responding to row selection
+    protected virtual void _(Events.RowSelected<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+
+        // Enable or disable the custom action based on order status
+        bool canSend = row.Status == SOOrderStatus.hold;
+        SendForApproval.SetEnabled(canSend);
+    }
+
+    // 4. React to a field change on the base DAC
+    protected virtual void _(Events.FieldUpdated<SOOrder, SOOrder.customerID> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+
+        // Clear the custom approval status when the customer changes
+        e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(row, null);
+    }
+}
+```
+
+The key structural elements are:
+
+| Element | Purpose |
+| --- | --- |
+| `PXGraphExtension<SOOrderEntry>` | Binds this extension to the `SOOrderEntry` graph type |
+| `Base` property | Provides access to the base graph instance (see below) |
+| `PXSelect<>` fields | New data views available on the screen |
+| `PXAction<>` fields | New toolbar/action buttons |
+| `protected virtual void _(Events.*)` | Delegate-style event handler syntax (preferred over named methods) |
+
+## Row-Level Event Handlers
+
+Graph extensions respond to the same row-level cache events as the base graph. The four most commonly used events — `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — let you react at each stage of a record's lifecycle. Declare them as `protected virtual void _` methods using the delegate-style syntax shown below; the framework discovers and wires them up automatically.
+
+<Tabs>
+  <Tab title="RowSelected">
+    Fires every time a record is loaded into the form or grid for display. Use it to control field visibility, enable/disable actions, and set dynamic defaults based on the current record's state. Keep this handler fast — it executes once per displayed row.
+
+    ```csharp
+    protected virtual void _(Events.RowSelected<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+    
+        bool isOnHold = row.Status == SOOrderStatus.hold;
+        SendForApproval.SetEnabled(isOnHold);
+        PXUIFieldAttribute.SetRequired<SOOrderExt.usrPoNumber>(e.Cache, isOnHold);
+    }
+    ```
+  </Tab>
+  <Tab title="RowInserted">
+    Fires after a new record has been inserted into the `PXCache` (before it is persisted). Use it to set default values that depend on other fields or on external data that `PXDefault` cannot express.
+
+    ```csharp
+    protected virtual void _(Events.RowInserted<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+    
+        // Stamp the extension field with an initial approval status
+        e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
+            row, ApprovalStatus.notSubmitted);
+    }
+    ```
+  </Tab>
+  <Tab title="RowUpdated">
+    Fires after an existing in-cache record has been modified. Use it to keep derived or related fields in sync whenever the user changes the primary record.
+
+    ```csharp
+    protected virtual void _(Events.RowUpdated<SOOrder> e)
+    {
+        SOOrder newRow = e.Row;
+        SOOrder oldRow = e.OldRow;
+        if (newRow == null) return;
+    
+        // Reset approval status whenever the order amount changes
+        if (newRow.OrderTotal != oldRow.OrderTotal)
+        {
+            e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
+                newRow, ApprovalStatus.notSubmitted);
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="RowDeleted">
+    Fires after a record has been marked for deletion in the cache (before the `DELETE` statement runs). Use it to cascade soft-deletes to child records or to enforce referential integrity rules beyond what the database schema provides.
+
+    ```csharp
+    protected virtual void _(Events.RowDeleted<SOOrder> e)
+    {
+        SOOrder row = e.Row;
+        if (row == null) return;
+    
+        // Mark all related custom records as cancelled
+        foreach (MyCustomRecord detail in
+            PXSelect<MyCustomRecord,
+                Where<MyCustomRecord.orderNbr,
+                      Equal<Required<MyCustomRecord.orderNbr>>>>
+            .Select(Base, row.OrderNbr))
+        {
+            MyCustomRecord copy = (MyCustomRecord)Base.Caches<MyCustomRecord>().CreateCopy(detail);
+            copy.Status = CustomRecordStatus.cancelled;
+            Base.Caches<MyCustomRecord>().Update(copy);
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  All four handlers use the same `protected virtual void _(Events.EventName<TDAC> e)` signature pattern. The `e.Cache` property gives you direct access to the `PXCache` for the DAC, and `e.Row` gives you the current record. In `RowUpdated`, `e.OldRow` provides the previous state of the record before the change.
+</Note>
+
+## Extension Initialization and the Base Property
+
+When the framework instantiates `SOOrderEntry`, it also instantiates every registered extension for that graph type in order. Your extension's `Initialize()` virtual method is called once immediately after construction, before any views are populated. Override it to perform one-time setup:
+
+```csharp
+public override void Initialize()
+{
+    base.Initialize();
+
+    // Adjust the display name of a base view's column at runtime
+    PXUIFieldAttribute.SetDisplayName<SOOrder.orderDate>(
+        Base.Caches<SOOrder>(), "Requested Date");
+}
+```
+
+The `Base` property gives you a typed reference to the base graph instance. Use `Base` to access the base graph's views, caches, actions, and any public helper methods:
+
+```csharp
+// Access a base graph view
+SOOrder currentOrder = Base.Document.Current;
+
+// Trigger a base graph action programmatically
+Base.Save.Press();
+
+// Access the cache for a base DAC
+Base.Caches<SOOrder>().SetValueExt<SOOrder.status>(order, SOOrderStatus.open);
+```
+
+Do not store a local copy of `Base` in an instance field — the reference is always available through the property and caching it can lead to stale-reference bugs if the framework refreshes the extension chain.
+
+## Multiple Extensions and Extension Chaining
+
+More than one extension can target the same base graph. The framework supports this through an ordered **extension chain**. When a `RowSelected` event fires, for example, the framework calls:
+
+1. The base graph's handler (if any).
+2. Extension #1's handler (in registration order).
+3. Extension #2's handler.
+4. …and so on through all registered extensions.
+
+Each handler in the chain can call `e.CallBase()` to explicitly invoke the previous handler in the chain, or simply return to skip the rest of the chain (for overriding scenarios):
+
+```csharp
+protected virtual void _(Events.RowPersisting<MyCustomRecord> e)
+{
+    if (e.Operation == PXDBOperation.Insert)
+    {
+        // Custom validation before the record is saved
+        if (string.IsNullOrWhiteSpace(e.Row.Description))
+            throw new PXException("Description is required.");
+    }
+
+    // Allow the rest of the chain (and base logic) to continue
+    e.CallBase();
+}
+```
+
+You can also call extension methods from another extension using the `GetExtension<TExt>()` helper:
+
+```csharp
+// Inside SOOrderEntryExt2, call a method defined in SOOrderEntryExt
+var ext1 = Base.GetExtension<SOOrderEntryExt>();
+ext1.SomePublicHelperMethod(order);
+```
+
+<Warning>
+  **Extension ordering matters — manage it carefully.** The framework applies extensions in the order they appear in the Customization Project's manifest. If two extensions both override the same event (for example, `RowPersisting<SOOrder>`) and neither calls `e.CallBase()`, the last extension to run effectively silences all previous handlers — including base ERP validation logic. Always call `e.CallBase()` unless you have a deliberate reason to suppress the rest of the chain, and document that decision clearly. When you have multiple projects deployed simultaneously, each project's extensions are chained together in project publish order, which is another source of unexpected behavior. If you observe an event handler appearing to do nothing, check that an earlier extension in the chain is not swallowing the call.
+</Warning>

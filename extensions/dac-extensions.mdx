@@ -1,0 +1,169 @@
+---
+title: "DAC Extensions: Add Fields to Existing ERP Data Tables"
+sidebarTitle: "DAC Extensions"
+description: "Use PXCacheExtension to append persisted or unbound fields to any ERP DAC, extending the data model without altering base table definitions."
+---
+
+A DAC extension lets you broaden the data model of an existing ERP entity — a sales order, an inventory item, a customer record — by adding your own fields alongside the ones the platform already defines. You write a class that inherits from `PXCacheExtension<TDAC>`, annotate your fields exactly as you would in a native DAC, and the framework takes care of reading and writing those fields as part of the ordinary data lifecycle. The base DAC is never touched, so platform upgrades never overwrite your additions.
+
+## What a DAC extension does
+
+When the framework initializes a cache for a DAC, it also scans for registered `PXCacheExtension<TDAC>` classes. Each extension's fields are merged into the cache schema so that:
+
+- **Persisted fields** (`[PXDBString]`, `[PXDBDecimal]`, `[PXDBInt]`, etc.) map to real columns in the underlying database table. The column name matches the property name exactly.
+- **Unbound fields** (`[PXString]`, `[PXDecimal]`, `[PXInt]`, etc.) exist only in memory. They are recalculated on every load and are never written to the database — useful for display-only values, running totals, or fields populated by a formula.
+
+Both field types participate in BQL queries (with some constraints for unbound fields), respond to `FieldDefaulting` and `FieldVerifying` events, and appear as first-class citizens in the Screen Editor.
+
+## Full example
+
+The following extension adds a custom reference string and a calculated flag to the `SOOrder` DAC.
+
+```csharp
+// Inherit from PXCacheExtension<T>, where T is the DAC you are extending.
+public class SOOrderExt : PXCacheExtension<SOOrder>
+{
+    // -------------------------------------------------------------------------
+    // Persisted field — stored in the SOOrder table as column UsrCustomReference
+    // -------------------------------------------------------------------------
+
+    // The abstract inner class is the BQL field descriptor. It must be declared
+    // inside the extension class and must exactly match the property name
+    // (camelCase version). This is what you use in Where<>, OrderBy<>, etc.
+    public abstract class usrCustomReference : PX.Data.BQL.BqlString.Field<usrCustomReference> { }
+
+    [PXDBString(50, IsUnicode = true)]
+    [PXUIField(DisplayName = "Custom Reference", Visibility = PXUIVisibility.SelectorVisible)]
+    public virtual string UsrCustomReference { get; set; }
+
+    // -------------------------------------------------------------------------
+    // Unbound field — calculated in a FieldSelecting event, never persisted
+    // -------------------------------------------------------------------------
+
+    public abstract class usrIsHighPriority : PX.Data.BQL.BqlBool.Field<usrIsHighPriority> { }
+
+    [PXBool]
+    [PXUIField(DisplayName = "High Priority", Enabled = false)]
+    public virtual bool? UsrIsHighPriority { get; set; }
+
+    // -------------------------------------------------------------------------
+    // Persisted decimal — a custom surcharge amount added to the order
+    // -------------------------------------------------------------------------
+
+    public abstract class usrSurchargeAmt : PX.Data.BQL.BqlDecimal.Field<usrSurchargeAmt> { }
+
+    [PXDBDecimal(2)]
+    [PXDefault(TypeCode.Decimal, "0.0")]
+    [PXUIField(DisplayName = "Surcharge Amount")]
+    public virtual decimal? UsrSurchargeAmt { get; set; }
+}
+```
+
+## Naming convention: the `Usr` prefix
+
+All custom fields must use the `Usr` prefix (short for _user-defined_) on both the property name and the abstract BQL field class. This prefix serves two purposes:
+
+1. It visually distinguishes your fields from platform-native fields in code reviews and in the Screen Editor.
+2. It prevents naming collisions with fields the platform might add in a future release. Platform fields never use the `Usr` prefix, so your fields are permanently safe.
+
+<Note>
+  The database column generated for a persisted field is named exactly after the property — including the `Usr` prefix. For example, `UsrCustomReference` becomes a column named `UsrCustomReference` in the `SOOrder` table. Keep property names concise but descriptive; they are permanent once data has been written to the column.
+</Note>
+
+## Accessing extension fields in code
+
+To read or write extension fields on a DAC instance, call `GetExtension<TExtension>()` on the record object. This method is available on every DAC instance and returns the strongly typed extension object.
+
+```csharp
+// Retrieve the current sales order from the view.
+SOOrder order = Base.Document.Current;
+
+// Get the extension object for that record.
+SOOrderExt orderExt = order.GetExtension<SOOrderExt>();
+
+// Read an extension field.
+string customRef = orderExt.UsrCustomReference;
+
+// Write an extension field and mark the record as dirty so the
+// framework knows to include it in the next persist operation.
+orderExt.UsrCustomReference = "MY-REF-001";
+Base.Document.Cache.MarkUpdated(order);
+```
+
+You can also access extension fields through the cache API when you have the cache but not a typed instance:
+
+```csharp
+// Read a field value through the cache (useful in generic event handlers).
+string value = (string)Base.Caches[typeof(SOOrder)]
+    .GetValue(order, nameof(SOOrderExt.UsrCustomReference));
+
+// Write a field value through the cache (triggers FieldUpdating events).
+Base.Caches[typeof(SOOrder)]
+    .SetValue(order, nameof(SOOrderExt.UsrCustomReference), "MY-REF-002");
+```
+
+## Using extension fields in BQL queries
+
+Extension fields integrate into BQL just like native fields. Use the abstract BQL field class (`usrCustomReference`, not `UsrCustomReference`) in your query expressions.
+
+```csharp
+// Select orders that carry a specific custom reference.
+PXSelect<
+    SOOrder,
+    Where<SOOrderExt.usrCustomReference, Equal<Required<SOOrderExt.usrCustomReference>>>>
+    .Select(this, "MY-REF-001");
+
+// Join the extension implicitly — the framework handles the join
+// automatically because PXCacheExtension fields map to the same table.
+// No explicit join syntax is needed for same-table extensions.
+
+// Sort by the extension field.
+PXSelectOrderBy<
+    SOOrder,
+    OrderBy<Asc<SOOrderExt.usrCustomReference>>>
+    .Select(this);
+```
+
+<Note>
+  Unbound fields (declared with `[PXString]` rather than `[PXDBString]`) do not have a backing column and cannot appear in `Where<>` clauses that translate to SQL. You can filter on them in-memory using `PXResultset` LINQ expressions after fetching the data, but they will not reduce the SQL result set at the database level.
+</Note>
+
+## Multiple extensions on the same DAC
+
+More than one extension class can target the same DAC. Each is registered independently and contributes its own fields to the cache schema. All extensions are loaded whenever the DAC's cache is initialized; use `IsActive()` on each extension class to gate fields that should only appear under certain conditions.
+
+```csharp
+public class SOOrderIntegrationExt : PXCacheExtension<SOOrder>
+{
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.externalIntegration>();
+
+    public abstract class usrExternalId : PX.Data.BQL.BqlString.Field<usrExternalId> { }
+
+    [PXDBString(100)]
+    [PXUIField(DisplayName = "External System ID", Enabled = false)]
+    public virtual string UsrExternalId { get; set; }
+}
+```
+
+## Adding extension fields to existing screens
+
+After you define the extension class, you need to place the new fields on the screen layout so users can see and edit them. Use the built-in Screen Editor to:
+
+<Steps>
+  <Step title="Open the Screen Editor">
+    Navigate to the target screen, then open **Customization → Inspect Element** and click the area where you want to add the field.
+  </Step>
+  <Step title="Add the field control">
+    In the Screen Editor's layout tree, insert a new `PXLayoutRule` or `PXFormView` field control and set its `DataField` property to the extension field name (for example, `UsrCustomReference`).
+  </Step>
+  <Step title="Set display properties">
+    Configure the field's label, width, and read-only state directly in the Screen Editor. These settings complement — and can override — the `[PXUIField]` attribute defaults.
+  </Step>
+  <Step title="Publish the customization">
+    Publish the customization project. The framework runs the required `ALTER TABLE` statement automatically to add the column to the database if it does not yet exist.
+  </Step>
+</Steps>
+
+<Tip>
+  If you need the same field to appear on multiple screens that share the same DAC (for example, `SOOrder` appears on both Sales Orders and Quick Orders), you only need one extension class. Add the field control to each screen's layout separately — the same underlying column and extension object serves both.
+</Tip>

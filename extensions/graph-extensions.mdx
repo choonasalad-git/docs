@@ -1,0 +1,234 @@
+---
+title: "Graph Extensions: Add Actions and Logic to ERP Screens"
+sidebarTitle: "Graph Extensions"
+description: "Use PXGraphExtension to attach data views, toolbar actions, event handlers, and method overrides to any ERP screen without modifying base code."
+---
+
+A graph extension is the primary mechanism for adding behavior to an existing ERP screen. You create a class that inherits from `PXGraphExtension<TGraph>`, where `TGraph` is the graph that drives the screen you want to customize, and the framework automatically discovers and activates your class alongside the original. Your extension can define new data views, expose custom toolbar buttons, react to cache events, and even replace virtual methods — all without touching a single line of base code.
+
+## Anatomy of a graph extension
+
+The following example shows a fully annotated graph extension targeting `SOOrderEntry`, the graph behind the Sales Orders screen. Each section is explained in the comments.
+
+```csharp
+// Inherit from PXGraphExtension<T>, where T is the target graph.
+// You can chain extensions: PXGraphExtension<MyFirstExt, SOOrderEntry>
+// if your extension itself needs to extend another extension.
+public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
+{
+    // IsActive() is checked once when the graph is instantiated.
+    // Return false to disable the entire extension in the current context.
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
+
+    // Initialize() runs after the base graph and all prior extensions
+    // have been set up. Use it for one-time setup that cannot be expressed
+    // as a declarative view or event handler — for example, adding
+    // a custom field to an existing selector column list.
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        // Example: append a custom column to an existing selector so it
+        // appears in the field chooser and in lookup pop-ups.
+        PXUIFieldAttribute.SetDisplayName<SOOrderExt.usrCustomReference>(
+            Base.Caches[typeof(SOOrder)],
+            "Custom Reference");
+    }
+
+    // The Base property gives you the fully-initialized base graph instance.
+    // Access any public view, action, or helper method on the original graph
+    // through this property.
+    // public SOOrderEntry Base { get; } — provided automatically by the framework
+
+    // Data views, actions, and event handlers follow below.
+}
+```
+
+The framework injects the `Base` property automatically — you never need to declare it. Through `Base` you can read or update any view on the original graph, call helper methods, and check state without duplicating logic.
+
+## Adding a custom data view
+
+A data view inside a graph extension works exactly like one in a native graph. Declare a public field of a `PXSelect` type — using BQL (Business Query Language) type-safe query expressions — and the framework registers it as part of the graph's view collection.
+
+```csharp
+public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
+{
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
+
+    // Selects all MyCustomRecord rows whose RefNbr matches the
+    // currently selected sales order. The Current<> parameter is
+    // re-evaluated automatically whenever the primary record changes.
+    public PXSelect<
+        MyCustomRecord,
+        Where<MyCustomRecord.refNbr, Equal<Current<SOOrder.orderNbr>>>>
+        CustomRecords;
+
+    // You can also declare a setup/configuration view that does not depend
+    // on the primary record — useful for pulling in lookup tables or
+    // user-level preferences.
+    public PXSetup<MyCustomSetup> CustomSetup;
+}
+```
+
+Once declared, the view is accessible from ASPX layout files using its field name (`CustomRecords`) and participates fully in the graph's save/discard cycle. Records inserted or updated through the view are persisted in the same transaction as the primary document.
+
+## Adding a custom action
+
+Actions appear as buttons on the screen's toolbar (or as menu items inside a button group). Declare a `PXAction<T>` field and decorate its handler method with `[PXButton]` and `[PXUIField]`.
+
+```csharp
+public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
+{
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
+
+    // Declare the action field. The generic parameter is the primary DAC
+    // of the graph — in this case SOOrder.
+    public PXAction<SOOrder> ValidateCustomData;
+
+    // CommitChanges = true tells the framework to save any pending edits
+    // in the browser before posting the action request. Set this to true
+    // whenever your action logic reads field values that the user may have
+    // changed but not yet saved.
+    [PXButton(CommitChanges = true)]
+    [PXUIField(DisplayName = "Validate", MapEnableRights = PXCacheRights.Update,
+                MapViewRights = PXCacheRights.Select)]
+    protected virtual IEnumerable validateCustomData(PXAdapter adapter)
+    {
+        // Retrieve the currently selected order from the adapter.
+        SOOrder order = adapter.Get<SOOrder>().First();
+
+        // Pull the extension fields from the order record.
+        SOOrderExt orderExt = order.GetExtension<SOOrderExt>();
+
+        if (string.IsNullOrEmpty(orderExt.UsrCustomReference))
+        {
+            // Surface a validation error directly on the field in the UI.
+            Base.Caches[typeof(SOOrder)].RaiseExceptionHandling<SOOrderExt.usrCustomReference>(
+                order,
+                orderExt.UsrCustomReference,
+                new PXSetPropertyException("Custom Reference is required before validation.",
+                                           PXErrorLevel.Error));
+        }
+        else
+        {
+            // Business logic — for example, call an external service.
+            PXTrace.WriteInformation($"Validating order {order.OrderNbr}");
+        }
+
+        // Always yield the adapter contents at the end so the framework
+        // can continue processing the action pipeline (long-running
+        // operations, redirects, etc.).
+        yield return adapter.Get().First();
+    }
+}
+```
+
+To surface the button on the screen you also need to add a `<px:PXButton>` control to the ASPX layout and bind it to the action name, or use the Screen Editor's toolbar designer to place it visually.
+
+## Overriding base graph methods
+
+When an event handler is not sufficient — for example, you need to change what happens inside `Persist()` or alter the behavior of a helper method — use the `[PXOverride]` attribute to replace a virtual method on the base graph.
+
+```csharp
+public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
+{
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
+
+    // The delegate parameter matches the signature of the base method
+    // and lets you call through to the original implementation.
+    // Always include the delegate so you can invoke base behavior
+    // when needed — omitting it completely replaces the method.
+    [PXOverride]
+    public void Persist(Action basePersist)
+    {
+        // Pre-persist logic: validate or prepare data before the
+        // base graph writes anything to the database.
+        ValidateBeforeSave();
+
+        // Call the original Persist() to perform all standard saves.
+        basePersist();
+
+        // Post-persist logic: create audit records, trigger integrations,
+        // or update external systems after the transaction commits.
+        CreateAuditRecord();
+    }
+
+    private void ValidateBeforeSave()
+    {
+        SOOrder order = Base.Document.Current;
+        if (order == null) return;
+
+        SOOrderExt ext = order.GetExtension<SOOrderExt>();
+        if (ext?.UsrCustomReference == null)
+            throw new PXException("Custom Reference must be set before saving.");
+    }
+
+    private void CreateAuditRecord()
+    {
+        // Insert a custom audit row using a separate graph instance
+        // so that it commits in a controlled way.
+        var auditGraph = PXGraph.CreateInstance<MyAuditGraph>();
+        auditGraph.InsertAudit(Base.Document.Current);
+    }
+}
+```
+
+The `[PXOverride]` attribute instructs the framework to call your method instead of the base graph's method. The delegate parameter (here `Action basePersist`) is injected automatically and points to the original implementation, giving you full control over whether and when to invoke it.
+
+## Accessing the base graph
+
+The `Base` property is your gateway to everything on the original graph: its views, its actions, its helper methods, and its caches.
+
+```csharp
+// Read the currently selected primary record.
+SOOrder currentOrder = Base.Document.Current;
+
+// Trigger a built-in action programmatically.
+Base.Actions["CancelOrder"].Press();
+
+// Access a cache directly to mark a record as updated.
+Base.Caches[typeof(SOOrder)].MarkUpdated(currentOrder);
+
+// Call a public helper method defined on the base graph.
+Base.RecalcFreight(currentOrder);
+```
+
+Because `Base` is the live graph instance (not a copy), any changes you make through it are immediately visible to all other extensions and to the base graph itself.
+
+## Chaining multiple extensions
+
+When two extensions both target the same graph, the framework activates them in registration order and chains their method overrides. Each override in the chain receives a delegate that points to the next link — either the next extension's override or, at the end of the chain, the base implementation.
+
+```csharp
+// Extension A — registered first
+public class SOOrderEntryExtA : PXGraphExtension<SOOrderEntry>
+{
+    [PXOverride]
+    public void Persist(Action baseMethod)
+    {
+        PXTrace.WriteInformation("ExtA: before persist");
+        baseMethod(); // calls ExtB's Persist, which calls the base
+        PXTrace.WriteInformation("ExtA: after persist");
+    }
+}
+
+// Extension B — registered second
+public class SOOrderEntryExtB : PXGraphExtension<SOOrderEntry>
+{
+    [PXOverride]
+    public void Persist(Action baseMethod)
+    {
+        PXTrace.WriteInformation("ExtB: before persist");
+        baseMethod(); // calls the original SOOrderEntry.Persist
+        PXTrace.WriteInformation("ExtB: after persist");
+    }
+}
+```
+
+<Warning>
+  Never call `Graph.Actions["Save"].Press()` or `Base.Save.Press()` inside an event handler. Event handlers run within the graph's existing data pipeline — issuing a save from inside one creates a recursive cycle that corrupts the unit-of-work transaction and is extremely difficult to debug. If you need to persist data during an event, use `Base.Caches[typeof(MyRecord)].Persist(PXDBOperation.Insert)` for targeted single-table writes, or restructure your logic to run in a `[PXOverride]` of `Persist()` instead.
+</Warning>
+
+<Tip>
+  If your extension only needs to react to data changes (no new views or actions), consider putting all of your logic in event handlers and skipping `Initialize()` entirely. The leaner your extension class, the faster the graph initializes — especially on screens with many simultaneous extensions.
+</Tip>

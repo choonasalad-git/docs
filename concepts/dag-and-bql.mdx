@@ -1,0 +1,184 @@
+---
+title: "PXGraph and BQL: Data Access in the Platform Guide"
+sidebarTitle: "DAG & BQL"
+description: "Understand how PXGraph drives screen data, how BQL gives you type-safe compile-time queries in C#, and how PXCache tracks in-memory record state."
+---
+
+Every screen in the ERP is backed by a **Data Access Graph** (DAG) — a C# class that owns all of the data views, business logic, and persistence behavior for that screen. When you customize an existing screen or build a new one, you are working with graphs. Alongside graphs, the platform provides **Business Query Language (BQL)**, a fluent, type-safe query API that replaces raw SQL strings with C# generics you can refactor, rename, and verify at compile time. Together, graphs and BQL form the backbone of everything you build on the platform.
+
+## What Is a Data Access Graph?
+
+A Data Access Graph is a class that inherits from `PXGraph` (or one of its typed subclasses like `PXGraph<TGraph, TPrimary>`). It is the controller layer for a single screen: it declares the data views that populate the screen's grids and forms, the actions that appear as toolbar buttons, and the event handlers that react to user input.
+
+```csharp
+public class SOOrderEntry : PXGraph<SOOrderEntry, SOOrder>
+{
+    // Primary data view — drives the main form
+    public PXSelect<SOOrder> Document;
+
+    // Detail data view — linked to the current order
+    public PXSelect<SOLine,Where<SOLine.orderNbr, Equal<Current<SOOrder.orderNbr>>>> Transactions;
+}
+```
+
+The generic parameter `TPrimary` tells the framework which DAC is the "master" record. The framework uses this to wire up the primary key navigation controls at the top of the screen automatically.
+
+### DAG vs. Plain PXGraph
+
+<Tabs>
+  <Tab title="PXGraph<TGraph, TPrimary>">
+    Use this form for **data entry screens** where a user creates, edits, and saves a single master record (with optional detail grids). The framework provides built-in Save, Cancel, Insert, and Delete toolbar actions based on the primary DAC's key fields.
+
+    ```csharp
+    public class VendorMaint : PXGraph<VendorMaint, Vendor>
+    {
+        public PXSelect<Vendor> Vendors;
+    }
+    ```
+  </Tab>
+  <Tab title="PXGraph<TGraph>">
+    Use this form for **processing screens** and inquiry screens where there is no single primary record. You manage all toolbar actions manually.
+
+    ```csharp
+    public class ReleaseOrders : PXGraph<ReleaseOrders>
+    {
+        public PXProcessing<SOOrder,
+            Where<SOOrder.status, Equal<SOOrderStatus.pendingProcessing>>>
+            OrdersToRelease;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## PXGraph Lifecycle
+
+Understanding when a graph is created and destroyed helps you write efficient event handlers and avoid subtle bugs.
+
+<Steps>
+  <Step title="Instantiation">
+    The framework creates a new graph instance for each HTTP request that involves that screen. You should never store mutable state in static fields on a graph; use instance fields or `PXCache` instead.
+  </Step>
+  <Step title="View population">
+    When the screen renders, each data view executes its BQL query, retrieves records from the database, and places them in the graph's `PXCache` for the corresponding DAC type.
+  </Step>
+  <Step title="User interaction">
+    Field changes and row-level events fire against the in-memory cache. No database write occurs until the user explicitly saves.
+  </Step>
+  <Step title="Persistence">
+    When the user clicks Save, the graph's `Persist()` method iterates over all dirty records in each cache and issues the appropriate `INSERT`, `UPDATE`, or `DELETE` statements inside a single database transaction.
+  </Step>
+  <Step title="Disposal">
+    After the response is sent, the graph instance is eligible for garbage collection. The framework does not pool graph instances between requests.
+  </Step>
+</Steps>
+
+## Business Query Language (BQL) Overview
+
+BQL is the platform's built-in, type-safe query language. Instead of writing SQL strings that can silently break when a column is renamed, you compose queries entirely from C# types. The compiler verifies field names, table references, and join conditions.
+
+BQL queries are expressed as generic type compositions. Each query is a type whose generic parameters describe the `FROM`, `JOIN`, `WHERE`, and `ORDER BY` clauses. Calling `.Select(graph)` on that type executes the query and returns a result set.
+
+### Simple Select
+
+```csharp
+// Select all active vendors
+PXResultset<Vendor> activeVendors =
+    PXSelect<Vendor,
+        Where<Vendor.status, Equal<VendorStatus.active>>>
+    .Select(this);
+
+foreach (Vendor vendor in activeVendors)
+{
+    // Process each vendor
+}
+```
+
+### Select with Join
+
+```csharp
+// Select open sales orders with their associated customer records
+PXResultset<SOOrder> openOrders =
+    PXSelectJoin<SOOrder,
+        InnerJoin<Customer,
+            On<SOOrder.customerID, Equal<Customer.bAccountID>>>,
+        Where<SOOrder.status, Equal<SOOrderStatus.open>>>
+    .Select(this);
+
+foreach (PXResult<SOOrder, Customer> result in openOrders)
+{
+    SOOrder order    = result;   // implicit cast to first type
+    Customer customer = result;  // implicit cast to second type
+}
+```
+
+### Parameterized Query
+
+Use `Required<>` to pass runtime values into a BQL query without string concatenation:
+
+```csharp
+// Fetch a single order by its primary key
+SOOrder order =
+    PXSelect<SOOrder,
+        Where<SOOrder.orderType, Equal<Required<SOOrder.orderType>>,
+          And<SOOrder.orderNbr,  Equal<Required<SOOrder.orderNbr>>>>>
+    .Select(this, orderType, orderNbr);
+```
+
+### Aggregation and Ordering
+
+```csharp
+// Sum of open order amounts, ordered by customer
+PXSelectGroupBy<SOOrder,
+    Where<SOOrder.status, Equal<SOOrderStatus.open>>,
+    Aggregate<
+        GroupBy<SOOrder.customerID,
+        Sum<SOOrder.orderTotal>>>,
+    OrderBy<Asc<SOOrder.customerID>>>
+.Select(this);
+```
+
+## PXCache: The In-Memory Record Store
+
+Every DAC type used in a graph has exactly one `PXCache<TDAC>` instance associated with it, accessible via `graph.Caches[typeof(TDAC)]` or the strongly-typed `graph.Caches<TDAC>()`. The cache is responsible for:
+
+- **Holding dirty records** — insertions, modifications, and deletions that have not yet been persisted.
+- **Firing row and field events** — when you update a field value through the cache API, it triggers the full event pipeline (`FieldVerifying`, `FieldUpdating`, `FieldUpdated`, `RowUpdating`, `RowUpdated`).
+- **Tracking record status** — each record in the cache carries a `PXEntryStatus` (`Inserted`, `Updated`, `Deleted`, `Notchanged`) that the persistence layer reads at save time.
+
+```csharp
+// Retrieve the cache for SOOrder
+PXCache orderCache = Base.Caches<SOOrder>();
+
+// Raise a field-level event (triggers validation and downstream handlers)
+orderCache.SetValueExt<SOOrder.status>(order, SOOrderStatus.completed);
+
+// Mark a record dirty without going through the full event pipeline
+orderCache.SetValue<SOOrder.descr>(order, "Updated description");
+orderCache.MarkUpdated(order);
+```
+
+## PXSelect vs. PXSelectReadonly
+
+<Accordion title="When to use PXSelect">
+  Use `PXSelect` when you need records that participate in the save pipeline — records the user can edit, insert, or delete. Records retrieved by `PXSelect` are placed in the cache and tracked for changes.
+</Accordion>
+
+<Accordion title="When to use PXSelectReadonly">
+  Use `PXSelectReadonly` for **lookup and reporting scenarios** where you need data for display or calculation purposes only. Records retrieved this way bypass the cache and are never included in `Persist()`. This avoids accidental persistence and reduces memory pressure for large result sets.
+
+  ```csharp
+  // Read-only lookup — result will never be saved
+  Vendor vendor =
+      PXSelectReadonly<Vendor,
+          Where<Vendor.acctCD, Equal<Required<Vendor.acctCD>>>>
+      .Select(this, acctCode);
+  ```
+</Accordion>
+
+<Accordion title="When to use PXSelectJoin vs. individual selects">
+  Prefer a single `PXSelectJoin` over multiple separate `PXSelect` calls when you need fields from multiple related tables in one loop. A join executes one round-trip to the database; separate selects execute one round-trip per row of the outer result, which can degrade performance dramatically on large data sets.
+</Accordion>
+
+<Tip>
+  **Performance tip — avoid N\+1 queries inside event handlers.** Event handlers like `RowSelected` fire for every record displayed in a grid, which can mean dozens or hundreds of executions per page render. Never place an uncached `PXSelect` inside a `RowSelected` handler; the query will execute once per row. Instead, declare a `PXSelectReadonly` view on the graph and call `.Select()` once before your loop, or use `PXSelectorAttribute`-backed fields to let the framework handle related-record lookups efficiently with its built-in result cache.
+</Tip>

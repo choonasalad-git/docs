@@ -1,0 +1,135 @@
+---
+title: "How to Create a Data Access Class for Custom Tables"
+sidebarTitle: "Creating a DAC"
+description: "Declare a DAC class, define field attributes, and publish your custom table to the database with this complete step-by-step walkthrough."
+---
+
+A Data Access Class (DAC) is the single source of truth for a custom table: it defines the database schema, the field-level validation rules, the UI display names, and the relationships to other entities — all in one C# class file. Once you add the DAC to your customization project and publish, the platform creates the corresponding SQL table automatically. This guide walks you through every step from creating the file to verifying the table in the database.
+
+## Complete DAC example
+
+Here is the full `RSSVRepairOrder` DAC assembled from the steps above, ready to copy into your project:
+
+```csharp
+using System;
+using PX.Data;
+using PX.Objects.AR;
+
+namespace MyCompany.MyProject
+{
+    [Serializable]
+    [PXCacheName("Repair Order")]
+    [PXPrimaryGraph(typeof(RSSVRepairOrderMaint))]
+    public class RSSVRepairOrder : IBqlTable
+    {
+        #region OrderID
+        [PXDBIdentity]
+        [PXUIField(DisplayName = "Order ID", Visibility = PXUIVisibility.Invisible)]
+        public virtual int? OrderID { get; set; }
+        public abstract class orderID : PX.Data.BQL.BqlInt.Field<orderID> { }
+        #endregion
+
+        #region OrderNbr
+        [PXDBString(15, IsUnicode = true, IsKey = true, InputMask = ">CCCCCCCCCCCCCCC")]
+        [PXDefault]
+        [PXUIField(DisplayName = "Order Nbr.", Visibility = PXUIVisibility.SelectorVisible)]
+        [PXSelector(typeof(RSSVRepairOrder.orderNbr), Filterable = true)]
+        public virtual string OrderNbr { get; set; }
+        public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+        #endregion
+
+        #region CustomerID
+        [PXDBInt]
+        [PXDefault]
+        [PXUIField(DisplayName = "Customer")]
+        [PXSelector(
+            typeof(AR.Customer.bAccountID),
+            typeof(AR.Customer.acctCD),
+            typeof(AR.Customer.acctName),
+            SubstituteKey = typeof(AR.Customer.acctCD),
+            DescriptionField = typeof(AR.Customer.acctName))]
+        public virtual int? CustomerID { get; set; }
+        public abstract class customerID : PX.Data.BQL.BqlInt.Field<customerID> { }
+        #endregion
+
+        #region Status
+        [PXDBString(1, IsFixed = true)]
+        [PXDefault(RSSVRepairOrderStatus.Open)]
+        [PXUIField(DisplayName = "Status")]
+        [PXStringList(
+            new[] { "O", "I", "C" },
+            new[] { "Open", "In Progress", "Closed" })]
+        public virtual string Status { get; set; }
+        public abstract class status : PX.Data.BQL.BqlString.Field<status> { }
+        #endregion
+
+        #region OrderDate
+        [PXDBDate]
+        [PXDefault(typeof(AccessInfo.businessDate))]
+        [PXUIField(DisplayName = "Order Date")]
+        public virtual DateTime? OrderDate { get; set; }
+        public abstract class orderDate : PX.Data.BQL.BqlDateTime.Field<orderDate> { }
+        #endregion
+
+        #region EstimatedAmount
+        [PXDBDecimal(2)]
+        [PXDefault(TypeCode.Decimal, "0.00")]
+        [PXUIField(DisplayName = "Estimated Amount")]
+        public virtual decimal? EstimatedAmount { get; set; }
+        public abstract class estimatedAmount : PX.Data.BQL.BqlDecimal.Field<estimatedAmount> { }
+        #endregion
+
+        #region Description
+        [PXDBString(255, IsUnicode = true)]
+        [PXUIField(DisplayName = "Description")]
+        public virtual string Description { get; set; }
+        public abstract class description : PX.Data.BQL.BqlString.Field<description> { }
+        #endregion
+
+        #region CreatedByID
+        [PXDBCreatedByID]
+        public virtual Guid? CreatedByID { get; set; }
+        public abstract class createdByID : PX.Data.BQL.BqlGuid.Field<createdByID> { }
+        #endregion
+
+        #region CreatedDateTime
+        [PXDBCreatedDateTime]
+        [PXUIField(DisplayName = "Created On", Enabled = false)]
+        public virtual DateTime? CreatedDateTime { get; set; }
+        public abstract class createdDateTime : PX.Data.BQL.BqlDateTime.Field<createdDateTime> { }
+        #endregion
+
+        #region LastModifiedByID
+        [PXDBLastModifiedByID]
+        public virtual Guid? LastModifiedByID { get; set; }
+        public abstract class lastModifiedByID : PX.Data.BQL.BqlGuid.Field<lastModifiedByID> { }
+        #endregion
+
+        #region LastModifiedDateTime
+        [PXDBLastModifiedDateTime]
+        [PXUIField(DisplayName = "Last Modified On", Enabled = false)]
+        public virtual DateTime? LastModifiedDateTime { get; set; }
+        public abstract class lastModifiedDateTime : PX.Data.BQL.BqlDateTime.Field<lastModifiedDateTime> { }
+        #endregion
+
+        #region tstamp
+        [PXDBTimestamp]
+        public virtual byte[] Tstamp { get; set; }
+        public abstract class tstamp : PX.Data.BQL.BqlByteArray.Field<tstamp> { }
+        #endregion
+    }
+}
+```
+
+## Adding the DAC to the customization project
+
+If you created the file outside the Customization Project editor (for example, directly in Visual Studio), you must register it:
+
+1. Open the **Customization Projects** screen and select your project.
+2. Go to the **Files** tab and click **Add File**.
+3. Browse to `App_RuntimeCode/DAC/RSSVRepairOrder.cs` (the runtime code folder) or the path where you saved the file.
+4. Save the project. The file now appears in the project manifest and will be included in every publish and package export.
+
+<Note>
+  The Customization Framework stores runtime DAC files under `App_RuntimeCode` in the web application directory. If you edit the file directly in the Code Editor inside the platform UI, it is automatically tracked in the project — you do not need to add it manually.
+</Note>

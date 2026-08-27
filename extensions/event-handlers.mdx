@@ -1,0 +1,375 @@
+---
+title: "Event Handlers: Respond to Data Changes in Your DAC"
+sidebarTitle: "Event Handlers"
+description: "A complete reference for every cache event in the ERP framework — when each fires, what you can do inside it, and how to surface errors cleanly in the UI."
+---
+
+Event handlers are the most common way to inject custom behavior into the ERP data lifecycle. Every time a user edits a field, inserts a row, or saves a document, the framework fires a precise sequence of cache events. By subscribing to those events inside a graph extension, you can validate input, set default values, enforce business rules, keep related records in sync, and control which fields are editable — all without modifying the base graph.
+
+## Handler naming convention
+
+The framework supports both a legacy signature (separate `sender` and `e` parameters) and a modern, strongly typed syntax. Always use the modern syntax in new code: it eliminates casting, makes the DAC type explicit in the method signature, and is easier to search.
+
+```csharp
+// Modern syntax — strongly typed, preferred for all new handlers.
+// The method name must start with an underscore; the rest is arbitrary.
+protected void _(Events.RowSelected<SOOrder> e) { }
+protected void _(Events.FieldVerifying<SOOrder, SOOrder.orderNbr> e) { }
+
+// Legacy syntax — still works but avoid in new code.
+protected void SOOrder_RowSelected(PXCache sender, PXRowSelectedEventArgs e) { }
+```
+
+The underscore method name is not a typo — the framework uses the generic type parameters to determine which event and which DAC the handler targets, so the method name itself carries no meaning. You can, however, give the method a descriptive name for readability:
+
+```csharp
+protected void _(Events.RowUpdated<SOOrder> e)  // valid
+protected void SOOrder_RowUpdated(Events.RowUpdated<SOOrder> e) // also valid, more descriptive
+```
+
+## Event lifecycle for a save operation
+
+Understanding the order in which events fire helps you place logic in the right handler and avoid duplicating work.
+
+<Steps>
+  <Step title="FieldDefaulting">
+    Fires for each field when a new row is inserted into the cache. Set the initial value here — before the user sees the row.
+  </Step>
+  <Step title="FieldVerifying">
+    Fires when a field value is about to be assigned (on user input or programmatic set). Reject invalid values by throwing a `PXSetPropertyException`.
+  </Step>
+  <Step title="FieldUpdating">
+    Fires immediately after `FieldVerifying` passes. Gives you the opportunity to transform or normalize the incoming value before it is stored in the cache.
+  </Step>
+  <Step title="FieldUpdated">
+    Fires after the new value has been committed to the cache. React here to recalculate dependent fields.
+  </Step>
+  <Step title="RowInserting">
+    Fires before a new row is added to the cache. You can cancel the insert by setting `e.Cancel = true`.
+  </Step>
+  <Step title="RowInserted">
+    Fires after the new row is in the cache. Create related records or trigger downstream logic here.
+  </Step>
+  <Step title="RowUpdating / RowUpdated">
+    Fire before and after an existing row's values change in the cache. Use `RowUpdating` to cancel invalid changes; use `RowUpdated` to react to committed changes.
+  </Step>
+  <Step title="RowPersisting">
+    Fires just before the row is written to the database. This is the last chance to cancel a persist for invalid data.
+  </Step>
+  <Step title="RowPersisted">
+    Fires after the database write succeeds. Use this for post-commit side effects such as calling external APIs or writing audit logs.
+  </Step>
+</Steps>
+
+`RowSelected` sits outside this linear flow — it fires whenever the current record changes (on navigation, after saves, and after actions) and is used exclusively for UI state management.
+
+## Event handler reference
+
+<Accordion title="RowSelected — update UI state">
+  `RowSelected` fires every time the current record changes: when the user navigates to a different row, after a save completes, and after any action returns. It is the correct place to enable or disable fields, show or hide controls, and set error indicators based on the current record's state.
+
+  Because `RowSelected` can fire many times per user session, keep its implementation fast. Never issue a database query or perform heavy computation here — read only what is already in memory.
+
+  ```csharp
+  protected void _(Events.RowSelected<SOOrder> e)
+  {
+      SOOrder order = e.Row;
+      if (order == null) return;
+  
+      // Read the extension fields for this record.
+      SOOrderExt ext = order.GetExtension<SOOrderExt>();
+  
+      // The surcharge field is only editable when the order is on hold.
+      bool isOnHold = order.Status == SOOrderStatus.Hold;
+      PXUIFieldAttribute.SetEnabled<SOOrderExt.usrSurchargeAmt>(e.Cache, order, isOnHold);
+  
+      // Show the custom reference field only for a specific order type.
+      bool showCustomRef = order.OrderType == "ZZ";
+      PXUIFieldAttribute.SetVisible<SOOrderExt.usrCustomReference>(e.Cache, order, showCustomRef);
+  
+      // Mark the field as required (red asterisk) when a condition is met.
+      PXUIFieldAttribute.SetRequired<SOOrderExt.usrCustomReference>(e.Cache, showCustomRef);
+  
+      // Surface a persistent warning if the surcharge seems unusually high.
+      if (ext.UsrSurchargeAmt > 1000m)
+      {
+          e.Cache.RaiseExceptionHandling<SOOrderExt.usrSurchargeAmt>(
+              order,
+              ext.UsrSurchargeAmt,
+              new PXSetPropertyException("Surcharge exceeds $1,000. Please verify.",
+                                         PXErrorLevel.Warning));
+      }
+  }
+  ```
+</Accordion>
+
+<Accordion title="RowInserting — validate or cancel new rows">
+  `RowInserting` fires before the framework commits a new row to the cache. If you detect that the row should not be created — for example, a required companion record does not exist — set `e.Cancel = true` to abort the insert.
+
+  ```csharp
+  protected void _(Events.RowInserting<MyCustomRecord> e)
+  {
+      MyCustomRecord row = e.Row;
+      if (row == null) return;
+  
+      // Prevent inserting a custom record when the parent order is closed.
+      SOOrder parentOrder = Base.Document.Current;
+      if (parentOrder?.Status == SOOrderStatus.Completed)
+      {
+          e.Cache.RaiseExceptionHandling<MyCustomRecord.refNbr>(
+              row,
+              row.RefNbr,
+              new PXSetPropertyException(
+                  "Cannot add records to a completed order.",
+                  PXErrorLevel.Error));
+  
+          e.Cancel = true;
+      }
+  }
+  ```
+</Accordion>
+
+<Accordion title="RowInserted — create related records">
+  `RowInserted` fires after the new row is in the cache. Use it to create companion records, initialize child collections, or push values into other caches that depend on the new row's identity fields.
+
+  ```csharp
+  protected void _(Events.RowInserted<SOOrder> e)
+  {
+      SOOrder order = e.Row;
+      if (order == null) return;
+  
+      // Automatically create a default custom record for every new order.
+      MyCustomRecord defaultRecord = new MyCustomRecord
+      {
+          RefNbr     = order.OrderNbr,
+          RecordType = "DEFAULT",
+          CreatedOn  = DateTime.UtcNow
+      };
+  
+      // Insert through the extension's view so the record participates
+      // in the same unit of work and is saved with the parent order.
+      Base.GetExtension<SOOrderEntryExt>().CustomRecords.Insert(defaultRecord);
+  }
+  ```
+</Accordion>
+
+<Accordion title="RowUpdating — cancel invalid updates">
+  `RowUpdating` fires before an existing row's new values are committed to the cache. The event exposes both the old state (`e.OldRow`) and the proposed new state (`e.NewRow`), letting you compare and reject the change if it violates a business rule.
+
+  ```csharp
+  protected void _(Events.RowUpdating<SOOrder> e)
+  {
+      SOOrder oldRow = e.OldRow;
+      SOOrder newRow = e.NewRow;
+      if (oldRow == null || newRow == null) return;
+  
+      SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
+      SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
+  
+      // Prevent changing the custom reference once the order has shipped.
+      if (oldRow.Status == SOOrderStatus.Shipping &&
+          newExt.UsrCustomReference != oldExt.UsrCustomReference)
+      {
+          e.Cache.RaiseExceptionHandling<SOOrderExt.usrCustomReference>(
+              newRow,
+              newExt.UsrCustomReference,
+              new PXSetPropertyException(
+                  "Custom Reference cannot be changed after shipping begins.",
+                  PXErrorLevel.Error));
+  
+          e.Cancel = true;
+      }
+  }
+  ```
+</Accordion>
+
+<Accordion title="RowUpdated — sync related data">
+  `RowUpdated` fires after the row's new values are committed to the cache. Like `RowUpdating`, it exposes both `e.OldRow` and `e.Row` (the committed new state). Use it to recalculate totals, propagate values to child records, or trigger conditional logic that only matters after a specific field changes.
+
+  ```csharp
+  protected void _(Events.RowUpdated<SOOrder> e)
+  {
+      SOOrder oldRow = e.OldRow;
+      SOOrder newRow = e.Row;
+      if (oldRow == null || newRow == null) return;
+  
+      SOOrderExt newExt = newRow.GetExtension<SOOrderExt>();
+      SOOrderExt oldExt = oldRow.GetExtension<SOOrderExt>();
+  
+      // Recalculate the adjusted total whenever the surcharge changes.
+      if (newExt.UsrSurchargeAmt != oldExt.UsrSurchargeAmt)
+      {
+          decimal adjustedTotal = (newRow.OrderTotal ?? 0m) + (newExt.UsrSurchargeAmt ?? 0m);
+  
+          // Update a formula-driven unbound field by raising FieldUpdating,
+          // which will trigger FieldUpdated and then RowSelected in sequence.
+          e.Cache.SetValueExt<SOOrderExt.usrIsHighPriority>(
+              newRow,
+              adjustedTotal > 10000m);
+      }
+  }
+  ```
+</Accordion>
+
+<Accordion title="RowDeleting — check constraints before delete">
+  `RowDeleting` fires before the framework removes a row from the cache. This is the correct place to enforce referential integrity for your custom tables: if dependent records exist that would be orphaned, raise an error and set `e.Cancel = true` to block the delete.
+
+  ```csharp
+  protected void _(Events.RowDeleting<SOOrder> e)
+  {
+      SOOrder order = e.Row;
+      if (order == null) return;
+  
+      // Check whether any approved custom records exist for this order.
+      MyCustomRecord approvedRecord = PXSelect<
+          MyCustomRecord,
+          Where<MyCustomRecord.refNbr,   Equal<Required<MyCustomRecord.refNbr>>,
+            And<MyCustomRecord.status, Equal<Required<MyCustomRecord.status>>>>>
+          .SelectSingleBound(Base, null, order.OrderNbr, "Approved");
+  
+      if (approvedRecord != null)
+      {
+          throw new PXException(
+              "Order {0} has approved custom records and cannot be deleted. " +
+              "Reject or remove all custom records first.",
+              order.OrderNbr);
+      }
+  }
+  ```
+
+  <Warning>
+    Never throw a `PXException` inside `RowDeleted`. By the time `RowDeleted` fires, the row has already been removed from the cache and the delete is staged for the next persist. Throwing there leaves the cache in an inconsistent state. Put all delete-blocking logic in `RowDeleting`, where `e.Cancel = true` is still effective.
+  </Warning>
+</Accordion>
+
+<Accordion title="RowDeleted — cascade delete custom records">
+  `RowDeleted` fires after the row has been removed from the cache. Use it to delete dependent records in your custom tables so they are cleaned up in the same transaction.
+
+  ```csharp
+  protected void _(Events.RowDeleted<SOOrder> e)
+  {
+      SOOrder order = e.Row;
+      if (order == null) return;
+  
+      // Delete all custom records linked to the deleted order.
+      // Fetching and deleting through the view ensures they go through
+      // the full event pipeline (including their own RowDeleting checks).
+      foreach (MyCustomRecord record in Base.GetExtension<SOOrderEntryExt>()
+                                            .CustomRecords.Select())
+      {
+          Base.GetExtension<SOOrderEntryExt>().CustomRecords.Delete(record);
+      }
+  }
+  ```
+</Accordion>
+
+<Accordion title="FieldVerifying — validate a field value before it is set">
+  `FieldVerifying` fires when a new value is about to be assigned to a specific field, whether the assignment comes from user input, a `SetValue` call, or a defaulting handler. Throw a `PXSetPropertyException` to reject the value and display an inline error; the field reverts to its previous value.
+
+  ```csharp
+  protected void _(Events.FieldVerifying<SOOrder, SOOrderExt.usrCustomReference> e)
+  {
+      string newValue = (string)e.NewValue;
+      if (string.IsNullOrWhiteSpace(newValue)) return;
+  
+      // Custom references must follow the pattern PREFIX-NNNNNN.
+      if (!System.Text.RegularExpressions.Regex.IsMatch(newValue, @"^[A-Z]{2,6}-\d{4,8}$"))
+      {
+          // Throwing here cancels the assignment and shows the message
+          // directly below the field in the UI.
+          throw new PXSetPropertyException<SOOrderExt.usrCustomReference>(
+              "Custom Reference must match the format PREFIX-NNNNNN (e.g., ORD-001234).");
+      }
+  
+      // Check for uniqueness across all orders.
+      SOOrder duplicate = PXSelect<
+          SOOrder,
+          Where<SOOrderExt.usrCustomReference, Equal<Required<SOOrderExt.usrCustomReference>>,
+            And<SOOrder.orderNbr, NotEqual<Required<SOOrder.orderNbr>>>>>
+          .SelectSingleBound(Base, null, newValue, Base.Document.Current?.OrderNbr);
+  
+      if (duplicate != null)
+          throw new PXSetPropertyException<SOOrderExt.usrCustomReference>(
+              "Custom Reference '{0}' is already used by order {1}.",
+              newValue, duplicate.OrderNbr);
+  }
+  ```
+</Accordion>
+
+<Accordion title="FieldDefaulting — set a field's initial value">
+  `FieldDefaulting` fires when a row is first inserted into the cache and again whenever the framework needs to reset a field to its default — for example, after a dependent field changes. Assign `e.NewValue` to provide the default; leave it untouched to fall through to the attribute-level default.
+
+  ```csharp
+  protected void _(Events.FieldDefaulting<SOOrder, SOOrderExt.usrSurchargeAmt> e)
+  {
+      // Look up the default surcharge from a setup table.
+      MyCustomSetup setup = PXSetup<MyCustomSetup>.Select(Base);
+  
+      if (setup?.DefaultSurcharge != null)
+          e.NewValue = setup.DefaultSurcharge;
+      else
+          e.NewValue = 0m;
+  
+      // Setting e.Cancel = true prevents any further defaulting logic
+      // (attribute defaults, formula evaluation) from overwriting your value.
+      e.Cancel = true;
+  }
+  ```
+</Accordion>
+
+<Accordion title="FieldUpdated — react to a committed field change">
+  `FieldUpdated` fires after a new value has been committed to a specific field in the cache. Use it to recalculate fields that depend on the changed field, or to apply conditional logic that only applies when a particular field transitions to a specific value.
+
+  ```csharp
+  protected void _(Events.FieldUpdated<SOOrder, SOOrder.orderType> e)
+  {
+      SOOrder order = e.Row;
+      if (order == null) return;
+  
+      string newType  = (string)e.NewValue;
+      string oldType  = (string)e.OldValue;
+  
+      if (newType == oldType) return;
+  
+      // When the order type changes, clear the custom reference so the
+      // user must re-enter one appropriate for the new type.
+      e.Cache.SetValueExt<SOOrderExt.usrCustomReference>(order, null);
+  
+      // Also update the high-priority flag based on the new order type.
+      bool isHighPriority = newType == "RUSH" || newType == "CRIT";
+      e.Cache.SetValueExt<SOOrderExt.usrIsHighPriority>(order, isHighPriority);
+  }
+  ```
+</Accordion>
+
+## Surfacing validation errors in the UI
+
+Use `e.Cache.RaiseExceptionHandling` to attach an inline error or warning to a specific field on the form. This method is preferable to throwing a `PXException` directly when you want the user to see _which field_ has the problem rather than just a generic dialog.
+
+```csharp
+// Attach a field-level error (red highlight, error icon next to the field).
+e.Cache.RaiseExceptionHandling<SOOrderExt.usrCustomReference>(
+    e.Row,
+    currentValue,
+    new PXSetPropertyException("This value is invalid.", PXErrorLevel.Error));
+
+// Attach a warning (yellow highlight) without blocking the save.
+e.Cache.RaiseExceptionHandling<SOOrderExt.usrSurchargeAmt>(
+    e.Row,
+    currentValue,
+    new PXSetPropertyException("Surcharge is unusually high.", PXErrorLevel.Warning));
+
+// Clear a previously attached error (pass null as the exception).
+e.Cache.RaiseExceptionHandling<SOOrderExt.usrCustomReference>(
+    e.Row,
+    currentValue,
+    null);
+```
+
+<Tip>
+  Prefer `RaiseExceptionHandling` over throwing from `RowSelected` for non-blocking feedback. When you throw a `PXException` in `RowSelected`, the framework swallows it as a dialog and the user sees a generic popup with no field context. `RaiseExceptionHandling` keeps the error pinned to the field that caused it, making the problem immediately actionable.
+</Tip>
+
+<Warning>
+  Do not throw a `PXException` inside `RowDeleted`. The row has already been removed from the cache by the time this event fires, so throwing there leaves the cache in an inconsistent state without actually preventing the delete. Use `RowDeleting` to block unwanted deletions — it fires before the row is removed, and setting `e.Cancel = true` cleanly aborts the operation.
+</Warning>
