@@ -7,31 +7,77 @@
     "light": "#07C983",
     "dark": "#15803D"
   },
+
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "getting-started/prerequisites",
+              "getting-started/setup",
+              "getting-started/first-customization"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/customization-project",
+              "concepts/dag-and-bql",
+              "concepts/data-access-classes",
+              "concepts/graph-extensions"
+            ]
+          },
+          {
+            "group": "Custom Tables",
+            "pages": [
+              "custom-tables/overview",
+              "custom-tables/creating-dac",
+              "custom-tables/field-types",
+              "custom-tables/relationships"
+            ]
+          },
+          {
+            "group": "Custom Screens",
+            "pages": [
+              "screens/overview",
+              "screens/creating-screens",
+              "screens/layouts-and-controls",
+              "screens/navigation-and-menus"
+            ]
+          },
+          {
+            "group": "Extensions",
+            "pages": [
+              "extensions/overview",
+              "extensions/graph-extensions",
+              "extensions/dac-extensions",
+              "extensions/event-handlers"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/publishing",
+              "deployment/packaging",
+              "deployment/upgrading"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting/common-errors",
+              "troubleshooting/debugging",
+              "troubleshooting/faq"
+            ]
+          }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
