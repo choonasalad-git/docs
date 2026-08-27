@@ -1,0 +1,284 @@
+---
+title: "Define relationships and lookups between DAC tables"
+sidebarTitle: "Relationships"
+description: "Learn how to use PXSelector, PXParent, and PXDBDefault to build foreign-key lookups, master-detail hierarchies, and many-to-many join patterns between DAC tables."
+---
+
+Relational data lives in multiple tables that reference each other through keys. The platform gives you a rich set of attributes to express those relationships directly in your DAC declarations — no separate configuration file or mapping layer required. `PXSelector` turns a foreign key integer into a user-facing lookup control. `PXParent` establishes a parent-child hierarchy with optional cascade-delete behavior. `PXDBDefault` automatically copies a value from a parent record into a child field so users never have to enter it manually. Together these three attributes cover the vast majority of relationship patterns you will need when building custom tables.
+
+## PXSelector — foreign key lookups
+
+`PXSelector` decorates a foreign key field and tells the platform how to resolve the raw key value (usually an integer ID) into something meaningful for users. It specifies which DAC to search, which columns to display in the lookup popup, and optionally a *substitute key* — a human-readable code that appears in the field instead of the numeric ID.
+
+### Basic syntax
+
+```csharp
+[PXSelector(
+    typeof(SearchDAC.keyField),          // BQL type identifying the source DAC and the key field
+    typeof(SearchDAC.displayField1),     // Columns shown in the lookup grid
+    typeof(SearchDAC.displayField2),
+    SubstituteKey = typeof(SearchDAC.codeField),       // What the user types / sees in the text box
+    DescriptionField = typeof(SearchDAC.nameField)     // Optional description shown next to the field
+)]
+```
+
+### Lookup to a standard ERP table
+
+The most common use case is linking your custom DAC to a built-in entity such as a customer, vendor, inventory item, or employee. The following example links a repair order to a customer account:
+
+```csharp
+#region CustomerID
+[PXDBInt]
+[PXDefault]
+[PXUIField(DisplayName = "Customer")]
+[PXSelector(
+    typeof(AR.Customer.bAccountID),
+    typeof(AR.Customer.acctCD),
+    typeof(AR.Customer.acctName),
+    typeof(AR.Customer.status),
+    SubstituteKey = typeof(AR.Customer.acctCD),
+    DescriptionField = typeof(AR.Customer.acctName))]
+public virtual int? CustomerID { get; set; }
+public abstract class customerID : PX.Data.BQL.BqlInt.Field<customerID> { }
+#endregion
+```
+
+When the user opens a repair order screen, the `CustomerID` field renders as a text box showing the customer code (`acctCD`). Clicking the magnifying-glass icon opens a popup grid with columns for code, name, and status. The platform stores only the integer `bAccountID` in the database but displays and accepts the alphanumeric `acctCD` everywhere in the UI.
+
+### Lookup with a filtered BQL expression
+
+You can restrict the selector to a subset of records by replacing the simple field type with a `Search<>` or `Search2<>` BQL expression:
+
+```csharp
+[PXSelector(
+    typeof(Search<InventoryItem.inventoryID,
+        Where<InventoryItem.itemStatus, Equal<InventoryItemStatus.active>,
+          And<InventoryItem.itemType, Equal<INItemTypes.nonStockItem>>>>),
+    typeof(InventoryItem.inventoryCD),
+    typeof(InventoryItem.descr),
+    SubstituteKey = typeof(InventoryItem.inventoryCD),
+    DescriptionField = typeof(InventoryItem.descr))]
+public virtual int? ServiceItemID { get; set; }
+public abstract class serviceItemID : PX.Data.BQL.BqlInt.Field<serviceItemID> { }
+```
+
+This selector only shows active non-stock items in the lookup, preventing users from selecting discontinued or stocked inventory items for a service line.
+
+### Lookup between two custom tables
+
+`PXSelector` works equally well when the target is another custom DAC. Link a repair order line back to the repair order header:
+
+```csharp
+#region OrderNbr
+[PXDBString(15, IsUnicode = true, IsKey = true)]
+[PXDefault]
+[PXUIField(DisplayName = "Order Nbr.")]
+[PXSelector(
+    typeof(RSSVRepairOrder.orderNbr),
+    typeof(RSSVRepairOrder.orderDate),
+    typeof(RSSVRepairOrder.status),
+    DescriptionField = typeof(RSSVRepairOrder.description))]
+public virtual string OrderNbr { get; set; }
+public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+#endregion
+```
+
+---
+
+## PXParent — master-detail relationships
+
+`PXParent` establishes a formal parent-child relationship between two DACs. Apply it to the field in the **child** DAC that holds the foreign key to the parent. The platform uses this declaration to:
+
+- **Cascade deletes** — When a parent record is deleted, all child records referencing it are deleted automatically (unless you suppress this with `LeaveChildren = true`).
+- **Drive formula fields** — `PXFormula` attributes on child fields can aggregate up to the parent (sum, count, min, max) using the parent link established by `PXParent`.
+- **Validate parent existence** — The platform verifies that the referenced parent record exists when a child is inserted or updated.
+
+### Basic syntax
+
+```csharp
+[PXParent(typeof(Select<ParentDAC,
+    Where<ParentDAC.keyField, Equal<Current<ChildDAC.foreignKeyField>>>>))]
+```
+
+### Linking repair order lines to a repair order header
+
+```csharp
+[Serializable]
+[PXCacheName("Repair Order Line")]
+public class RSSVRepairOrderLine : IBqlTable
+{
+    #region OrderNbr
+    [PXDBString(15, IsUnicode = true, IsKey = true)]
+    [PXDBDefault(typeof(RSSVRepairOrder.orderNbr))]
+    [PXParent(typeof(Select<RSSVRepairOrder,
+        Where<RSSVRepairOrder.orderNbr,
+              Equal<Current<RSSVRepairOrderLine.orderNbr>>>>))]
+    [PXUIField(DisplayName = "Order Nbr.", Visible = false)]
+    public virtual string OrderNbr { get; set; }
+    public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+    #endregion
+
+    #region LineNbr
+    [PXDBInt(IsKey = true)]
+    [PXLineNbr(typeof(RSSVRepairOrder.lineCntr))]
+    [PXUIField(DisplayName = "Line Nbr.", Visibility = PXUIVisibility.Invisible)]
+    public virtual int? LineNbr { get; set; }
+    public abstract class lineNbr : PX.Data.BQL.BqlInt.Field<lineNbr> { }
+    #endregion
+
+    #region InventoryID
+    [PXDBInt]
+    [PXDefault]
+    [PXUIField(DisplayName = "Part")]
+    [PXSelector(
+        typeof(InventoryItem.inventoryID),
+        typeof(InventoryItem.inventoryCD),
+        typeof(InventoryItem.descr),
+        SubstituteKey = typeof(InventoryItem.inventoryCD))]
+    public virtual int? InventoryID { get; set; }
+    public abstract class inventoryID : PX.Data.BQL.BqlInt.Field<inventoryID> { }
+    #endregion
+
+    #region Quantity
+    [PXDBDecimal(2)]
+    [PXDefault(TypeCode.Decimal, "1.00")]
+    [PXUIField(DisplayName = "Qty.")]
+    public virtual decimal? Quantity { get; set; }
+    public abstract class quantity : PX.Data.BQL.BqlDecimal.Field<quantity> { }
+    #endregion
+
+    #region UnitCost
+    [PXDBDecimal(4)]
+    [PXDefault(TypeCode.Decimal, "0.0000")]
+    [PXUIField(DisplayName = "Unit Cost")]
+    public virtual decimal? UnitCost { get; set; }
+    public abstract class unitCost : PX.Data.BQL.BqlDecimal.Field<unitCost> { }
+    #endregion
+
+    #region ExtCost
+    [PXDBDecimal(2)]
+    [PXFormula(typeof(Mult<RSSVRepairOrderLine.quantity, RSSVRepairOrderLine.unitCost>),
+        typeof(SumCalc<RSSVRepairOrder.totalCost>))]
+    [PXUIField(DisplayName = "Ext. Cost", Enabled = false)]
+    public virtual decimal? ExtCost { get; set; }
+    public abstract class extCost : PX.Data.BQL.BqlDecimal.Field<extCost> { }
+    #endregion
+}
+```
+
+In this example, `PXParent` on the `OrderNbr` field links each line to its header. The `PXFormula` on `ExtCost` uses `SumCalc` to add up all line extension costs and write the result to `RSSVRepairOrder.totalCost` on the parent — a common aggregate rollup pattern.
+
+### Suppressing cascade delete
+
+If you want child records to survive when the parent is deleted (for example, an archive or audit log), pass `LeaveChildren = true`:
+
+```csharp
+[PXParent(
+    typeof(Select<RSSVRepairOrder,
+        Where<RSSVRepairOrder.orderNbr, Equal<Current<RSSVAuditEntry.orderNbr>>>>),
+    LeaveChildren = true)]
+```
+
+---
+
+## PXDBDefault — auto-filling child fields from the parent
+
+`PXDBDefault` copies a value from the current parent record into a child field at insert time. You almost always combine it with `PXParent` on the same field — `PXDBDefault` fills the foreign key value, and `PXParent` uses it to locate the parent for cascade and formula operations.
+
+```csharp
+#region OrderNbr
+[PXDBString(15, IsUnicode = true, IsKey = true)]
+[PXDBDefault(typeof(RSSVRepairOrder.orderNbr))]
+[PXParent(typeof(Select<RSSVRepairOrder,
+    Where<RSSVRepairOrder.orderNbr, Equal<Current<RSSVRepairOrderLine.orderNbr>>>>))]
+[PXUIField(DisplayName = "Order Nbr.", Visible = false)]
+public virtual string OrderNbr { get; set; }
+public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+#endregion
+```
+
+When the user adds a new line to the grid on the repair order screen, the platform automatically sets `OrderNbr` on the line to match the header's `OrderNbr`. The user never needs to type it — and if you set `Visible = false` on the `PXUIField`, they never see it.
+
+You can also use `PXDBDefault` to copy any parent field, not just the key:
+
+```csharp
+#region CurrencyID
+[PXDBString(5)]
+[PXDBDefault(typeof(RSSVRepairOrder.currencyID))]
+[PXUIField(DisplayName = "Currency", Enabled = false)]
+public virtual string CurrencyID { get; set; }
+public abstract class currencyID : PX.Data.BQL.BqlString.Field<currencyID> { }
+#endregion
+```
+
+---
+
+## Many-to-many relationships
+
+The platform does not provide a dedicated many-to-many attribute, but you implement the pattern the standard relational way: create a **junction DAC** that holds foreign keys to both sides of the relationship, and apply `PXParent` from the junction to each side.
+
+The following example models a many-to-many between `RSSVRepairOrder` (an order can require multiple certifications) and `RSSVCertification` (a certification can apply to multiple orders):
+
+```csharp
+[Serializable]
+[PXCacheName("Repair Order Certification")]
+public class RSSVRepairOrderCertification : IBqlTable
+{
+    #region OrderNbr
+    [PXDBString(15, IsUnicode = true, IsKey = true)]
+    [PXDBDefault(typeof(RSSVRepairOrder.orderNbr))]
+    [PXParent(typeof(Select<RSSVRepairOrder,
+        Where<RSSVRepairOrder.orderNbr,
+              Equal<Current<RSSVRepairOrderCertification.orderNbr>>>>))]
+    [PXUIField(DisplayName = "Order Nbr.", Visible = false)]
+    public virtual string OrderNbr { get; set; }
+    public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+    #endregion
+
+    #region CertificationID
+    [PXDBInt(IsKey = true)]
+    [PXDefault]
+    [PXUIField(DisplayName = "Certification")]
+    [PXSelector(
+        typeof(RSSVCertification.certificationID),
+        typeof(RSSVCertification.certificationCD),
+        typeof(RSSVCertification.description),
+        SubstituteKey = typeof(RSSVCertification.certificationCD))]
+    public virtual int? CertificationID { get; set; }
+    public abstract class certificationID : PX.Data.BQL.BqlInt.Field<certificationID> { }
+    #endregion
+}
+```
+
+To query all certifications for a given order, use a `PXSelectJoin`:
+
+```csharp
+public PXSelectJoin<
+    RSSVCertification,
+    InnerJoin<RSSVRepairOrderCertification,
+        On<RSSVRepairOrderCertification.certificationID,
+           Equal<RSSVCertification.certificationID>>>,
+    Where<RSSVRepairOrderCertification.orderNbr,
+          Equal<Current<RSSVRepairOrder.orderNbr>>>> Certifications;
+```
+
+---
+
+## Handling multi-level hierarchies
+
+When you build a three-level hierarchy — for example, a header, a section, and a line — apply `PXParent` at each level. The section DAC declares a `PXParent` pointing to the header; the line DAC declares a `PXParent` pointing to the section. Cascade deletes flow down each level automatically: deleting the header deletes its sections, and deleting each section deletes its lines.
+
+```csharp
+// Section → Header
+[PXParent(typeof(Select<RSSVRepairOrder,
+    Where<RSSVRepairOrder.orderNbr, Equal<Current<RSSVRepairSection.orderNbr>>>>))]
+
+// Line → Section
+[PXParent(typeof(Select<RSSVRepairSection,
+    Where<RSSVRepairSection.orderNbr, Equal<Current<RSSVRepairLine.orderNbr>>,
+      And<RSSVRepairSection.sectionNbr, Equal<Current<RSSVRepairLine.sectionNbr>>>>>))]
+```
+
+<Warning>
+Avoid circular `PXParent` references. If DAC A declares a `PXParent` to DAC B and DAC B declares a `PXParent` back to DAC A, the cascade-delete logic will enter an infinite loop and crash the publish or save operation. Always ensure the parent-child relationship forms a directed acyclic graph (a tree, not a cycle).
+</Warning>

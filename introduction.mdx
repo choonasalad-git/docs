@@ -1,0 +1,92 @@
+---
+title: "Customization Platform Developer Documentation"
+sidebarTitle: "Introduction"
+description: "Build and deploy custom tables, screens, and business logic on top of your ERP application using the Customization Platform's C#/.NET toolkit."
+---
+
+Welcome to the Customization Platform documentation. Whether you're extending an existing ERP screen, creating brand-new data tables, or wiring up complex business logic, this platform gives you a structured, type-safe environment to build production-grade customizations in C#/.NET — all without touching the ERP application's core source code. Use these docs to go from your first project setup to deploying fully packaged customizations to production.
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card
+    title="Prerequisites"
+    icon="list-check"
+    href="/getting-started/prerequisites"
+  >
+    Review the software, access rights, and background knowledge you need before you write your first line of customization code.
+  </Card>
+  <Card
+    title="Environment Setup"
+    icon="gear"
+    href="/getting-started/setup"
+  >
+    Install the development tools, configure your ERP instance connection, and add the required NuGet packages to your project.
+  </Card>
+  <Card
+    title="Customization Projects"
+    icon="folder"
+    href="/concepts/customization-project"
+  >
+    Learn how Customization Projects keep your extensions organized, versioned, and ready for packaging.
+  </Card>
+  <Card
+    title="Custom Tables"
+    icon="table"
+    href="/custom-tables/overview"
+  >
+    Define new database tables using Data Access Classes (DAC) and query them with type-safe Business Query Language (BQL).
+  </Card>
+</CardGroup>
+
+## Go Deeper
+
+<CardGroup cols={2}>
+  <Card
+    title="Custom Screens"
+    icon="display"
+    href="/screens/overview"
+  >
+    Design and publish new UI screens using the layout designer, and bind them to your graphs and DACs.
+  </Card>
+  <Card
+    title="Graph Extensions"
+    icon="puzzle-piece"
+    href="/extensions/overview"
+  >
+    Add business logic to existing ERP screens by writing Graph Extensions that attach event handlers and override actions.
+  </Card>
+  <Card
+    title="Publishing"
+    icon="rocket"
+    href="/deployment/publishing"
+  >
+    Package your customization project and publish it to a target ERP instance with zero downtime.
+  </Card>
+  <Card
+    title="FAQ & Troubleshooting"
+    icon="circle-question"
+    href="/troubleshooting/faq"
+  >
+    Find answers to common questions and solutions for the most frequently encountered issues.
+  </Card>
+</CardGroup>
+
+## How Customization Works
+
+The four steps below describe the end-to-end workflow you'll follow for virtually every customization project, from a simple field addition to a fully featured new module.
+
+<Steps>
+  <Step title="Set Up Your Environment">
+    Install Visual Studio (or VS Code), reference the `PX.Data` and `PX.Objects` NuGet packages, and verify that your development machine can connect to a running ERP instance. A correctly configured environment means faster iteration and reliable deployments.
+  </Step>
+  <Step title="Create a Customization Project">
+    Open the ERP application's **Customization Projects** screen and create a new project. The project acts as a container for every artifact you build — DACs, graphs, screens, and scripts — and tracks which version of each artifact is deployed to each environment.
+  </Step>
+  <Step title="Build Custom Tables and Screens">
+    Define Data Access Classes to model any new database tables you need, then query them with BQL inside a `PXGraph`. Build out the user interface by adding new screens in the layout designer or extending existing ones via `PXGraphExtension`. Add event handlers (`RowSelected`, `RowInserted`, `RowUpdated`, `RowDeleted`) to enforce business rules at the right moment in the data lifecycle.
+  </Step>
+  <Step title="Deploy and Publish">
+    Compile your project, add the output assembly to your Customization Project, and click **Publish**. The platform validates the package, applies any database schema changes, and makes your customization live — with a full rollback available if anything goes wrong.
+  </Step>
+</Steps>

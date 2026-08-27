@@ -1,0 +1,110 @@
+---
+title: "Extensions: Add Logic to Existing ERP Functionality"
+sidebarTitle: "Overview"
+description: "Learn how graph and DAC extensions let you customize ERP screens and data models without touching base code, keeping your project upgrade-safe."
+---
+
+The ERP platform's extension system gives you a structured, non-destructive way to add business logic, custom fields, and UI behavior to any existing screen or data object. Instead of modifying the platform's base source code — which would break on every upgrade — you write extension classes that the framework discovers and activates at runtime, layering your customizations cleanly on top of the originals.
+
+## Why extensions exist
+
+Every ERP deployment has unique requirements: an extra approval step, a company-specific reference number, a calculation that only applies in certain regions. Without a formal extension mechanism, teams either fork the base code (creating a permanent maintenance burden) or bolt on workarounds that break silently after upgrades.
+
+Extensions solve this by defining a stable contract between the platform and your code. The framework loads your extension alongside the base graph or DAC, wires up your event handlers and actions, and calls your code at exactly the right moment in the data lifecycle. When the platform ships a new version, your extension classes remain untouched — they simply re-attach to the updated base.
+
+Two structural guarantees make this possible:
+
+- **No inheritance from base screens.** Your extension references the base type as a generic parameter rather than subclassing it, so renaming or restructuring the base never silently breaks your code.
+- **Versioned registration.** The framework tracks which extensions are active and in what order, giving you predictable, reproducible behavior across environments.
+
+## Two types of extensions
+
+<CardGroup cols={2}>
+  <Card title="Graph Extensions" icon="code" href="/extensions/graph-extensions">
+    Add actions, data views, and event handlers to an existing ERP screen. Use `PXGraphExtension<TGraph>` to attach behavior to any graph without modifying its source.
+  </Card>
+  <Card title="DAC Extensions" icon="database" href="/extensions/dac-extensions">
+    Add persisted or calculated fields to an existing ERP table. Use `PXCacheExtension<TDAC>` to extend the data model while keeping the original DAC unchanged.
+  </Card>
+</CardGroup>
+
+### Graph extensions — behavior and logic
+
+A graph extension targets a specific graph class (the controller behind an ERP screen) and can:
+
+- Define new `PXSelect` data views that pull additional records into the screen's context
+- Add toolbar buttons backed by `PXAction<T>` implementations
+- Subscribe to cache events (row-level and field-level) to validate input, set defaults, and keep related data in sync
+- Override virtual methods on the base graph using the `[PXOverride]` attribute
+
+### DAC extensions — data model
+
+A DAC extension targets a data access class and appends new fields to it. Those fields can be:
+
+- **Persisted** (`[PXDBString]`, `[PXDBDecimal]`, etc.) — stored in the database table alongside the original columns
+- **Unbound** (`[PXString]`, `[PXDecimal]`, etc.) — calculated or UI-only values that never hit the database
+
+Both field types integrate fully with BQL queries, selectors, and the Screen Editor, so they behave identically to native fields from the perspective of views and formulas.
+
+## Extension lifecycle
+
+When the platform initializes a graph, it runs through the following sequence:
+
+<Steps>
+  <Step title="Graph instantiation">
+    The framework creates an instance of the base graph class and its primary cache.
+  </Step>
+  <Step title="Extension discovery">
+    The framework scans the registered extension assemblies for any `PXGraphExtension<TGraph>` classes that target this graph type.
+  </Step>
+  <Step title="IsActive() check">
+    For each candidate extension, the framework calls the static `IsActive()` method. Extensions that return `false` are skipped entirely — their event handlers and views are never registered.
+  </Step>
+  <Step title="Extension initialization">
+    Active extensions are instantiated in registration order. Their `Initialize()` method runs, and their declared views and actions are merged into the graph.
+  </Step>
+  <Step title="Event handler wiring">
+    The framework registers each extension's event handler methods against the appropriate cache events, again in registration order.
+  </Step>
+</Steps>
+
+When multiple extensions target the same graph, they all run. The order is deterministic — determined by the extension registration sequence in your customization project — so you can reason about which extension's handler runs first.
+
+## Controlling activation with IsActive()
+
+Every extension can implement a static `IsActive()` method that gates whether the extension loads at all. This is the recommended way to tie extensions to licensed features, company-specific configuration flags, or deployment environments.
+
+```csharp
+public class SOOrderExtension : PXGraphExtension<SOOrderEntry>
+{
+    // The extension only activates when the MyFeature license is present.
+    // When IsActive() returns false, none of this extension's handlers,
+    // views, or actions are registered — zero overhead at runtime.
+    public static bool IsActive() => PXAccess.FeatureInstalled<FeaturesSet.myFeature>();
+
+    // ... views, actions, and event handlers
+}
+```
+
+If you omit `IsActive()`, the extension is always active. For extensions that should load unconditionally (for example, a core customization deployed to all tenants), omitting the method is fine. For feature-flagged or tenant-specific logic, always add the guard.
+
+## Further reading
+
+<CardGroup cols={2}>
+  <Card title="Graph Extensions" icon="code" href="/extensions/graph-extensions">
+    Anatomy of a graph extension, adding views and actions, overriding base methods.
+  </Card>
+  <Card title="DAC Extensions" icon="database" href="/extensions/dac-extensions">
+    Adding persisted and unbound fields, naming conventions, BQL usage.
+  </Card>
+  <Card title="Event Handlers" icon="bolt" href="/extensions/event-handlers">
+    Full reference for every cache event type, lifecycle order, and validation patterns.
+  </Card>
+  <Card title="Actions" icon="play" href="/extensions/graph-extensions#adding-a-custom-action">
+    Custom toolbar buttons, adapters, and committing changes before execution.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Keep each extension class focused on a single responsibility. If you need to add both a custom approval workflow and a third-party integration, create two separate extension classes even if both target the same graph. Smaller extensions are easier to test, easier to disable independently via `IsActive()`, and far easier to debug when something goes wrong.
+</Tip>

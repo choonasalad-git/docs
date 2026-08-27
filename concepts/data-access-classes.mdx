@@ -1,0 +1,161 @@
+---
+title: "Data Access Classes: Defining Your Data Model"
+sidebarTitle: "Data Access Classes"
+description: "Learn how DACs map C# classes to database tables, define field types and validation rules, and serve as the strongly-typed foundation for all BQL queries."
+---
+
+A Data Access Class (DAC) is the bridge between your C# code and the database. Every table you read from or write to in the platform — whether it is a base ERP table or one you created yourself — is represented by a DAC. Understanding how DACs are structured, how their field attributes control persistence and validation, and how BQL uses their abstract inner classes is essential groundwork for everything else you build on the platform.
+
+## What Is a DAC?
+
+A DAC is a C# class that implements the marker interface `IBqlTable`. Each public property on the class corresponds to a column in a database table. The platform's ORM reads the attributes on those properties to determine column type, length, default values, UI labels, and validation rules — no separate mapping file required.
+
+When the framework executes a BQL query, it reads a DAC's attributes at runtime to generate the correct SQL, map result-set columns back to property values, and raise the appropriate cache events as records flow through the system.
+
+## Structure of a DAC
+
+Every field in a DAC follows the **two-property pattern**: one `abstract` inner class (used by BQL as a compile-time field token) and one `virtual` property (holds the runtime value). This pattern is what makes BQL queries type-safe — you reference `MyDac.myField` (the abstract class) rather than a string, so the compiler catches typos and the IDE provides refactoring support.
+
+```csharp
+[PXCacheName("My Custom Record")]
+public class MyCustomRecord : IBqlTable
+{
+    // --- RecordID ---
+    [PXDBIdentity]
+    [PXUIField(DisplayName = "Record ID")]
+    public virtual int? RecordID { get; set; }
+    public abstract class recordID : PX.Data.BQL.BqlInt.Field<recordID> { }
+
+    // --- Description ---
+    [PXDBString(50, IsUnicode = true)]
+    [PXUIField(DisplayName = "Description")]
+    public virtual string Description { get; set; }
+    public abstract class description : PX.Data.BQL.BqlString.Field<description> { }
+
+    // --- Amount ---
+    [PXDBDecimal(4)]
+    [PXUIField(DisplayName = "Amount")]
+    [PXDefault(TypeCode.Decimal, "0.0")]
+    public virtual decimal? Amount { get; set; }
+    public abstract class amount : PX.Data.BQL.BqlDecimal.Field<amount> { }
+
+    // --- IsActive ---
+    [PXDBBool]
+    [PXUIField(DisplayName = "Active")]
+    [PXDefault(true)]
+    public virtual bool? IsActive { get; set; }
+    public abstract class isActive : PX.Data.BQL.BqlBool.Field<isActive> { }
+
+    // --- CreatedDate ---
+    [PXDBDate]
+    [PXUIField(DisplayName = "Created Date", Enabled = false)]
+    public virtual DateTime? CreatedDate { get; set; }
+    public abstract class createdDate : PX.Data.BQL.BqlDateTime.Field<createdDate> { }
+}
+```
+
+### Naming Conventions
+
+The platform enforces a specific naming convention to keep the two halves of each field consistent:
+
+| Part | Casing | Example |
+|---|---|---|
+| Abstract inner class | `camelCase` | `recordID`, `description` |
+| Concrete property | `PascalCase` | `RecordID`, `Description` |
+| Database column (auto-derived) | `PascalCase` | `RecordID`, `Description` |
+
+The framework derives the database column name directly from the concrete property name. Changing a property name after a table has been created requires a schema migration script.
+
+## Field Type Attributes
+
+Choose the correct `PXDB*` attribute for each field based on the type of data you are storing:
+
+<CardGroup cols={2}>
+  <Card title="PXDBIdentity" icon="key">
+    Auto-incrementing integer primary key. The database generates the value on insert; you should never set it manually.
+  </Card>
+  <Card title="PXDBString(length)" icon="text-cursor-input">
+    Variable-length string. Always specify `IsUnicode = true` for any user-visible text to support international characters.
+  </Card>
+  <Card title="PXDBInt" icon="hashtag">
+    32-bit integer. Use for foreign keys and small numeric counters.
+  </Card>
+  <Card title="PXDBDecimal(precision)" icon="calculator">
+    Fixed-precision decimal for monetary and quantity values. The `precision` argument controls the number of decimal places.
+  </Card>
+  <Card title="PXDBBool" icon="toggle-left">
+    Boolean (maps to a `bit` column). Always pair with `[PXDefault(true)]` or `[PXDefault(false)]` to avoid null surprises.
+  </Card>
+  <Card title="PXDBDate" icon="calendar">
+    Date-only value. Use `PXDBDateAndTime` when you also need to store the time component.
+  </Card>
+</CardGroup>
+
+### Non-Database Fields
+
+Not every property needs to write to a column. Use `[PXString]` or `[PXInt]` (without the `DB` prefix) for computed or UI-only fields. These values live only in the `PXCache` during a request and are never persisted.
+
+```csharp
+// Computed display field — not stored in the database
+[PXString(100)]
+[PXUIField(DisplayName = "Full Name", Enabled = false)]
+public virtual string FullName { get; set; }
+public abstract class fullName : PX.Data.BQL.BqlString.Field<fullName> { }
+```
+
+## Key DAC-Level Attributes
+
+Beyond field attributes, several class-level attributes shape how the platform treats the entire DAC:
+
+<Accordion title="PXCacheName">
+  Provides the human-readable name shown in the platform's audit trail and Generic Inquiry designer. Always set this; without it the framework falls back to the raw class name.
+
+  ```csharp
+  [PXCacheName("Purchase Order Line")]
+  public class POLine : IBqlTable { ... }
+  ```
+</Accordion>
+
+<Accordion title="PXPrimaryGraph">
+  Tells the platform which graph (screen) to open when a user clicks a record in a Generic Inquiry result or follows a drill-down link. Omitting this attribute means drill-downs from inquiries will not work for your DAC.
+
+  ```csharp
+  [PXPrimaryGraph(typeof(MyInvoiceEntry))]
+  [PXCacheName("My Invoice")]
+  public class MyInvoice : IBqlTable { ... }
+  ```
+</Accordion>
+
+<Accordion title="PXProjection">
+  Maps a DAC to a database view or a hand-written SQL SELECT rather than a plain table. Use projections for read-heavy reporting DACs that join multiple tables at the database level. The underlying SQL view must exist before you publish the project.
+
+  ```csharp
+  [PXProjection(typeof(
+      Select2<SOOrder,
+          InnerJoin<Customer,
+              On<SOOrder.customerID, Equal<Customer.bAccountID>>>>))]
+  [PXCacheName("Order with Customer")]
+  public class SOOrderWithCustomer : IBqlTable { ... }
+  ```
+</Accordion>
+
+## Defining a Primary Key
+
+Mark the fields that together uniquely identify a record with `[PXDBIdentity]` (for surrogate auto-keys) or `[PXDBString]`/`[PXDBInt]` combined with `[PXDefault]` and `IsKey = true` for natural keys. The framework uses these to generate `WHERE` clauses in update and delete statements automatically.
+
+```csharp
+// Natural compound primary key
+[PXDBString(3, IsFixed = true, IsKey = true)]
+[PXUIField(DisplayName = "Order Type")]
+public virtual string OrderType { get; set; }
+public abstract class orderType : PX.Data.BQL.BqlString.Field<orderType> { }
+
+[PXDBString(15, IsUnicode = true, IsKey = true)]
+[PXUIField(DisplayName = "Order Nbr.")]
+public virtual string OrderNbr { get; set; }
+public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
+```
+
+<Note>
+  **DAC extensions vs. new DACs** — If you need to add fields to an *existing* base ERP table (for example, adding a custom approval status to `SOOrder`), do not create a new DAC. Instead, create a `PXCacheExtension<TDAC>` that extends the existing DAC. Extension fields are stored in the same database table via automatically managed extension columns, and the framework merges the extension properties onto the base DAC transparently. Create a brand-new DAC only when you are introducing an entirely new table with no relationship to an existing base record.
+</Note>

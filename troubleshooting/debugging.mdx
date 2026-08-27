@@ -1,0 +1,173 @@
+---
+title: "Debug your ERP customization with logging and breakpoints"
+sidebarTitle: "Debugging"
+description: "Attach Visual Studio to the ERP IIS process, use PXTrace for structured logging, and read the publish and trace logs to diagnose customization issues effectively."
+---
+
+Debugging a customization running inside an ERP web application is different from debugging a standalone console app—you cannot simply press F5 and step through code. The ERP runtime is hosted inside IIS, business logic executes in response to HTTP requests, and errors that look cryptic in the UI often have clear root causes when you examine them through the right lens. This guide covers the three primary tools at your disposal: Visual Studio's remote debugger for breakpoint-level inspection, `PXTrace` for structured runtime logging, and the application's built-in trace and publish logs for diagnosing errors without a live debug session.
+
+## Attaching Visual Studio to the ERP IIS process
+
+Attaching a debugger gives you full breakpoint support—inspect variable values, step through code line by line, and evaluate expressions while the application is running.
+
+<Steps>
+  <Step title="Build the project in Debug configuration">
+    In Visual Studio, switch the solution configuration to **Debug** and build the customization project. This generates a `.pdb` symbols file alongside the compiled assembly. Copy both the `.dll` and the `.pdb` to the ERP application's `bin` folder. Without the `.pdb`, Visual Studio cannot map executable code back to your source lines.
+  </Step>
+
+  <Step title="Open the Attach to Process dialog">
+    In Visual Studio, click **Debug > Attach to Process** (or press `Ctrl+Alt+P`). The dialog lists every running process on the machine.
+  </Step>
+
+  <Step title="Select the IIS worker process">
+    Look for `w3wp.exe` in the process list. If there are multiple worker processes, identify the correct one by its **User Name**—the IIS application pool identity for the ERP site. If you are not sure which pool the ERP site uses, open **IIS Manager > Application Pools**, find the pool assigned to the ERP site, then match the pool identity to the `w3wp.exe` user name column.
+
+    Check the **Managed (.NET)** code type option before clicking **Attach**, or select **Automatically determine the type to debug**.
+  </Step>
+
+  <Step title="Set breakpoints and reproduce the issue">
+    After attaching, open the source file where you want to pause execution and click the gutter to set a breakpoint. Trigger the relevant action in the ERP application (for example, save a record or click a custom action button). Visual Studio will pause execution at the breakpoint and show the current call stack, local variable values, and the watch window.
+  </Step>
+
+  <Step title="Detach cleanly when finished">
+    When you have collected the information you need, click **Debug > Detach All**. Do not close Visual Studio while attached—doing so terminates the IIS worker process and disconnects all active user sessions.
+  </Step>
+</Steps>
+
+<Note>
+  The debugger attaches to the live IIS process, which means every user on the instance is affected by breakpoints you set. Always debug on a development or sandbox instance—never attach a debugger to a production IIS process.
+</Note>
+
+## Using PXTrace for structured logging
+
+`PXTrace` is the recommended way to emit log messages from ERP customization code. Unlike `Console.WriteLine` (which has no output destination inside IIS) or `System.Diagnostics.Trace` (which routes to the Windows event log and requires separate tooling to read), `PXTrace` writes directly to the ERP application's built-in trace log, which you can read from within the application itself.
+
+### Writing log messages
+
+```csharp
+using PX.Data;
+
+protected void SOOrder_RowPersisting(PXCache cache, PXRowPersistingEventArgs e)
+{
+    SOOrder row = (SOOrder)e.Row;
+    if (row == null) return;
+
+    // Informational message — appears in the trace log at Info level
+    PXTrace.WriteInformation("Persisting order {0}, status {1}",
+        row.OrderNbr, row.Status);
+
+    try
+    {
+        ValidateOrder(row);
+    }
+    catch (Exception ex)
+    {
+        // Error message — appears in the trace log at Error level
+        PXTrace.WriteError("Validation failed for order {0}: {1}",
+            row.OrderNbr, ex.Message);
+        throw;
+    }
+}
+```
+
+```csharp
+// Additional PXTrace severity levels
+PXTrace.WriteWarning("Customer {0} has exceeded credit limit", row.CustomerID);
+PXTrace.WriteInformation("Cache status for row: {0}", cache.GetStatus(row));
+```
+
+### PXTrace severity levels
+
+| Method | Use when |
+|---|---|
+| `PXTrace.WriteInformation` | Recording normal execution flow, parameter values, record counts |
+| `PXTrace.WriteWarning` | A condition is unusual but recoverable; execution continues |
+| `PXTrace.WriteError` | An error occurred; include the exception message and any relevant identifiers |
+
+<Tip>
+  Use `PXTrace.WriteInformation` instead of `Console.WriteLine` in all ERP customization code. `Console.WriteLine` output is silently discarded in an IIS-hosted application—you will never see it, and it adds noise to the codebase for future developers who may wonder where the output goes. `PXTrace` writes to a log you can actually read.
+</Tip>
+
+## Reading the application trace log
+
+The ERP application stores trace log entries in memory and makes them available through the UI.
+
+1. Navigate to **Tools > Trace** in the ERP application's top navigation bar.
+2. The **Trace** screen shows a time-ordered list of log entries from the current session. Each entry includes a timestamp, severity level, and the message text.
+3. Use the **Filter by Level** dropdown to narrow the display to warnings and errors only, which reduces noise when you are looking for a specific problem.
+4. Click **Download** to export the current log as a text file if you need to share it with a colleague or attach it to a support ticket.
+
+To control the verbosity of the trace log, navigate to **System > System Management > System Configuration** and adjust the **Trace Level** setting. Set it to **Verbose** during active debugging and return it to **Warning** or **Error** for normal operation—verbose logging can generate large log files quickly on a busy instance.
+
+## Using the Customization Publish Log
+
+The publish log records every step of the publish pipeline and is your first stop when a publish fails.
+
+1. Navigate to **Customization > Customization Projects** and open the project that failed to publish.
+2. Click **Actions > Show Publish Log** (or look for the **Log** tab in the project editor).
+3. The log is structured in phases: **Compile**, **DB Schema**, **Sitemap**, and **Screen Deploy**. Find the first phase that shows errors—earlier errors in the pipeline prevent later phases from running, so start with the earliest failure.
+4. Each compile error includes the source file name, line number, and the C# error code. Open the corresponding file in the Customization Project editor, navigate to the indicated line, and apply the fix.
+
+<Note>
+  The publish log is stored per-project and is overwritten on each publish attempt. If you want to preserve the log from a failed publish for comparison or record-keeping, copy the log text to a file before attempting another publish.
+</Note>
+
+## Common debugging patterns
+
+### Checking cache status to understand record lifecycle
+
+The `PXCache.GetStatus` method returns the current state of a row in the ERP unit-of-work cache. This is useful for understanding why an event fires unexpectedly or why a value appears to reset.
+
+```csharp
+protected void SOOrder_RowSelected(PXCache cache, PXRowSelectedEventArgs e)
+{
+    SOOrder row = e.Row as SOOrder;
+    if (row == null) return;
+
+    PXEntryStatus status = cache.GetStatus(row);
+    PXTrace.WriteInformation("RowSelected called — cache status: {0}", status);
+
+    // PXEntryStatus values:
+    // Inserted  — new record not yet saved to DB
+    // Updated   — existing record with pending changes
+    // Deleted   — marked for deletion
+    // Notchanged — retrieved from DB, no pending changes
+}
+```
+
+### Inspecting `e.Row` values at runtime
+
+When you suspect a field has an unexpected value, log it directly from the event handler rather than guessing:
+
+```csharp
+protected void SOOrder_RowPersisted(PXCache cache, PXRowPersistedEventArgs e)
+{
+    SOOrder row = e.Row as SOOrder;
+    if (row == null) return;
+
+    PXTrace.WriteInformation(
+        "RowPersisted: OrderNbr={0}, CustomerID={1}, OrderDate={2}, Status={3}",
+        row.OrderNbr,
+        row.CustomerID,
+        row.OrderDate?.ToString("yyyy-MM-dd") ?? "null",
+        row.Status
+    );
+}
+```
+
+### Diagnosing events that fire multiple times
+
+`RowSelected` and `FieldUpdated` events can fire more times than expected because the ERP cache refreshes rows during navigation, validation, and after graph actions. Before assuming your code has a bug, add a trace log entry at the top of the handler to count invocations, then trace the call stack to understand which ERP operations are triggering each call. If the extra calls are benign, add a guard condition to skip unnecessary processing:
+
+```csharp
+protected void SOOrder_RowSelected(PXCache cache, PXRowSelectedEventArgs e)
+{
+    SOOrder row = e.Row as SOOrder;
+    if (row == null) return;
+
+    // Only run expensive logic when the row is in a specific status
+    if (row.Status != SOOrderStatus.Open) return;
+
+    // ... rest of handler
+}
+```

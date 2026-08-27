@@ -1,0 +1,294 @@
+---
+title: "Build Your First ERP Customization from Scratch"
+sidebarTitle: "First Customization"
+description: "Create a Customization Project, define a DAC, extend an existing graph with event handlers, then publish and test your customization end to end."
+---
+
+This guide takes you from a blank slate to a published, working ERP customization. You'll create a Customization Project in the ERP UI, define a simple custom database table using a Data Access Class, extend an existing ERP screen with a Graph Extension that reacts to user events, and finally publish the whole package to your development instance. By the end, you'll understand the full inner loop of customization development and have a working foundation you can build on.
+
+<Steps>
+  <Step title="Create a New Customization Project in the ERP UI">
+    Log in to your ERP development instance and navigate to **System → Customization → Customization Projects** (screen ID `SM204505`). This screen is the central registry for all customizations on your instance.
+
+    Click **Add Row** in the toolbar and fill in the project details:
+
+    | Field | Value |
+    |-------|-------|
+    | **Project Name** | `MyFirstCustomization` |
+    | **Description** | `Tutorial: custom support ticket table and screen extension` |
+    | **Is Active** | Checked |
+
+    Save the record. The project now appears in the list and is ready to receive artifacts — DAC definitions, screen layouts, and compiled assemblies.
+
+    <Note>
+      A Customization Project is a container and a deployment unit. Everything you add to this project will be published (or rolled back) together. Keep one logical feature per project to make deployments and rollbacks predictable.
+    </Note>
+
+    Click **Open Project** to enter the Customization Project Editor. Leave this browser tab open — you'll return to it after building your code.
+  </Step>
+
+  <Step title="Add a Simple DAC for a Custom Database Table">
+    In Visual Studio, open the customization class library project you created during [environment setup](/getting-started/setup). Add a new file called `SupportTicket.cs`.
+
+    A DAC (Data Access Class) is a C# class that maps to a database table. Each property corresponds to a column, and attributes on each property control database behavior, UI labels, and validation rules.
+
+    ```csharp
+    using PX.Data;
+    using System;
+
+    namespace MyCompany.Customization
+    {
+        /// <summary>
+        /// Represents a custom support ticket linked to a customer account.
+        /// Maps to the database table [dbo].[MyCompany_SupportTicket].
+        /// </summary>
+        [Serializable]
+        [PXCacheName("Support Ticket")]
+        [PXPrimaryGraph(typeof(SupportTicketEntry))]
+        public class SupportTicket : IBqlTable
+        {
+            #region TicketID
+            /// <summary>Auto-generated integer identity — the primary key.</summary>
+            [PXDBIdentity]
+            public virtual int? TicketID { get; set; }
+            public abstract class ticketID : PX.Data.BQL.BqlInt.Field<ticketID> { }
+            #endregion
+
+            #region TicketCD
+            /// <summary>Human-readable ticket number, e.g. "TK-000001".</summary>
+            [PXDBString(15, IsUnicode = true, IsKey = true, InputMask = "")]
+            [PXDefault]
+            [PXUIField(DisplayName = "Ticket Number", Visibility = PXUIVisibility.SelectorVisible)]
+            [AutoNumber(typeof(SupportTicketSetup.ticketNumberingID), typeof(AccessInfo.businessDate))]
+            public virtual string? TicketCD { get; set; }
+            public abstract class ticketCD : PX.Data.BQL.BqlString.Field<ticketCD> { }
+            #endregion
+
+            #region CustomerID
+            /// <summary>Foreign key to the BAccount (customer) table.</summary>
+            [PXDBInt]
+            [PXUIField(DisplayName = "Customer")]
+            [PXSelector(
+                typeof(Search<BAccount.bAccountID, Where<BAccount.type, Equal<BAccountType.customerType>>>),
+                typeof(BAccount.acctCD),
+                typeof(BAccount.acctName),
+                SubstituteKey = typeof(BAccount.acctCD)
+            )]
+            public virtual int? CustomerID { get; set; }
+            public abstract class customerID : PX.Data.BQL.BqlInt.Field<customerID> { }
+            #endregion
+
+            #region Subject
+            [PXDBString(255, IsUnicode = true)]
+            [PXDefault]
+            [PXUIField(DisplayName = "Subject")]
+            public virtual string? Subject { get; set; }
+            public abstract class subject : PX.Data.BQL.BqlString.Field<subject> { }
+            #endregion
+
+            #region Status
+            [PXDBString(1, IsFixed = true)]
+            [PXDefault(TicketStatus.Open)]
+            [PXUIField(DisplayName = "Status")]
+            [TicketStatus.List]
+            public virtual string? Status { get; set; }
+            public abstract class status : PX.Data.BQL.BqlString.Field<status> { }
+            #endregion
+
+            #region CreatedDateTime
+            [PXDBCreatedDateTime]
+            public virtual DateTime? CreatedDateTime { get; set; }
+            public abstract class createdDateTime : PX.Data.BQL.BqlDateTime.Field<createdDateTime> { }
+            #endregion
+
+            #region LastModifiedDateTime
+            [PXDBLastModifiedDateTime]
+            public virtual DateTime? LastModifiedDateTime { get; set; }
+            public abstract class lastModifiedDateTime : PX.Data.BQL.BqlDateTime.Field<lastModifiedDateTime> { }
+            #endregion
+
+            #region tstamp
+            [PXDBTimestamp]
+            public virtual byte[]? tstamp { get; set; }
+            public abstract class Tstamp : PX.Data.BQL.BqlByteArray.Field<Tstamp> { }
+            #endregion
+        }
+
+        /// <summary>String constants for the Status field.</summary>
+        public class TicketStatus
+        {
+            public const string Open = "O";
+            public const string InProgress = "I";
+            public const string Closed = "C";
+
+            public class ListAttribute : PXStringListAttribute
+            {
+                public ListAttribute() : base(
+                    new[] { Open, InProgress, Closed },
+                    new[] { "Open", "In Progress", "Closed" }
+                ) { }
+            }
+        }
+    }
+    ```
+
+    The abstract inner classes (e.g., `ticketID`, `subject`) are BQL field descriptors. They look unusual at first, but they give the compiler type-safety for every query you write against this DAC — no magic strings required.
+  </Step>
+
+  <Step title="Create a Graph Extension to Add Business Logic">
+    A **PXGraph** is the controller layer in the ERP application — it owns the data views (queries) and handles user actions. Rather than modifying an existing graph, you create a **PXGraphExtension** that layers your logic on top.
+
+    In this step you'll create a standalone graph for the new `SupportTicket` table, then add a small extension on an existing ERP graph to demonstrate event handler wiring.
+
+    **Part A — Create the SupportTicket entry graph:**
+
+    Add a new file `SupportTicketEntry.cs`:
+
+    ```csharp
+    using PX.Data;
+    using PX.Objects.CR; // BAccount lives here
+
+    namespace MyCompany.Customization
+    {
+        public class SupportTicketEntry : PXGraph<SupportTicketEntry, SupportTicket>
+        {
+            // Primary data view — the currently selected ticket
+            public PXSelect<SupportTicket> Tickets;
+
+            // Read-only view of all open tickets for the current customer
+            public PXSelectReadonly<SupportTicket,
+                Where<SupportTicket.customerID, Equal<Current<SupportTicket.customerID>>,
+                  And<SupportTicket.status, NotEqual<TicketStatus.closed>>>>
+                OpenTicketsForCustomer;
+
+            #region Event Handlers
+
+            protected void _(Events.RowSelected<SupportTicket> e)
+            {
+                if (e.Row is null) return;
+
+                // Make all fields read-only once the ticket is closed
+                bool isClosed = e.Row.Status == TicketStatus.Closed;
+                PXUIFieldAttribute.SetReadOnly<SupportTicket.subject>(e.Cache, e.Row, isClosed);
+                PXUIFieldAttribute.SetReadOnly<SupportTicket.customerID>(e.Cache, e.Row, isClosed);
+            }
+
+            protected void _(Events.RowInserted<SupportTicket> e)
+            {
+                if (e.Row is null) return;
+
+                // Ensure new tickets always start in Open status
+                e.Cache.SetValueExt<SupportTicket.status>(e.Row, TicketStatus.Open);
+            }
+
+            protected void _(Events.RowUpdated<SupportTicket> e)
+            {
+                if (e.Row is null || e.OldRow is null) return;
+
+                // Log a trace message when a ticket transitions to Closed
+                if (e.Row.Status == TicketStatus.Closed
+                    && e.OldRow.Status != TicketStatus.Closed)
+                {
+                    PXTrace.WriteInformation(
+                        $"Ticket {e.Row.TicketCD} was closed at {System.DateTime.UtcNow:u}."
+                    );
+                }
+            }
+
+            #endregion
+        }
+    }
+    ```
+
+    **Part B — Extend an existing ERP graph with a Graph Extension:**
+
+    Graph Extensions let you add behavior to built-in ERP screens without modifying core code. The class below extends the standard Customer screen (`CustomerMaint`) to automatically create a welcome ticket whenever a new customer is saved.
+
+    Add `CustomerMaintExt.cs`:
+
+    ```csharp
+    using PX.Data;
+    using PX.Objects.CR;
+
+    namespace MyCompany.Customization
+    {
+        // PXGraphExtension<TGraph> wires this class into CustomerMaint automatically.
+        public class CustomerMaintExt : PXGraphExtension<CustomerMaint>
+        {
+            // Access the SupportTicketEntry graph to create tickets
+            private SupportTicketEntry TicketGraph =>
+                PXGraph.CreateInstance<SupportTicketEntry>();
+
+            protected void _(Events.RowInserted<BAccount> e)
+            {
+                if (e.Row is null) return;
+
+                // Create a welcome ticket for every new customer record
+                var ticketGraph = TicketGraph;
+                var newTicket = ticketGraph.Tickets.Insert(new SupportTicket
+                {
+                    CustomerID = e.Row.BAccountID,
+                    Subject    = $"Welcome — account {e.Row.AcctCD} created",
+                    Status     = TicketStatus.Open,
+                });
+                ticketGraph.Actions.PressSave();
+            }
+        }
+    }
+    ```
+
+    <Note>
+      The four event handler signatures — `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — cover the full data lifecycle. `RowSelected` fires every time a record is loaded into the UI and is the correct place for UI state logic (enabling/disabling fields). The other three fire during the save pipeline and are the right place for data validation and side effects.
+    </Note>
+
+    Build your project to confirm there are no compilation errors:
+
+    ```bash
+    dotnet build --configuration Release
+    ```
+  </Step>
+
+  <Step title="Publish and Test the Customization">
+    With a clean build in hand, you're ready to package and publish your customization to the development ERP instance.
+
+    **1. Add the compiled assembly to the Customization Project**
+
+    Return to the Customization Project Editor in the ERP UI (the browser tab you opened in Step 1). Navigate to **Files** and click **Add Assembly**. Upload the compiled `MyCompany.Customization.dll` from your project's `bin/Release/net48/` output folder.
+
+    **2. Add the DAC schema script**
+
+    The `SupportTicket` DAC maps to a table that doesn't exist yet in the database. The platform can generate the `CREATE TABLE` script for you:
+
+    1. In the Customization Project Editor, go to **Database Scripts**.
+    2. Click **Generate Script from DAC** and select `MyCompany.Customization.SupportTicket`.
+    3. Review the generated SQL and click **Save to Project**.
+
+    **3. Publish the project**
+
+    Click **Publish** in the Customization Project Editor toolbar. The platform will:
+
+    - Validate all artifacts in the project.
+    - Run the database migration script (creating the `MyCompany_SupportTicket` table).
+    - Deploy the assembly to the ERP application's `bin` directory.
+    - Restart the application pool.
+
+    The publish process typically takes 30–60 seconds. A green **Published Successfully** banner confirms the deployment completed without errors.
+
+    **4. Verify in the ERP application**
+
+    After the restart, navigate to the new Support Tickets screen (search for "Support Tickets" in the global search bar or open it via the site map). Create a new ticket record and confirm:
+
+    - The **Ticket Number** is auto-assigned.
+    - The **Customer** selector shows only customer-type accounts.
+    - Changing **Status** to *Closed* makes the Subject and Customer fields read-only.
+    - Creating a new customer in the Customer screen automatically produces a welcome ticket.
+
+    <Tip>
+      If the screen doesn't appear in search immediately after publishing, clear your browser cache and reload. The ERP application caches the site map in the browser session.
+    </Tip>
+  </Step>
+</Steps>
+
+<Note>
+  You've now completed the full customization lifecycle — project creation, DAC definition, graph extension, and deployment. To go deeper on any of these topics, see the dedicated concept guides: [Customization Projects](/concepts/customization-project), [Custom Tables & DACs](/custom-tables/overview), [Graph Extensions](/extensions/overview), and [Publishing & Deployment](/deployment/publishing).
+</Note>

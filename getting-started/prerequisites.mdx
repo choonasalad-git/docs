@@ -1,0 +1,82 @@
+---
+title: "Prerequisites for Customization Platform Development"
+sidebarTitle: "Prerequisites"
+description: "Check every software dependency, access requirement, and knowledge prerequisite before you begin building customizations on the platform."
+---
+
+Before you write your first Data Access Class or Graph Extension, make sure your workstation and ERP instance are ready for development. Skipping any of the items below is the most common cause of cryptic build errors and deployment failures, so take a few minutes to confirm each requirement is in place. This page covers required software, the access rights you need inside the ERP application, and the background knowledge that will help you move quickly once you start coding.
+
+## Required Software
+
+The Customization Platform targets the Microsoft .NET ecosystem. You'll need the following tools installed on your development machine.
+
+### .NET Framework / .NET SDK
+
+The ERP application and the Customization Platform SDK target **.NET Framework 4.8**. Install the developer pack — not just the runtime — so that MSBuild can locate the reference assemblies at compile time.
+
+- Download the [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48) from Microsoft.
+- If your organization also uses the modern SDK-style project format, install the **.NET 8 SDK** alongside the Framework developer pack. Both can coexist on the same machine.
+
+### Visual Studio or Visual Studio Code
+
+You can use either editor, but Visual Studio provides the richest experience for ERP customization work.
+
+| Tool | Minimum Version | Notes |
+|------|----------------|-------|
+| Visual Studio | 2022 (Community or higher) | Full IntelliSense, integrated NuGet manager, and one-click publish |
+| Visual Studio Code | Latest stable | Requires the C# Dev Kit extension and the .NET CLI |
+
+For most developers, **Visual Studio 2022 Community** is the recommended starting point because it handles NuGet package restore, project template scaffolding, and assembly signing without extra configuration.
+
+### ERP Application Instance
+
+You need access to a running ERP application instance — typically a dedicated **development or sandbox environment**. Do not develop directly against a production instance. Your dev instance must:
+
+- Be reachable over HTTPS from your development machine.
+- Have the **Customization** module enabled in the license.
+- Be running a version of the ERP application that is compatible with your Customization Platform SDK version. Check the SDK release notes for the exact version matrix.
+
+<Warning>
+  Developing against a production ERP instance risks data loss and unplanned downtime for end users. Always use a dedicated sandbox or developer instance.
+</Warning>
+
+## Required Permissions and Access
+
+### Developer License
+
+Your ERP user account must have a **Developer** role or the equivalent access level. This role grants:
+
+- Access to the **Customization Projects** screen (`SM204505`).
+- The ability to publish and unpublish customization packages.
+- Read access to the application schema browser, which you'll use to browse existing DACs and graph types.
+
+Contact your ERP system administrator to confirm your account has this role before proceeding. Attempting to open the Customization Projects screen without the correct role will result in an "Access Denied" error.
+
+### Source Control (Recommended)
+
+While not strictly required by the platform, you should have a Git repository set up for your customization code before you create your first project. The platform does not manage source history — that's your responsibility. Store your DAC classes, graph extensions, and screen definitions in version control from day one.
+
+## Knowledge Prerequisites
+
+### C# and .NET Fundamentals
+
+The Customization Platform is a C#/.NET development environment. You should be comfortable with:
+
+- **Object-oriented programming** in C#: classes, inheritance, interfaces, and attributes.
+- **Generics**: the platform's BQL syntax makes heavy use of generic type parameters, such as `PXSelect<MyDAC, Where<MyDAC.field, Equal<Required<MyDAC.field>>>>`.
+- **Attributes**: DAC fields are declared using .NET attributes to define database mapping, UI labels, and validation rules.
+- **NuGet package management**: you'll reference `PX.Data`, `PX.Objects`, and related packages in your project file.
+
+If you're new to C#, Microsoft's [C# documentation](https://learn.microsoft.com/en-us/dotnet/csharp/) is an excellent starting point. Aim to understand classes, generics, and attributes before diving into DAC authoring.
+
+### Familiarity with the Host ERP Application
+
+You don't need to be an ERP power user, but you should understand:
+
+- **Basic navigation**: how to open screens, enter records, and use the toolbar actions.
+- **Data model concepts**: what entities (like vendors, customers, or orders) the ERP manages, because your customizations will often extend or relate to those entities.
+- **The existing screen you plan to extend**: if you're adding a field to the Accounts Payable Bills screen, spend time understanding how that screen works before you extend its graph.
+
+<Note>
+  Once you've confirmed all the prerequisites above, head to the [Environment Setup](/getting-started/setup) page to install the SDK and configure your development machine for your first customization project.
+</Note>

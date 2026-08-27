@@ -1,13 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
+  "projectType": "framework",
+  "projectName": "Customization Platform",
+  "projectDescription": "A low-code platform for building and deploying custom tables, screens, and business logic extensions on top of an ERP or business application.",
   "theme": "maple",
-  "name": "Customization Platform",
-  "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
-  },
-  "favicon": "/favicon.svg",
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
   "navigation": {
     "tabs": [
       {
@@ -78,20 +76,24 @@
       }
     ]
   },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@example.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "/introduction"
-    }
-  },
-  "footer": {
-    "socials": {}
-  }
+  "keyFeatures": [
+    "Customization Projects for organizing and versioning ERP extensions",
+    "Data Access Classes (DAC) for defining custom database tables and fields",
+    "Business Query Language (BQL) for type-safe data queries",
+    "Graph Extensions for adding business logic to existing application screens",
+    "Custom Screens built with a visual layout designer",
+    "Event Handlers for responding to record-level actions",
+    "Packaging and deployment of customizations across environments"
+  ],
+  "publicApiSurface": [
+    "PXGraph — base class for data graph definitions",
+    "PXSelect / BQL queries — type-safe data access API",
+    "PXCache — in-memory record cache and event source",
+    "DAC field attributes — PXDBString, PXDBInt, PXDBDecimal, etc.",
+    "Graph Extension (PXGraphExtension) — extend existing screens",
+    "DAC Extension (PXCacheExtension) — extend existing tables",
+    "RowSelected / RowInserted / RowUpdated / RowDeleted event handlers",
+    "Customization Project XML manifest",
+    "Package publish and deployment CLI"
+  ]
 }
