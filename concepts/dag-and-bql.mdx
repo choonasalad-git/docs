@@ -17,9 +17,7 @@ public class SOOrderEntry : PXGraph<SOOrderEntry, SOOrder>
     public PXSelect<SOOrder> Document;
 
     // Detail data view — linked to the current order
-    public PXSelect<SOLine,
-        Where<SOLine.orderNbr,
-              Equal<Current<SOOrder.orderNbr>>>> Transactions;
+    public PXSelect<SOLine,Where<SOLine.orderNbr, Equal<Current<SOOrder.orderNbr>>>> Transactions;
 }
 ```
 
@@ -28,7 +26,7 @@ The generic parameter `TPrimary` tells the framework which DAC is the "master" r
 ### DAG vs. Plain PXGraph
 
 <Tabs>
-  <Tab title="PXGraph&lt;TGraph, TPrimary&gt;">
+  <Tab title="PXGraph<TGraph, TPrimary>">
     Use this form for **data entry screens** where a user creates, edits, and saves a single master record (with optional detail grids). The framework provides built-in Save, Cancel, Insert, and Delete toolbar actions based on the primary DAC's key fields.
 
     ```csharp
@@ -38,7 +36,7 @@ The generic parameter `TPrimary` tells the framework which DAC is the "master" r
     }
     ```
   </Tab>
-  <Tab title="PXGraph&lt;TGraph&gt;">
+  <Tab title="PXGraph<TGraph>">
     Use this form for **processing screens** and inquiry screens where there is no single primary record. You manage all toolbar actions manually.
 
     ```csharp
@@ -182,5 +180,5 @@ orderCache.MarkUpdated(order);
 </Accordion>
 
 <Tip>
-  **Performance tip — avoid N+1 queries inside event handlers.** Event handlers like `RowSelected` fire for every record displayed in a grid, which can mean dozens or hundreds of executions per page render. Never place an uncached `PXSelect` inside a `RowSelected` handler; the query will execute once per row. Instead, declare a `PXSelectReadonly` view on the graph and call `.Select()` once before your loop, or use `PXSelectorAttribute`-backed fields to let the framework handle related-record lookups efficiently with its built-in result cache.
+  **Performance tip — avoid N\+1 queries inside event handlers.** Event handlers like `RowSelected` fire for every record displayed in a grid, which can mean dozens or hundreds of executions per page render. Never place an uncached `PXSelect` inside a `RowSelected` handler; the query will execute once per row. Instead, declare a `PXSelectReadonly` view on the graph and call `.Select()` once before your loop, or use `PXSelectorAttribute`-backed fields to let the framework handle related-record lookups efficiently with its built-in result cache.
 </Tip>
