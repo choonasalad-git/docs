@@ -1,8 +1,10 @@
 ---
 title: "MYOB Acumatica Customization: Vendor MOQ Visibility in Purchase and Sales Order Entry"
-sidebarTitle: "document-control"
+sidebarTitle: "Minimum Order Quantity"
 icon: "device-desktop-analytics"
 description: "Functional & Technical Specification"
+tag: "Customization"
+keywords: ["MYOB", "Acumatica", "C#", "Customization"]
 ---
 
 <Badge color="blue" size="lg" shape="pill" icon="arrow-up-1-0">Version 1.0.0</Badge>    <Badge color="yellow" size="lg" shape="pill" icon="app-window">Acumatica</Badge>    <Badge color="green" size="lg" shape="pill" icon="dock">Functional & Technical</Badge>
@@ -275,9 +277,7 @@ if (order?.VendorID == null)
 For the implementation to be accepted, all of the following must be true:
 
 - [ ] Vendor MOQ is visible as a column in the PO order entry grid.
-
 - [ ] Vendor MOQ is visible as a column in the SO order entry grid.
-
 - [ ] Selecting a stock item automatically displays its applicable MOQ.
 - [ ] Changing the stock item refreshes the displayed MOQ.
 - [ ] PO lines use the relevant PO vendor when determining vendor-specific MOQ.

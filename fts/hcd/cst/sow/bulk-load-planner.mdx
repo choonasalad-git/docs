@@ -1,8 +1,11 @@
 ---
 title: "MYOB Acumatica Customization: Sales Order Bulk Load Visibility and Calculation"
-sidebarTitle: "bulk-load-planning"
+sidebarTitle: "Bulk Load Planning"
 icon: "device-desktop-analytics"
 description: "Functional & Technical Specification"
+tag: "Customization"
+keywords: ["Acumatica", "MYOB", "HC Distributors", "C#"]
+mode: "default"
 ---
 
 <Badge color="blue" size="lg" shape="pill">Version 1.0.0</Badge>    <Badge color="green" size="lg" shape="pill">Acumatica</Badge>    <Badge color="yellow" size="lg" shape="pill">Functional & Technical</Badge>    
@@ -367,18 +370,16 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
   </Step>
 </Steps>
 
-# Validation, Acceptance & Benefits
+# Validation & Error Handling
 
-Validation rules, acceptance criteria, and expected business benefits for the Bulk Load Planning customization.
-
-### Validation and error handling
+To ensure no exceptions stop workflow, the customisation must enforce the following rules:
 
 - Packaging configuration must be validated to prevent negative values.
 - A Stock Item without packaging configuration must remain valid for Sales Order entry.
 - Missing or incomplete packaging information must not cause an exception or prevent the Sales Order from being saved.
 - Where a load cannot be calculated because required packaging information is missing, the affected calculation must remain blank or zero rather than making assumptions about the item's packaging.
 
-## Acceptance criteria
+# Acceptance Criteria
 
 For the implementation to be accepted, all of the following must be true:
 
@@ -395,7 +396,7 @@ For the implementation to be accepted, all of the following must be true:
 - [ ] The enhancement does not modify order quantities or automatically create shipments.
 - [ ] Existing Sales Order and Shipment processing remain unaffected.
 
-## Expected business benefits
+# Expected Business Benefits
 
 Users can assess the approximate physical size of bulk Sales Orders while the order is being entered, rather than waiting until shipment creation.
 

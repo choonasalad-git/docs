@@ -75,6 +75,13 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Functional & Technical Specification",
+        "pages": [
+          "fts/hcd/cst/sow/bulk-load-planner",
+          "fts/hcd/cst/inw/minimum-order-quantity"
+        ]
       }
     ]
   },
