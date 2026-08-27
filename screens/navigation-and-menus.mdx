@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 title: "Navigation and menus"
 description: "Expose custom screens in Acumatica workspaces and menus."
 ---
@@ -6,3 +7,153 @@ description: "Expose custom screens in Acumatica workspaces and menus."
 Add a screen to the workspace where users perform the related task. Use a clear title and preserve the assigned screen ID across environments.
 
 After publishing, verify the menu entry with a non-administrator role. Confirm that direct URL access follows the same access rights.
+=======
+title: "Register custom screens in the ERP navigation and menus"
+sidebarTitle: "Navigation & Menus"
+description: "Learn how to add your custom screen to the ERP sitemap, place it in the right menu, control access with role permissions, and build deep-link URLs."
+---
+
+Publishing a custom screen to the ERP is only half the job — users also need to find it. The ERP uses a **sitemap** to define the navigation tree: every screen, whether standard or custom, lives in the sitemap as a node that describes where it lives in the menu, what its URL is, and what its display title is. This guide shows you how to register your custom screen, control who can see it, and construct URLs that open it with pre-filled filters.
+
+## How the ERP sitemap works
+
+The sitemap is a hierarchical tree of nodes. Top-level nodes correspond to ERP modules (Finance, Inventory, Projects, and so on). Below each module are folders (menu groups) and leaf nodes (individual screens). When you open the ERP's navigation menu, you are browsing this tree.
+
+Each leaf node stores:
+- The **Screen ID** (e.g., `AC000001`)
+- The **URL** to the ASPX file (e.g., `~/Pages/AC/AC000001.aspx`)
+- The **display title** shown in the menu
+- The **parent node** that determines which module/submenu it appears under
+
+When you add a sitemap node inside your Customization Project and publish, the platform inserts that node into the live sitemap. The node persists across upgrades as long as it remains in the project.
+
+## Register a screen in the sitemap
+
+<Steps>
+  <Step title="Open the Customization Project">
+    In the ERP, navigate to **System → Customization** and open the Customization Project that contains your screen's graph and ASPX definition.
+
+    All sitemap nodes for custom screens must live inside a Customization Project. Never edit the sitemap directly in the ERP's **Sitemap** maintenance screen for entries you intend to deploy — those changes are not captured in the project and will be lost when the project is re-published or the site is reinstalled.
+  </Step>
+
+  <Step title="Add a Sitemap node for the screen">
+    Inside the Customization Project editor, navigate to the **Site Map** section in the left panel and click **Add Node**.
+
+    A new node entry appears in the list. The node type should be set to **Screen** (as opposed to a folder/group node, which has no associated screen).
+
+    <Note>
+      If you need your screen to appear under a new submenu that does not yet exist, first create a **Folder** node as the parent, then create your **Screen** node as a child of that folder. Folder nodes require a title but no Screen ID or URL.
+    </Note>
+  </Step>
+
+  <Step title="Set the Screen ID, URL, title, and parent menu">
+    Fill in the four required fields for the sitemap node:
+
+    | Field | What to enter | Example |
+    |---|---|---|
+    | **Screen ID** | Your 8-character screen code | `AC000001` |
+    | **URL** | Path to the ASPX file relative to the site root | `~/Pages/AC/AC000001.aspx` |
+    | **Title** | Display name shown in the menu and browser tab | `My Custom Records` |
+    | **Parent Node** | The module/folder where this screen should appear | `Finance → Setup` |
+
+    The **URL** must exactly match the path where the ASPX file was deployed. By convention, custom screen files are placed under `~/Pages/XX/` where `XX` is your company prefix.
+
+    The **Parent Node** is selected from the existing sitemap tree using a dropdown. If you are placing the screen in a standard module menu (e.g., under **Accounts Payable → Reports**), select that node. If you created a custom folder node in the previous step, select that folder.
+
+    <Tip>
+      Keep the **Title** short — menu labels that exceed approximately 30 characters are truncated in the standard navigation sidebar. Use the full descriptive name for the ASPX page `<title>` attribute, and a concise action-oriented label for the menu title (e.g., "Pending Approvals" rather than "View All Records Pending Manager Approval").
+    </Tip>
+  </Step>
+
+  <Step title="Publish and verify the screen appears in the menu">
+    Save the Customization Project and click **Publish**. After the publish completes:
+
+    1. Refresh the browser and open the ERP navigation menu.
+    2. Navigate to the parent menu path you selected and confirm your screen title appears.
+    3. Click the menu entry to verify it opens the correct screen.
+
+    If the screen title does not appear in the menu after publishing, check the following:
+
+    - The sitemap node was saved inside the project (not edited directly in the ERP Sitemap screen).
+    - Your user account has been granted **view** access to the screen in **Access Rights** (see the section below).
+    - The publish log shows no errors. A failed publish may have partially updated the sitemap.
+
+    You can also verify the node exists by opening **System → Customization → Site Map** and searching for your Screen ID.
+  </Step>
+</Steps>
+
+---
+
+## Role-based access rights
+
+Registering a screen in the sitemap makes it *exist* in the navigation, but it does not automatically make it *visible* to every user. The ERP's access rights system controls which roles can see and interact with each screen. A user without view access will not see the screen in the menu and will receive an access denied message if they navigate to it directly.
+
+### Granting access to a custom screen
+
+After publishing your sitemap node:
+
+1. Navigate to **System → Security → Access Rights by Screen** (or the equivalent access rights screen in your ERP version).
+2. Search for your Screen ID (`AC000001`) or find it by navigating the module tree.
+3. For each role that should access the screen, set the permission level:
+
+| Permission level | What the role can do |
+|---|---|
+| **View** | Open the screen and read records — no edits |
+| **Edit** | View and modify existing records |
+| **Insert** | View, edit, and create new records |
+| **Delete** | Full access including deleting records |
+
+4. Save and confirm the changes are applied.
+
+Users whose roles do not have at least **View** permission will not see the screen in the navigation menu. This means the access rights configuration is also your primary tool for showing a screen only to a specific team or business unit.
+
+<Note>
+  There are two separate concepts to keep in mind: the **Sitemap node** controls where a screen appears in the menu tree, while **Access Rights** controls who can see and interact with it. A screen can exist in the sitemap but be invisible to all but one role — or it can be visible to everyone but editable only by administrators. Configure both independently to achieve the combination your business requires.
+</Note>
+
+---
+
+## Deep-linking to a screen with default filter values
+
+Every screen in the ERP has a stable URL based on its Screen ID and ASPX path. You can navigate directly to a screen by constructing a URL:
+
+```
+https://yourerpsite.com/Pages/AC/AC000001.aspx
+```
+
+### Passing filter parameters via the URL
+
+For inquiry screens backed by a `PXFilter` or `PXProcessing` view, you can pre-populate filter fields by appending query string parameters. The parameter names match the DAC field names on the filter DAC.
+
+```
+https://yourerpsite.com/Pages/AC/AC000001.aspx?Status=O&CustomerID=10042
+```
+
+This URL opens the screen with **Status** pre-set to `O` (Open) and **CustomerID** pre-set to `10042`. The screen will execute its data view using these values immediately on load.
+
+### Linking directly to a specific record
+
+For maintenance screens (master record screens backed by `PXSelect` with a primary key), append the primary key value to navigate directly to a known record:
+
+```
+https://yourerpsite.com/Pages/AC/AC000001.aspx?RecordCD=REC-0042
+```
+
+The screen will open with that record already loaded in the form, skipping the need for the user to search for it.
+
+<Tip>
+  Deep links are especially useful in notification emails and approval workflow messages. When the ERP sends an automated email telling a manager that a record requires their review, embed a deep link directly to that record's screen so they can open it in one click rather than navigating the menu.
+</Tip>
+
+### Using Screen IDs in the search bar
+
+Users can also jump directly to any screen by typing its Screen ID into the ERP's global search bar. For example, typing `AC000001` in the search bar will show the screen as a result and navigate to it on selection — no menu navigation required. This is useful during development and for power users who prefer keyboard-driven navigation.
+
+---
+
+## Workspace and multi-tenancy considerations
+
+In multi-tenant or multi-branch ERP installations, sitemap nodes are typically shared across all tenants. If your custom screen should only appear for a specific tenant or branch, use **Access Rights** scoped to tenant-specific roles rather than creating separate sitemap nodes per tenant. This keeps the sitemap maintainable and avoids duplication.
+
+If your ERP installation uses **workspaces** (sometimes called dashboards or role-based portals), you can pin your custom screen as a tile on a workspace by adding it through the workspace configuration screen. This is separate from the sitemap registration — the sitemap entry is still required even for screens that are accessed exclusively through workspace tiles.
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

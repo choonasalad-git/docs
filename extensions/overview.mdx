@@ -23,7 +23,10 @@ Two structural guarantees make this possible:
   <Card title="Graph Extensions" icon="code" href="/extensions/graph-extensions">
     Add actions, data views, and event handlers to an existing ERP screen. Use `PXGraphExtension<TGraph>` to attach behavior to any graph without modifying its source.
   </Card>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Card title="DAC Extensions" icon="database" href="/extensions/dac-extensions">
     Add persisted or calculated fields to an existing ERP table. Use `PXCacheExtension<TDAC>` to extend the data model while keeping the original DAC unchanged.
   </Card>
@@ -119,6 +122,7 @@ If you omit `IsActive()`, the extension is always active. For extensions that sh
   <Card title="Graph Extensions" icon="code" href="/extensions/graph-extensions">
     Anatomy of a graph extension, adding views and actions, overriding base methods.
   </Card>
+<<<<<<< HEAD
 
   <Card title="DAC Extensions" icon="database" href="/extensions/dac-extensions">
     Adding persisted and unbound fields, naming conventions, BQL usage.
@@ -136,6 +140,20 @@ If you omit `IsActive()`, the extension is always active. For extensions that sh
     How the XML project manifest bundles DACs, graphs, and screens into a deployable unit.
   </Card>
 
+=======
+  <Card title="DAC Extensions" icon="database" href="/extensions/dac-extensions">
+    Adding persisted and unbound fields, naming conventions, BQL usage.
+  </Card>
+  <Card title="Event Handlers" icon="bolt" href="/extensions/event-handlers">
+    Full reference for every cache event type, lifecycle order, and validation patterns.
+  </Card>
+  <Card title="Actions" icon="play" href="/extensions/graph-extensions#adding-a-custom-action">
+    Custom toolbar buttons, adapters, and committing changes before execution.
+  </Card>
+  <Card title="Customization Projects" icon="folder" href="/concepts/customization-project">
+    How the XML project manifest bundles DACs, graphs, and screens into a deployable unit.
+  </Card>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Card title="Publishing & Deployment" icon="rocket" href="/deployment/publishing">
     Compile code, migrate the database schema, and deploy your project using the publish CLI.
   </Card>
@@ -143,4 +161,8 @@ If you omit `IsActive()`, the extension is always active. For extensions that sh
 
 <Tip>
   Keep each extension class focused on a single responsibility. If you need to add both a custom approval workflow and a third-party integration, create two separate extension classes even if both target the same graph. Smaller extensions are easier to test, easier to disable independently via `IsActive()`, and far easier to debug when something goes wrong.
+<<<<<<< HEAD
 </Tip>
+=======
+</Tip>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

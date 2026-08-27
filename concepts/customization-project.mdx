@@ -16,6 +16,7 @@ Think of a project as a named package. When you publish it, the platform compile
   <Card title="Code Artifacts" icon="code">
     C# source files for DACs, graph extensions, and business logic classes that the platform compiles on publish.
   </Card>
+<<<<<<< HEAD
 
   <Card title="Screen Definitions" icon="layout-panel-top">
     ASPX page customizations and control-level changes stored as XML diff records rather than full page replacements.
@@ -25,6 +26,14 @@ Think of a project as a named package. When you publish it, the platform compile
     SQL update scripts and import scenarios that run during publish to seed or migrate data alongside your code changes.
   </Card>
 
+=======
+  <Card title="Screen Definitions" icon="layout-panel-top">
+    ASPX page customizations and control-level changes stored as XML diff records rather than full page replacements.
+  </Card>
+  <Card title="Data Scripts" icon="database">
+    SQL update scripts and import scenarios that run during publish to seed or migrate data alongside your code changes.
+  </Card>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Card title="Supporting Files" icon="file">
     Reports (RDLC), static resources, localization strings, and push notifications bundled with the rest of the project.
   </Card>
@@ -34,7 +43,11 @@ Think of a project as a named package. When you publish it, the platform compile
 
 On disk, a Customization Project is represented as a directory exported to a `.zip` archive. Inside that archive the platform maintains a well-defined layout:
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 MyProject/
 ├── ProjectMetadata.xml      # Manifest: name, version, dependencies
 ├── App_RuntimeCode/
@@ -98,4 +111,8 @@ A typical team workflow looks like this:
   **Project dependencies and merge conflicts** — If your project depends on another project (for example, a shared library project that defines common DACs), declare that dependency in `ProjectMetadata.xml`. The platform will enforce publish order, ensuring the dependency is live before your project compiles against it.
 
   Merge conflicts in the XML manifest are the trickiest part of multi-developer workflows. Two developers adding different customization items to the same project will produce conflicting manifest XML. To minimize this, keep projects small and focused on a single business domain, and use short-lived feature branches. When conflicts do occur, resolve them by carefully merging the `<Items>` list in the manifest — do not let your merge tool simply accept one side wholesale or you will silently drop the other developer's items.
+<<<<<<< HEAD
 </Note>
+=======
+</Note>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

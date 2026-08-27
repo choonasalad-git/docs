@@ -12,11 +12,19 @@ Complete all of the following steps on your development instance **before** appl
 
 <Steps>
   <Step title="Export and archive the current customization package">
+<<<<<<< HEAD
     Navigate to **Customization \> Customization Projects**, select each project, and export a package (`.zip`) for every project. Each package contains a `ProjectMetadata.xml` manifest that records the complete list of artifacts and their version at the time of export. Store these archives in a safe location—your version control system is ideal. These snapshots let you recover the exact pre-upgrade state if things go wrong.
   </Step>
   <Step title="Read the ERP release notes for breaking changes">
     The ERP vendor publishes release notes and an upgrade guide with each version. Search them specifically for:
 
+=======
+    Navigate to **Customization > Customization Projects**, select each project, and export a package (`.zip`) for every project. Each package contains a `ProjectMetadata.xml` manifest that records the complete list of artifacts and their version at the time of export. Store these archives in a safe location—your version control system is ideal. These snapshots let you recover the exact pre-upgrade state if things go wrong.
+  </Step>
+
+  <Step title="Read the ERP release notes for breaking changes">
+    The ERP vendor publishes release notes and an upgrade guide with each version. Search them specifically for:
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
     - **DAC field removals or renames** — any field your DAC extensions reference that has changed
     - **Graph method signature changes** — event handler parameter types and graph method names that have been refactored
     - **Assembly or namespace restructuring** — classes that have moved to different namespaces or assemblies
@@ -24,11 +32,21 @@ Complete all of the following steps on your development instance **before** appl
 
     Make a list of every breaking change that affects your codebase before you start the upgrade.
   </Step>
+<<<<<<< HEAD
   <Step title="Upgrade a dedicated development instance first">
     Apply the ERP update to a development or sandbox instance that mirrors your production data schema. Never perform an untested upgrade directly on production. Use this instance to discover and fix all compatibility issues before they reach users.
   </Step>
   <Step title="Attempt to publish and record all errors">
     After the ERP update is applied, navigate to **Customization \> Customization Projects** and attempt to publish. Record every error and warning in the publish log. This gives you the full scope of changes required before you start modifying code.
+=======
+
+  <Step title="Upgrade a dedicated development instance first">
+    Apply the ERP update to a development or sandbox instance that mirrors your production data schema. Never perform an untested upgrade directly on production. Use this instance to discover and fix all compatibility issues before they reach users.
+  </Step>
+
+  <Step title="Attempt to publish and record all errors">
+    After the ERP update is applied, navigate to **Customization > Customization Projects** and attempt to publish. Record every error and warning in the publish log. This gives you the full scope of changes required before you start modifying code.
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   </Step>
 </Steps>
 
@@ -90,6 +108,7 @@ After each category of fix, attempt a compile (either via **Validate** in the Cu
   <Card title="Re-publish on dev first" icon="wrench">
     Confirm a clean publish with zero errors on the development instance before touching UAT or production. A clean publish does not guarantee runtime correctness, but it eliminates the class of issues that would prevent the application from starting.
   </Card>
+<<<<<<< HEAD
 
   <Card title="Run through key workflows" icon="list-check">
     Execute every business workflow that your customization touches—creating records, running actions, triggering automation. Watch for runtime exceptions in the application trace log (Tools \> Trace) even if the UI appears to work correctly.
@@ -99,6 +118,14 @@ After each category of fix, attempt a compile (either via **Validate** in the Cu
     For customizations that write to the database, spot-check that records created before and after the upgrade have consistent field values. Pay special attention to fields that were affected by the base DAC changes.
   </Card>
 
+=======
+  <Card title="Run through key workflows" icon="list-check">
+    Execute every business workflow that your customization touches—creating records, running actions, triggering automation. Watch for runtime exceptions in the application trace log (Tools > Trace) even if the UI appears to work correctly.
+  </Card>
+  <Card title="Verify data integrity" icon="database">
+    For customizations that write to the database, spot-check that records created before and after the upgrade have consistent field values. Pay special attention to fields that were affected by the base DAC changes.
+  </Card>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   <Card title="Test on a data copy of production" icon="copy">
     Before upgrading production, restore a recent production database backup to your UAT instance and re-run all tests against real data. Edge cases that never appear in dev data are common in production datasets.
   </Card>
@@ -108,6 +135,7 @@ After each category of fix, attempt a compile (either via **Validate** in the Cu
 
 The Customization Project editor includes a **Compare** tool that shows the difference between two versions of a project—useful for understanding what changed between your pre-upgrade export and your post-upgrade working project.
 
+<<<<<<< HEAD
 1. Open **Customization \> Customization Projects** and select the updated project.
 2. Click **Actions \> Compare with Package** and select the pre-upgrade `.zip` archive you saved earlier.
 3. The compare view highlights every artifact that differs. Use this to confirm you have addressed all breaking changes and have not accidentally lost any customization items during the upgrade.
@@ -117,3 +145,14 @@ If you maintain multiple separate projects that must all be updated, use **Actio
 <Tip>
   After a successful upgrade, immediately export a new package archive and commit it to your version control system. Tag the commit with both the ERP version and your customization version (for example, `erp-2024.1-custom-v3.1`). This creates a clear audit trail that future developers can use to understand which customization version works with which ERP version.
 </Tip>
+=======
+1. Open **Customization > Customization Projects** and select the updated project.
+2. Click **Actions > Compare with Package** and select the pre-upgrade `.zip` archive you saved earlier.
+3. The compare view highlights every artifact that differs. Use this to confirm you have addressed all breaking changes and have not accidentally lost any customization items during the upgrade.
+
+If you maintain multiple separate projects that must all be updated, use **Actions > Merge Projects** to combine them into a single project for testing. This makes it easier to identify cross-project conflicts that the upgrade may have introduced.
+
+<Tip>
+  After a successful upgrade, immediately export a new package archive and commit it to your version control system. Tag the commit with both the ERP version and your customization version (for example, `erp-2024.1-custom-v3.1`). This creates a clear audit trail that future developers can use to understand which customization version works with which ERP version.
+</Tip>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

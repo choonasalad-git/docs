@@ -1,17 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "almond",
-<<<<<<< HEAD
-  "name": "Acumatica Customization Guide",
-=======
-  "name": "MYOB Acumatica Customizations",
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
-  "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
-  },
-  "favicon": "/favicon.svg",
+  "projectType": "framework",
+  "projectName": "Customization Platform",
+  "projectDescription": "A low-code platform for building and deploying custom tables, screens, and business logic extensions on top of an ERP or business application.",
+  "theme": "maple",
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
   "navigation": {
     "tabs": [
       {
@@ -82,49 +76,24 @@
       }
     ]
   },
-  "navbar": {
-    "links": [
-      {
-<<<<<<< HEAD
-        "label": "Community",
-        "href": "https://community.acumatica.com/"
-=======
-        "label": "Support",
-        "href": "mailto:support@example.com"
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
-      }
-    ],
-    "primary": {
-      "type": "button",
-<<<<<<< HEAD
-      "label": "Acumatica",
-      "href": "https://www.acumatica.com/"
-=======
-      "label": "Get Started",
-      "href": "/introduction"
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
-    }
-  },
-  "footer": {
-<<<<<<< HEAD
-    "socials": {
-      "linkedin": "https://www.linkedin.com/company/acumatica"
-    }
-=======
-    "socials": {}
-  },
-  "background": {
-    "decoration": "gradient"
-  },
-  "icons": {
-    "library": "lucide"
-  },
-  "fonts": {
-    "family": "Roboto"
-  },
-  "banner": {
-    "content": "7jtyr",
-    "dismissible": true
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
-  }
+  "keyFeatures": [
+    "Customization Projects for organizing and versioning ERP extensions",
+    "Data Access Classes (DAC) for defining custom database tables and fields",
+    "Business Query Language (BQL) for type-safe data queries",
+    "Graph Extensions for adding business logic to existing application screens",
+    "Custom Screens built with a visual layout designer",
+    "Event Handlers for responding to record-level actions",
+    "Packaging and deployment of customizations across environments"
+  ],
+  "publicApiSurface": [
+    "PXGraph — base class for data graph definitions",
+    "PXSelect / BQL queries — type-safe data access API",
+    "PXCache — in-memory record cache and event source",
+    "DAC field attributes — PXDBString, PXDBInt, PXDBDecimal, etc.",
+    "Graph Extension (PXGraphExtension) — extend existing screens",
+    "DAC Extension (PXCacheExtension) — extend existing tables",
+    "RowSelected / RowInserted / RowUpdated / RowDeleted event handlers",
+    "Customization Project XML manifest",
+    "Package publish and deployment CLI"
+  ]
 }

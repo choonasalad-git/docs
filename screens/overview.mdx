@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 title: "Custom screens overview"
 description: "Design Acumatica screens around a graph, views, and actions."
 ---
@@ -6,3 +7,109 @@ description: "Design Acumatica screens around a graph, views, and actions."
 An Acumatica screen connects a screen definition to a graph. The graph exposes data views and actions; controls bind to those members.
 
 Plan the primary record, detail records, user actions, and navigation before arranging controls.
+=======
+title: "Custom Screens: build tailored ERP user interfaces"
+sidebarTitle: "Overview"
+description: "Learn what custom screens are, how they differ from screen extensions, and when to build a new screen versus modifying an existing one."
+---
+
+Custom screens let you build purpose-built user interfaces directly inside the ERP — complete with their own data entry forms, grids, and business logic — without modifying the platform's standard code. Rather than bolting extra fields onto an existing screen, you design a screen from scratch to match exactly what your users need: the right data, the right layout, and the right workflow.
+
+## What are custom screens?
+
+A custom screen is a fully independent UI that you create inside a Customization Project. It has its own **PXGraph** (the C# class that drives business logic and data access) and its own **screen definition** (an XML-based ASPX file that describes the layout and controls). Together these two artifacts define what data the screen shows, how users interact with it, and what happens when they save or run an action.
+
+Custom screens appear in the ERP exactly like any standard screen: they have a unique **Screen ID**, show up in the navigation menu, respect role-based access rights, and support all the standard ERP UI behaviors such as notes, file attachments, and audit history.
+
+### How custom screens differ from screen extensions
+
+When you *extend* an existing screen you add fields, change visibility rules, or inject extra logic into a graph that already exists. The original screen's purpose and data model stay the same — you are layering on top of it.
+
+When you *create* a custom screen you define everything from the ground up: a new graph, a new ASPX layout, a new sitemap entry, and (usually) new DAC tables. The screen is entirely yours to own and evolve independently of the standard codebase.
+
+| | Screen Extension | Custom Screen |
+|---|---|---|
+| Owns the graph | No — modifies existing | Yes — new PXGraph |
+| Owns the layout | Partially | Yes — new ASPX |
+| Separate Screen ID | No | Yes |
+| Independent data model | No | Yes |
+| Impact of upgrades | Must re-validate | Isolated |
+
+## Architecture
+
+Every custom screen is built from three coordinated pieces registered inside a single Customization Project.
+
+**Graph (C#)** — A class that inherits from `PXGraph<TGraph, TPrimary>`. It declares the data views (`PXSelect` queries), save/cancel actions, and any custom business logic methods. The graph is the brains of the screen. It also owns event handler methods — such as `RowSelected`, `RowInserted`, `RowUpdated`, and `RowDeleted` — that fire when the `PXCache` raises lifecycle events for your DAC records.
+
+**Screen definition (XML/ASPX)** — An XML document that describes the visual layout: which containers to use (`PXFormView`, `PXGrid`, `PXTab`), which controls to place inside them (`PXTextEdit`, `PXSelector`, `PXButton`), and how each control binds to a field on the DAC. The Screen Editor in the ERP UI provides a visual designer so you can build this file without writing raw XML by hand.
+
+**Sitemap registration** — An entry in the ERP sitemap that maps your Screen ID to the ASPX file and places the screen inside the correct module menu. Without this entry the screen exists but is unreachable from the navigation.
+
+```
+Customization Project
+├── Graph          MyScreenGraph.cs       (C# business logic)
+├── Screen         AC000001.aspx          (XML layout definition)
+└── Sitemap node   AC000001               (menu placement + access rights)
+```
+
+<Note>
+  Screen IDs follow the format `XX000000`, where the first two letters are your company's assigned prefix and the remaining six digits uniquely identify the screen (for example, `AC000001` or `ZZ990010`). The placeholder `XX000000` shown in format examples throughout this documentation represents the pattern — replace `XX` with your actual prefix and choose a unique number for each screen you create.
+</Note>
+
+### Extending existing screens vs. building new ones
+
+When you need to add fields or logic to a screen that already exists, you use a **PXGraphExtension** (to extend the graph's business logic) and a **PXCacheExtension** (to add fields to the existing DAC) rather than creating a new screen from scratch. Custom screens and screen extensions are complementary tools — the architecture section above describes the custom screen path, while the [Customization Projects](/concepts/customization-project) guide covers both approaches in full.
+
+## Common use cases
+
+<CardGroup cols={2}>
+  <Card title="Custom data entry form" icon="pen-to-square">
+    Collect structured input that doesn't fit any standard document — configuration wizards, onboarding checklists, custom master records — with full validation and save logic.
+  </Card>
+  <Card title="Custom inquiry or report screen" icon="magnifying-glass-chart">
+    Surface aggregated or cross-entity data in a filterable grid. Power users get a tailored search experience without navigating multiple standard screens.
+  </Card>
+  <Card title="Approval dashboard" icon="list-check">
+    Centralise records pending review across multiple document types. Combine a grid of pending items with form-level detail and one-click approve/reject buttons.
+  </Card>
+  <Card title="Integration staging screen" icon="arrows-left-right">
+    Expose inbound records from an external system in a dedicated screen where staff can review, correct, and push data into the core ERP entities.
+  </Card>
+</CardGroup>
+
+## Key documentation
+
+<CardGroup cols={2}>
+  <Card title="Creating Screens" icon="screwdriver-wrench" href="/screens/creating-screens">
+    Step-by-step walkthrough: create the graph, define the layout, assign a Screen ID, and publish your first custom screen.
+  </Card>
+  <Card title="Layouts & Controls" icon="table-columns" href="/screens/layouts-and-controls">
+    Reference for every layout container and UI control, including common properties and binding patterns.
+  </Card>
+  <Card title="Navigation & Menus" icon="compass" href="/screens/navigation-and-menus">
+    Register your screen in the sitemap, place it in the right menu, and control who can access it with role-based permissions.
+  </Card>
+  <Card title="Customization Projects" icon="folder-open" href="/concepts/customization-project">
+    Understand how graphs, screens, and sitemap nodes are packaged together for deployment.
+  </Card>
+</CardGroup>
+
+## When to create a new screen vs. extend an existing one
+
+Creating a new screen is the right choice when:
+
+- The data you need to display or collect **doesn't belong to any existing document type** — you need a new DAC (database table).
+- The workflow is sufficiently different that **sharing a screen with standard logic would create confusion** or maintenance risk.
+- You need a **dedicated entry point** in the menu that isn't tied to standard navigation flows.
+- The screen will be used by a **distinct audience** (e.g., a contractor portal, a warehouse picking interface) that should not see or interact with the broader standard screen.
+
+Extending an existing screen is the right choice when:
+
+- You only need to **add a few fields** to a standard document (sales order, purchase order, employee record).
+- You want to **inject validation or defaulting logic** into an existing save workflow.
+- The screen's core purpose and data model already match what you need.
+
+<Note>
+  If you find yourself extending an existing screen so heavily that its original purpose is obscured, that is a strong signal to create a new dedicated screen instead. Over-extended standard screens are harder to upgrade and harder for users to understand.
+</Note>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 title: "Layouts and controls"
 description: "Bind controls to fields and create usable Acumatica layouts."
 ---
@@ -6,3 +7,381 @@ description: "Bind controls to fields and create usable Acumatica layouts."
 Group fields by task, keep required inputs visible, and use tabs for secondary information. Bind controls to the correct data member and field name.
 
 <Tip>Test the screen with realistic labels and data. Empty test records can hide spacing and overflow problems.</Tip>
+=======
+title: "Screen layout containers and UI controls reference"
+sidebarTitle: "Layouts & Controls"
+description: "Complete reference for PXFormView, PXGrid, PXTab, PXPanel, PXLayoutRule, and every UI control available in the ERP screen designer."
+---
+
+The ERP's ASPX screen framework gives you a set of purpose-built layout containers and input controls that plug directly into your PXGraph data views. Each element is declared in XML and binds to your DAC fields by name, so the framework handles two-way data binding, validation display, and read-only enforcement automatically. This page describes every container and control you'll use when building custom screens.
+
+## Layout containers
+
+Layout containers define the structural skeleton of your screen. They hold controls and other containers, and each one has a distinct role in how data is presented.
+
+<AccordionGroup>
+  <Accordion title="PXFormView — primary form container">
+    `PXFormView` is the main container for a single-record form. It binds to one data view on the graph and renders its controls in a grid-based two-column layout by default. Every master/detail screen has at least one `PXFormView` at the top that shows the header record.
+
+    ```xml
+    <px:PXFormView ID="form" runat="server"
+        DataSourceID="ds"
+        DataMember="Records"
+        Width="100%"
+        Caption="Customer Record">
+      <Template>
+        <px:PXLayoutRule runat="server" StartRow="True"
+            ControlSize="M" LabelsWidth="S" />
+        <px:PXTextEdit ID="edCustomerCD" runat="server"
+            DataField="CustomerCD" />
+        <px:PXTextEdit ID="edCustomerName" runat="server"
+            DataField="CustomerName" />
+      </Template>
+    </px:PXFormView>
+    ```
+
+    **Key properties:**
+
+    | Property | Description |
+    |---|---|
+    | `DataMember` | Name of the graph data view this form is bound to |
+    | `DataSourceID` | ID of the `PXDataSource` control on the page (always `ds`) |
+    | `Caption` | Text shown in the form's header bar |
+    | `Width` | CSS width; use `100%` for full-width forms |
+
+    A `PXFormView` can contain nested `PXTab`, `PXPanel`, and `PXLayoutRule` elements to create richer layouts within the form area.
+  </Accordion>
+
+  <Accordion title="PXGrid — tabular record list">
+    `PXGrid` renders a collection of DAC records as a sortable, editable data grid. Use it for detail lines in a master/detail screen, or as the main content area on an inquiry or list screen.
+
+    ```xml
+    <px:PXGrid ID="grid" runat="server"
+        DataSourceID="ds"
+        DataMember="Details"
+        Width="100%"
+        SkinID="Details">
+      <Levels>
+        <px:PXGridLevel DataMember="Details">
+          <Columns>
+            <px:PXGridColumn DataField="LineNbr"
+                Width="60px" TextAlign="Right" />
+            <px:PXGridColumn DataField="InventoryID"
+                Width="120px" />
+            <px:PXGridColumn DataField="Qty"
+                Width="80px" TextAlign="Right" />
+            <px:PXGridColumn DataField="UnitPrice"
+                Width="100px" TextAlign="Right" />
+          </Columns>
+        </px:PXGridLevel>
+      </Levels>
+      <AutoSize Container="Window" Enabled="True" MinHeight="150" />
+    </px:PXGrid>
+    ```
+
+    **Key properties:**
+
+    | Property | Description |
+    |---|---|
+    | `DataMember` | Graph data view that supplies the rows |
+    | `SkinID` | `Details` for a detail grid; `Inquire` for a read-only inquiry grid |
+    | `AutoSize` | Enables the grid to fill remaining vertical space on the page |
+
+    Each `PXGridColumn` mirrors a control: set `DataField` to the DAC property name, and set `Width` in pixels. You can also set `Type="CheckBox"` for boolean columns or `Type="DateTime"` for date columns.
+  </Accordion>
+
+  <Accordion title="PXTab / PXTabItem — tabbed section layout">
+    `PXTab` creates a tabbed panel where each `PXTabItem` child is one tab. Use tabs when you have too many fields to display on one screen without scrolling, or when the fields logically belong to separate concern areas (e.g., General, Financial, Settings).
+
+    ```xml
+    <px:PXTab ID="tab" runat="server" Width="100%" DataSourceID="ds">
+      <Items>
+        <px:PXTabItem Text="General">
+          <Template>
+            <px:PXLayoutRule runat="server" StartRow="True"
+                ControlSize="M" LabelsWidth="S" />
+            <px:PXTextEdit ID="edName" runat="server"
+                DataField="Name" />
+            <px:PXTextEdit ID="edEmail" runat="server"
+                DataField="Email" />
+          </Template>
+        </px:PXTabItem>
+
+        <px:PXTabItem Text="Settings">
+          <Template>
+            <px:PXLayoutRule runat="server" StartRow="True"
+                ControlSize="SM" LabelsWidth="S" />
+            <px:PXCheckBox ID="chkIsActive" runat="server"
+                DataField="IsActive" />
+            <px:PXDropDown ID="edStatus" runat="server"
+                DataField="Status" />
+          </Template>
+        </px:PXTabItem>
+      </Items>
+    </px:PXTab>
+    ```
+
+    `PXTab` itself does not bind to a data view — it is purely a layout element. The controls inside each `PXTabItem` bind to the enclosing `PXFormView`'s data view, or to a data view you specify per tab using `DataMember`.
+  </Accordion>
+
+  <Accordion title="PXPanel — grouped control section">
+    `PXPanel` groups a set of controls under an optional caption, drawing a visual border around them. It is lighter than a tab — use it when you want to visually separate a cluster of related fields within a single tab or form without introducing full tab navigation.
+
+    ```xml
+    <px:PXPanel ID="pnlAddress" runat="server"
+        ContentLayout-SpacingSize="M"
+        Caption="Billing Address">
+      <px:PXLayoutRule runat="server" StartRow="True"
+          ControlSize="L" LabelsWidth="S" />
+      <px:PXTextEdit ID="edAddressLine1" runat="server"
+          DataField="AddressLine1" />
+      <px:PXTextEdit ID="edAddressLine2" runat="server"
+          DataField="AddressLine2" />
+      <px:PXTextEdit ID="edCity" runat="server"
+          DataField="City" />
+    </px:PXPanel>
+    ```
+
+    Set `Caption` to render a titled border. Leave it empty for an invisible grouping that still enforces layout flow.
+  </Accordion>
+
+  <Accordion title="PXLayoutRule — flow and column control">
+    `PXLayoutRule` is a non-visual element that instructs the layout engine how to arrange subsequent controls. It does not render anything itself — it acts as a formatting directive.
+
+    ```xml
+    <%-- Start a new row, two-column layout, medium controls --%>
+    <px:PXLayoutRule runat="server"
+        StartRow="True"
+        ControlSize="M"
+        LabelsWidth="SM" />
+
+    <%-- Span the next control across both columns --%>
+    <px:PXLayoutRule runat="server"
+        StartColumn="True"
+        ColumnSpan="2" />
+    <px:PXTextEdit ID="edNotes" runat="server" DataField="Notes" />
+
+    <%-- Begin a new column within the same row --%>
+    <px:PXLayoutRule runat="server" StartColumn="True" />
+    ```
+
+    **Key attributes:**
+
+    | Attribute | Description |
+    |---|---|
+    | `StartRow` | Begins a new layout row |
+    | `StartColumn` | Moves to the next column in the current row |
+    | `ColumnSpan` | Number of columns the next control should occupy |
+    | `ControlSize` | Preset width token for controls: `XS`, `S`, `SM`, `M`, `L`, `XL` |
+    | `LabelsWidth` | Preset width token for label text: `XS`, `S`, `SM`, `M` |
+
+    Place a `PXLayoutRule` immediately before any control whose layout needs to differ from the default.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## UI controls
+
+UI controls are the interactive elements users see and type into. Every control binds to a DAC field via its `DataField` property. The framework reads the field's type and attributes (like `PXUIFieldAttribute`) to apply labels, validation, and visibility rules automatically.
+
+<AccordionGroup>
+  <Accordion title="PXTextEdit — plain text input">
+    `PXTextEdit` renders a single-line text box. Use it for string DAC fields such as names, codes, descriptions, and free-text notes.
+
+    ```xml
+    <px:PXTextEdit ID="edDescription" runat="server"
+        DataField="Description"
+        Width="300px" />
+    ```
+
+    For multi-line text, set `TextMode="MultiLine"` and specify a `Height`:
+
+    ```xml
+    <px:PXTextEdit ID="edNotes" runat="server"
+        DataField="Notes"
+        TextMode="MultiLine"
+        Height="80px"
+        Width="100%" />
+    ```
+  </Accordion>
+
+  <Accordion title="PXNumberEdit — numeric input">
+    `PXNumberEdit` renders a numeric text box with optional formatting. Use it for integer, decimal, and currency DAC fields. The framework applies the field's `PXUIField` format string automatically.
+
+    ```xml
+    <px:PXNumberEdit ID="edQuantity" runat="server"
+        DataField="Qty"
+        Width="80px" />
+
+    <px:PXNumberEdit ID="edUnitPrice" runat="server"
+        DataField="UnitPrice"
+        Width="100px" />
+    ```
+
+    On the DAC, back decimal fields with `PXDBDecimal` and integer fields with `PXDBInt`:
+
+    ```csharp
+    // Decimal field — two decimal places stored as decimal(19,2)
+    [PXDBDecimal(2)]
+    [PXUIField(DisplayName = "Unit Price")]
+    [PXDefault(TypeCode.Decimal, "0.0")]
+    public decimal? UnitPrice { get; set; }
+
+    // Integer field — whole-number quantities
+    [PXDBInt]
+    [PXUIField(DisplayName = "Quantity")]
+    [PXDefault(0)]
+    public int? Qty { get; set; }
+    ```
+
+    Set `CommitChanges="True"` when changing the quantity or price should immediately recalculate a dependent total field.
+  </Accordion>
+
+  <Accordion title="PXDateTimeEdit — date and time picker">
+    `PXDateTimeEdit` renders a date input with a calendar picker. For fields typed as `DateTime?` on the DAC, the framework displays and parses dates using the user's locale settings.
+
+    ```xml
+    <px:PXDateTimeEdit ID="edOrderDate" runat="server"
+        DataField="OrderDate"
+        Width="100px" />
+    ```
+
+    To show time alongside the date, set `TimeMode="True"`:
+
+    ```xml
+    <px:PXDateTimeEdit ID="edScheduledTime" runat="server"
+        DataField="ScheduledTime"
+        Width="150px"
+        TimeMode="True" />
+    ```
+  </Accordion>
+
+  <Accordion title="PXCheckBox — boolean toggle">
+    `PXCheckBox` renders a labelled checkbox for boolean DAC fields. The label text comes from the field's `PXUIFieldAttribute.DisplayName` automatically.
+
+    ```xml
+    <px:PXCheckBox ID="chkIsActive" runat="server"
+        DataField="IsActive" />
+
+    <px:PXCheckBox ID="chkRequiresApproval" runat="server"
+        DataField="RequiresApproval"
+        CommitChanges="True" />
+    ```
+
+    Set `CommitChanges="True"` when toggling the checkbox should immediately show or hide other controls on the form that depend on this flag.
+  </Accordion>
+
+  <Accordion title="PXDropDown — list attribute selector">
+    `PXDropDown` renders a dropdown list populated from a `PXStringList` or `PXIntList` attribute defined on the DAC field. The list items are defined in code — the control reads them automatically.
+
+    ```xml
+    <px:PXDropDown ID="edStatus" runat="server"
+        DataField="Status"
+        Width="120px" />
+    ```
+
+    On the DAC side, the field must be decorated with a list attribute that provides the allowed values:
+
+    ```csharp
+    [PXDBString(1, IsFixed = true)]
+    [PXUIField(DisplayName = "Status")]
+    [PXStringList(
+        new[] { "O", "C", "H" },
+        new[] { "Open", "Closed", "On Hold" }
+    )]
+    public string Status { get; set; }
+    ```
+
+    The `PXDropDown` respects any `AllowNull` setting on the field — set `AllowNull="False"` on `PXUIFieldAttribute` to prevent an empty selection.
+  </Accordion>
+
+  <Accordion title="PXSelector — lookup field with search">
+    `PXSelector` renders a lookup field: users type to search or click the magnifying-glass icon to open a selection popup. It is the standard control for foreign-key fields that reference another DAC (e.g., a Customer ID, Inventory Item, or Employee).
+
+    ```xml
+    <px:PXSelector ID="edCustomerID" runat="server"
+        DataField="CustomerID"
+        Width="120px" />
+    ```
+
+    The selector's list of available values and its search columns come from the `PXSelectorAttribute` on the DAC field:
+
+    ```csharp
+    [PXDBInt]
+    [PXUIField(DisplayName = "Customer")]
+    [PXSelector(
+        typeof(Search<Customer.customerID>),
+        typeof(Customer.customerCD),
+        typeof(Customer.customerName),
+        SubstituteKey = typeof(Customer.customerCD)
+    )]
+    public int? CustomerID { get; set; }
+    ```
+
+    `SubstituteKey` tells the framework to display the human-readable code (`customerCD`) in the field even though the underlying value stored is the integer key.
+  </Accordion>
+
+  <Accordion title="PXSegmentMask — segmented key input">
+    `PXSegmentMask` is used for segmented identifier fields — DAC fields backed by a `PXDimensionAttribute` (also called a dimension or segmented key). Common examples include account numbers, subaccounts, and inventory item codes that have structure like `MAIN-SUB-CLASS`.
+
+    ```xml
+    <px:PXSegmentMask ID="edAccountID" runat="server"
+        DataField="AccountID"
+        Width="120px" />
+    ```
+
+    The dimension configuration (segment lengths, separators, validation) is maintained in the ERP's Segmented Keys setup screen — the control reads that configuration at runtime.
+  </Accordion>
+
+  <Accordion title="PXButton — action trigger">
+    `PXButton` renders a clickable button that triggers an action method on the graph. Define the action as a `PXAction<T>` on the graph, then reference it by name on the button.
+
+    ```xml
+    <px:PXButton ID="btnApprove" runat="server"
+        Text="Approve"
+        CommandName="Approve"
+        CommandSourceID="ds" />
+    ```
+
+    On the graph, the matching action:
+
+    ```csharp
+    public PXAction<MyRecord> Approve;
+
+    [PXButton(CommitChanges = true)]
+    [PXUIField(DisplayName = "Approve")]
+    protected virtual IEnumerable approve(PXAdapter adapter)
+    {
+        foreach (MyRecord record in adapter.Get<MyRecord>())
+        {
+            record.Status = MyRecordStatus.Approved;
+            Records.Update(record);
+        }
+        Save.Press();
+        return adapter.Get();
+    }
+    ```
+
+    Buttons that appear in the toolbar are typically declared via `PXAction` on the graph (the framework adds them to the toolbar automatically). `PXButton` in the layout is used for inline buttons within a form or grid.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Common control properties
+
+All UI controls share a set of properties that you will configure regularly, regardless of control type.
+
+| Property | Type | Description |
+|---|---|---|
+| `DataField` | `string` | DAC property name the control binds to. Must match exactly (case-insensitive). |
+| `CommitChanges` | `bool` | When `True`, changing this control's value immediately posts a callback to the server so dependent fields can recalculate. Defaults to `False`. |
+| `Width` | `string` | CSS width of the input element, e.g. `120px` or `100%`. |
+| `Enabled` | `bool` | Overrides the field's enabled state at the layout level. The graph's `FieldSelecting`/`RowSelected` handlers can also control this dynamically. |
+| `LabelWidth` | `string` | Width of the label text to the left of the control. Usually left to `PXLayoutRule` to manage uniformly. |
+
+<Tip>
+  Use `CommitChanges="True"` on any control whose value affects the visibility, editability, or default value of other controls on the same form. Without it, those dependent changes only appear after the user manually saves or navigates away. For example, if changing a **Document Type** dropdown should immediately hide or reveal a **Reference Number** field, set `CommitChanges="True"` on the dropdown — and handle the `RowSelected` event on the graph to adjust the target field's `PXUIFieldAttribute` state accordingly.
+</Tip>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

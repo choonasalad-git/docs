@@ -61,7 +61,11 @@ public class SOOrderExt : PXCacheExtension<SOOrder>
 
 ## Naming convention: the `Usr` prefix
 
+<<<<<<< HEAD
 All custom fields must use the `Usr` prefix (short for _user-defined_) on both the property name and the abstract BQL field class. This prefix serves two purposes:
+=======
+All custom fields must use the `Usr` prefix (short for *user-defined*) on both the property name and the abstract BQL field class. This prefix serves two purposes:
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 
 1. It visually distinguishes your fields from platform-native fields in code reviews and in the Screen Editor.
 2. It prevents naming collisions with fields the platform might add in a future release. Platform fields never use the `Usr` prefix, so your fields are permanently safe.
@@ -166,4 +170,8 @@ After you define the extension class, you need to place the new fields on the sc
 
 <Tip>
   If you need the same field to appear on multiple screens that share the same DAC (for example, `SOOrder` appears on both Sales Orders and Quick Orders), you only need one extension class. Add the field control to each screen's layout separately — the same underlying column and extension object serves both.
+<<<<<<< HEAD
 </Tip>
+=======
+</Tip>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d

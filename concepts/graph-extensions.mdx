@@ -74,7 +74,11 @@ public class SOOrderEntryExt : PXGraphExtension<SOOrderEntry>
 The key structural elements are:
 
 | Element | Purpose |
+<<<<<<< HEAD
 | --- | --- |
+=======
+|---|---|
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
 | `PXGraphExtension<SOOrderEntry>` | Binds this extension to the `SOOrderEntry` graph type |
 | `Base` property | Provides access to the base graph instance (see below) |
 | `PXSelect<>` fields | New data views available on the screen |
@@ -94,7 +98,11 @@ Graph extensions respond to the same row-level cache events as the base graph. T
     {
         SOOrder row = e.Row;
         if (row == null) return;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
         bool isOnHold = row.Status == SOOrderStatus.hold;
         SendForApproval.SetEnabled(isOnHold);
         PXUIFieldAttribute.SetRequired<SOOrderExt.usrPoNumber>(e.Cache, isOnHold);
@@ -109,7 +117,11 @@ Graph extensions respond to the same row-level cache events as the base graph. T
     {
         SOOrder row = e.Row;
         if (row == null) return;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
         // Stamp the extension field with an initial approval status
         e.Cache.SetValueExt<SOOrderExt.usrApprovalStatus>(
             row, ApprovalStatus.notSubmitted);
@@ -125,7 +137,11 @@ Graph extensions respond to the same row-level cache events as the base graph. T
         SOOrder newRow = e.Row;
         SOOrder oldRow = e.OldRow;
         if (newRow == null) return;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
         // Reset approval status whenever the order amount changes
         if (newRow.OrderTotal != oldRow.OrderTotal)
         {
@@ -143,7 +159,11 @@ Graph extensions respond to the same row-level cache events as the base graph. T
     {
         SOOrder row = e.Row;
         if (row == null) return;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
         // Mark all related custom records as cancelled
         foreach (MyCustomRecord detail in
             PXSelect<MyCustomRecord,
@@ -230,4 +250,8 @@ ext1.SomePublicHelperMethod(order);
 
 <Warning>
   **Extension ordering matters — manage it carefully.** The framework applies extensions in the order they appear in the Customization Project's manifest. If two extensions both override the same event (for example, `RowPersisting<SOOrder>`) and neither calls `e.CallBase()`, the last extension to run effectively silences all previous handlers — including base ERP validation logic. Always call `e.CallBase()` unless you have a deliberate reason to suppress the rest of the chain, and document that decision clearly. When you have multiple projects deployed simultaneously, each project's extensions are chained together in project publish order, which is another source of unexpected behavior. If you observe an event handler appearing to do nothing, check that an earlier extension in the chain is not swallowing the call.
+<<<<<<< HEAD
 </Warning>
+=======
+</Warning>
+>>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
