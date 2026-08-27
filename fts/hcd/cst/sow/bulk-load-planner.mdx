@@ -1,0 +1,304 @@
+---
+title: "MYOB Acumatica Customization: Sales Order Bulk Load Visibility and Calculation"
+sidebarTitle: "bulk-load-planning"
+icon: "device-desktop-analytics"
+description: "Functional & Technical Specification"
+---
+
+<Badge color="blue" size="lg" shape="pill" icon="arrow-up-1-0">
+  Version 1.0.0
+</Badge>
+<Badge color="yellow" size="lg" shape="pill" icon="app-window">
+  Acumatica
+</Badge>
+<Badge color="green" size="lg" shape="pill" icon="dock">
+  Functional & Technical
+</Badge>
+
+<Card title="Sales Order Bulk Load Visibility and Calculation" type="info">
+  MYOB Acumatica Customization
+
+Bulk Load Planning - v25.201.0213.1
+
+</Card>
+
+## Document purpose
+
+This document defines:
+
+- Purpose and problem
+- Proposed solution and implementation strategy
+- Functional, technical, and data requirements
+- Integrations and system behavior
+- Key design considerations
+
+<Note>
+  It also serves as a shared reference, so stakeholders have a common
+  understanding of the solution being delivered.
+</Note>
+
+## Objective
+
+Provide users with visibility of the estimated physical load of a Sales Order during order entry, without requiring a shipment to first be created.
+
+Packaging and bulk values will be available at individual Sales Order line level, with consolidated load totals available from the Shipping tab.
+
+<Tabs>
+  <Tab title="Problem Statement" icon="message-circle-question-mark">
+    Sales Orders are currently raised without sufficient visibility of shipping and load requirements, particularly when entering bulk orders.
+
+    Users may need to create a shipment before they can determine the approximate physical size of an order. This makes it difficult to assess pallet, carton, and transport requirements during initial order entry.
+
+    This can result in:
+
+    - Orders exceeding expected pallet or vehicle capacity.
+    - Inefficient transport and warehouse planning.
+    - Shipments being created solely to determine approximate load size.
+    - Additional administration where orders need to be changed after shipment creation.
+    - Delays in identifying unusually large or incorrectly entered order quantities.
+
+    <Frame caption="Vendors tab on the stock item entry screen">
+      ![Stock Item All Fruits Vendor](/images/StockItemAllFruitsVendor.png "Stock Item All Fruits Vendor")
+    </Frame>
+
+  </Tab>
+  <Tab title="Proposed Solution" icon="check">
+    Introduce packaging configuration against the Stock Item and expose the relevant bulk information directly within Sales Order entry.
+
+    Each Sales Order line will display calculated packaging information based on the ordered quantity and the packaging configuration of the selected stock item.
+
+    At the order level, a **Load Summary** panel will be added to the Shipping tab. This panel will provide consolidated carton, pallet, and other relevant load totals for the entire Sales Order.
+
+    To avoid unnecessary processing during normal order entry, order-level totals will not continuously recalculate. A **Calculate Load** button will allow the user to explicitly request calculation of the current order's load.
+
+    <Frame caption="Sales order entry screen with MOQ">
+      ![SO Screen](/images/SOScreen.png "SO Screen")
+    </Frame>
+
+  </Tab>
+</Tabs>
+
+# Functional Requirements
+
+<AccordionGroup>
+  <Accordion title="Stock Item packaging configuration" icon="truck">
+    Add the following custom fields to the Inventory Item / Stock Item:
+
+    - `UsrUnitsPerCarton` — Number of individual units contained within one carton.
+    - `UsrCartonsPerPallet` — Number of cartons contained on one full pallet.
+    - `UsrUnitsPerPallet` — Number of individual units contained on one full pallet.
+
+    These fields are user-maintainable and represent the standard bulk packaging configuration for the stock item.
+
+    It is appropriate that `UsrUnitsPerPallet` automatically derives from:
+
+    ```text
+    UsrUnitsPerCarton × UsrCartonsPerPallet
+    ```
+    Alternatively, it may remain independently maintained where actual pallet configuration does not always represent a direct multiplication of the carton configuration. Future carrier or freight profiles are a real use case.
+
+  </Accordion>
+
+  <Accordion title="SO line visibility" icon="list-ordered">
+    Add unbound fields to the `SOLine` extension to expose the relevant bulk / load information during Sales Order entry.
+
+    The Sales Order grid should display enough information for the user to understand the physical impact of each line, including:
+
+    - Units per Carton
+    - Cartons per Pallet
+    - Units per Pallet
+    - Calculated Cartons
+    - Calculated Pallets
+
+    These fields are informational and must not modify the packaging configuration held against the Stock Item.
+
+  </Accordion>
+
+  <Accordion title="Line-level calculation" icon="screen-share-off">
+    When an Inventory Item and Order Quantity are present, the system calculates the estimated carton and pallet requirements for the line.
+
+    Conceptually:
+
+    ```text
+    OrderQuantity ÷ UsrUnitsPerCarton = Carton requirement
+    OrderQuantity ÷ UsrUnitsPerPallet = Pallet requirement
+    ```
+
+    Calculations should retain sufficient decimal precision to indicate partial cartons or pallets where applicable.
+
+    Example: an order quantity of 1,200 units for an item configured as 20 units per carton and 1,000 units per pallet would represent:
+
+    - 60 cartons
+    - 1.2 pallet equivalents
+
+    This provides users with immediate visibility of the approximate load generated by each Sales Order line.
+
+  </Accordion>
+
+  <Accordion title="Packaging data retrieval" icon="sticky-note-off">
+    When a Stock Item is selected, the system retrieves the corresponding packaging values from the Inventory Item record and exposes them through the unbound `SOLine` fields.
+
+    If the Inventory Item is changed, the displayed values and calculated load information must refresh accordingly.
+
+    Where packaging information has not been configured, the applicable fields should remain blank or zero in accordance with the agreed UI standard, and must not prevent order entry.
+
+  </Accordion>
+
+  <Accordion title="Shipping tab load summary" icon="circle-question-mark">
+    Add a **Load Summary** panel to the Sales Order Shipping tab.
+
+    The panel contains order-level unbound fields representing the consolidated load, including at minimum:
+
+    - Total Units
+    - Total Cartons
+    - Total Pallet Equivalents
+
+    Additional values such as full pallets, partial pallets, weight, or volume may be added in future enhancements if the required source data is available.
+
+  </Accordion>
+
+  <Accordion title="Calculate Load button" icon="eye">
+    Add a **Calculate Load** action / button to the Load Summary panel.
+
+    Order-level load calculations are only performed when the user presses this button. When selected, the system will:
+
+    1. Read all applicable Sales Order lines.
+    2. Retrieve the bulk configuration associated with each Inventory Item.
+    3. Calculate the carton and pallet requirements for each line.
+    4. Aggregate the calculated values.
+    5. Populate the unbound order-level Load Summary fields.
+
+    This approach avoids repeatedly performing aggregate calculations whenever the Sales Order is refreshed or individual fields are changed.
+
+  </Accordion>
+  <Accordion title="Recalculation behavior">
+    The Load Summary represents the Sales Order at the point the **Calculate Load** action was last executed.
+
+    If order quantities, inventory items, or lines are subsequently changed, the user must press **Calculate Load** again to refresh the totals.
+
+    The button-driven calculation should therefore be clearly understood as an on-demand estimate rather than a continuously maintained transaction total.
+    </Accordion>
+
+</AccordionGroup>
+
+# Technical Design
+
+Technical design for the Vendor MOQ customization: unbound field, FieldSelecting handler, data retrieval strategy, and performance considerations.
+
+<Steps>
+  <Step title="Custom fields" icon="code" stepNumber={1} titleSize="h2">
+    Extend the Inventory Item DAC with persistent custom fields:
+
+    ```csharp lines
+    #region UsrUnitsPerCarton
+    public abstract class usrUnitsPerCarton
+        : BqlDecimal.Field<usrUnitsPerCarton>
+    {
+    }
+
+    [PXDecimal(6)]
+    [PXUIField(DisplayName = "Units Per Carton", Enabled = false)]
+    public decimal? UsrUnitsPerCarton { get; set; }
+    #endregion
+    ```
+
+    Appropriate numeric data types and validation should be applied. Values must not accept negative quantities.
+
+    These fields will be exposed on the Stock Item screen in an appropriate packaging or shipping section.
+
+  </Step>
+  <Step title="SOLine Extension" icon="file-code" stepNumber={2} titleSize="h2">
+    Extend `SOLine` with unbound fields required to display the packaging configuration and calculated line load.
+
+    ```csharp SOLineExt.cs lines
+    using System;
+    using PX.Data;
+    using PX.Data.BQL;
+    using PX.Objects.PO;
+    using PX.Objects.SO;
+
+    namespace HCD.CST.SOW
+    {
+        public sealed class SOLineExt : PXCacheExtension<SOLine>
+        {
+            public static bool IsActive() => true;
+
+            #region Unbound Fields
+            // Field goes here before or after other blocks
+            #endregion
+        }
+    }
+    ```
+
+    The field does not need to be persisted to the database because it represents reference information derived from the existing Vendor MOQ configuration.<br />
+
+  </Step>
+  <Step title="SOOrder Extension" icon="square-code" stepNumber={3} titleSize="h2">
+    Extend `SOOrder` with unbound fields for the consolidated Load Summary.
+
+    Because these fields provide an on-demand estimate, the values do not need to be persisted to the `SOOrder` table unless a future requirement calls for historical load calculations to be retained.
+
+  </Step>
+  <Step title="Event Handlers" icon="database" stepNumber={4} titleSize="h2">
+    Use appropriate event handlers, including `FieldSelecting` where applicable, to retrieve and display the Stock Item packaging values through the unbound `SOLine` fields.
+
+The event handler will:
+
+1. Identify the Inventory ID of the current `SOLine`.
+2. Retrieve the relevant Inventory Item packaging configuration.
+3. Set the unbound field values.
+4. Calculate the line-level carton / pallet values where required.
+5. Return blank / null values safely where configuration does not exist.
+
+   <Note>
+     The implementation should minimize unnecessary database calls because
+     `FieldSelecting` events may execute repeatedly during grid rendering.
+   </Note>
+
+  </Step>
+  <Step title="Calculation" icon="fast-forward" stepNumber={5} titleSize="h2">
+    Create a graph extension action for **Calculate Load** on the Sales Order Entry screen.
+
+    The action iterates through the current Sales Order lines, performs the required calculations, and populates the `SOOrder` unbound summary fields.
+
+    Calculation logic should be centralized in reusable methods where practical so that line-level and order-level calculations use the same business rules.
+
+  </Step>
+</Steps>
+
+# Validation, Acceptance & Benefits
+
+Validation rules, acceptance criteria, and expected business benefits for the Bulk Load Planning customization.
+
+### Validation and error handling
+
+- Packaging configuration must be validated to prevent negative values.
+- A Stock Item without packaging configuration must remain valid for Sales Order entry.
+- Missing or incomplete packaging information must not cause an exception or prevent the Sales Order from being saved.
+- Where a load cannot be calculated because required packaging information is missing, the affected calculation must remain blank or zero rather than making assumptions about the item's packaging.
+
+
+## Acceptance criteria
+
+For the implementation to be accepted, all of the following must be true:
+
+- [ ] `UsrUnitsPerCarton`, `UsrCartonsPerPallet`, and `UsrUnitsPerPallet` are available for maintenance against Stock Items.
+- [ ] Relevant packaging values are visible for each Stock Item within the Sales Order entry grid.
+- [ ] Line-level carton and pallet requirements are calculated using the selected Inventory Item and order quantity.
+- [ ] Changing the Inventory Item or quantity updates the applicable line-level information.
+- [ ] A **Load Summary** panel is available within the Sales Order Shipping tab.
+- [ ] The Load Summary displays consolidated unit, carton, and pallet information.
+- [ ] A **Calculate Load** button is available to calculate the order-level totals on demand.
+- [ ] Order-level totals are not unnecessarily recalculated during normal screen activity.
+- [ ] Pressing **Calculate Load** refreshes the totals using the current Sales Order lines.
+- [ ] Missing packaging configuration does not prevent Sales Order processing.
+- [ ] The enhancement does not modify order quantities or automatically create shipments.
+- [ ] Existing Sales Order and Shipment processing remain unaffected.
+
+## Expected business benefits
+
+Users can assess the approximate physical size of bulk Sales Orders while the order is being entered, rather than waiting until shipment creation.
+
+Line-level visibility provides immediate feedback on the impact of individual order quantities, while the Shipping tab Load Summary provides an on-demand view of the complete order.
+
+This supports better transport and warehouse planning, reduces unnecessary shipment creation, identifies unusually large orders earlier in the process, and improves overall efficiency when processing bulk Sales Orders.
