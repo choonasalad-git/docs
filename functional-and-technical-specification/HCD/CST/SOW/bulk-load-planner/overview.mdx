@@ -1,0 +1,36 @@
+---
+title: "Overview"
+icon: "screen-users"
+description: "Give users visibility of a Sales Order's estimated physical load during order entry, without needing to create a shipment first."
+sidebarTitle: "Overview"
+---
+
+## Objective
+
+Provide users with visibility of the estimated physical load of a Sales Order during order entry, without requiring a shipment to first be created.
+
+Packaging and bulk values will be available at individual Sales Order line level, with consolidated load totals available from the Shipping tab.
+
+## Problem statement
+
+Sales Orders are currently raised without sufficient visibility of shipping and load requirements, particularly when entering bulk orders.
+
+Users may need to create a shipment before they can determine the approximate physical size of an order. This makes it difficult to assess pallet, carton, and transport requirements during initial order entry.
+
+This can result in:
+
+- Orders exceeding expected pallet or vehicle capacity.
+- Inefficient transport and warehouse planning.
+- Shipments being created solely to determine approximate load size.
+- Additional administration where orders need to be changed after shipment creation.
+- Delays in identifying unusually large or incorrectly entered order quantities.
+
+## Proposed solution
+
+Introduce packaging configuration against the Stock Item and expose the relevant bulk information directly within Sales Order entry.
+
+Each Sales Order line will display calculated packaging information based on the ordered quantity and the packaging configuration of the selected stock item.
+
+At the order level, a **Load Summary** panel will be added to the Shipping tab. This panel will provide consolidated carton, pallet, and other relevant load totals for the entire Sales Order.
+
+To avoid unnecessary processing during normal order entry, order-level totals will not continuously recalculate. A **Calculate Load** button will allow the user to explicitly request calculation of the current order's load.

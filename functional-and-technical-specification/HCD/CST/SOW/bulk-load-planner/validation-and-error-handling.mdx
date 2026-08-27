@@ -1,0 +1,38 @@
+---
+title: "Validation, Acceptance & Benefits"
+icon: "exclamation-circle"
+description: "Validation rules, acceptance criteria, and expected business benefits for the Sales Order Bulk Load Visibility customization."
+sidebarTitle: "Validation"
+---
+
+## Validation and error handling
+
+- Packaging configuration must be validated to prevent negative values.
+- A Stock Item without packaging configuration must remain valid for Sales Order entry.
+- Missing or incomplete packaging information must not cause an exception or prevent the Sales Order from being saved.
+- Where a load cannot be calculated because required packaging information is missing, the affected calculation must remain blank or zero rather than making assumptions about the item's packaging.
+
+## Acceptance criteria
+
+For the implementation to be accepted, all of the following must be true:
+
+- `UsrUnitsPerCarton`, `UsrCartonsPerPallet`, and `UsrUnitsPerPallet` are available for maintenance against Stock Items.
+- Relevant packaging values are visible for each Stock Item within the Sales Order entry grid.
+- Line-level carton and pallet requirements are calculated using the selected Inventory Item and order quantity.
+- Changing the Inventory Item or quantity updates the applicable line-level information.
+- A **Load Summary** panel is available within the Sales Order Shipping tab.
+- The Load Summary displays consolidated unit, carton, and pallet information.
+- A **Calculate Load** button is available to calculate the order-level totals on demand.
+- Order-level totals are not unnecessarily recalculated during normal screen activity.
+- Pressing **Calculate Load** refreshes the totals using the current Sales Order lines.
+- Missing packaging configuration does not prevent Sales Order processing.
+- The enhancement does not modify order quantities or automatically create shipments.
+- Existing Sales Order and Shipment processing remain unaffected.
+
+## Expected business benefits
+
+Users can assess the approximate physical size of bulk Sales Orders while the order is being entered, rather than waiting until shipment creation.
+
+Line-level visibility provides immediate feedback on the impact of individual order quantities, while the Shipping tab Load Summary provides an on-demand view of the complete order.
+
+This supports better transport and warehouse planning, reduces unnecessary shipment creation, identifies unusually large orders earlier in the process, and improves overall efficiency when processing bulk Sales Orders.

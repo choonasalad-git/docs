@@ -1,0 +1,61 @@
+---
+title: "Validation, Acceptance & Benefits"
+sidebarTitle: "Validation"
+icon: "exclamation-circle"
+description: "Validation rules, acceptance criteria, and expected business benefits for the Vendor MOQ Visibility customization."
+---
+
+## Validation and error handling
+
+The enhancement is informational and must not prevent order entry if MOQ information cannot be found. Failure to locate an MOQ should result in a blank field rather than an exception.
+
+This change does not introduce MOQ enforcement or prevent users from entering quantities below or above the MOQ. Any future requirement to validate order quantity against MOQ should be implemented separately.
+
+### Guard clauses
+
+Handle missing inputs early so the event handler exits safely without querying the database or throwing.
+
+Guard against a missing Inventory ID on the current row:
+
+```csharp
+if (e.Row?.InventoryID == null) return;
+```
+
+For PO entry, also guard against a missing vendor on the current document before attempting a vendor-specific MOQ lookup:
+
+```csharp
+if (line?.InventoryID == null) return;
+
+POOrder order = Base.Document.Current;
+
+if (order?.VendorID == null)
+    return;
+```
+
+### Behavior when MOQ is missing
+
+- The Vendor MOQ column remains blank.
+- No error, warning, or dialog is raised.
+- The user can save and process the order normally.
+
+## Acceptance criteria
+
+For the implementation to be accepted, all of the following must be true:
+
+- Vendor MOQ is visible as a column in the PO order entry grid.
+- Vendor MOQ is visible as a column in the SO order entry grid.
+- Selecting a stock item automatically displays its applicable MOQ.
+- Changing the stock item refreshes the displayed MOQ.
+- PO lines use the relevant PO vendor when determining vendor-specific MOQ.
+- SO lines use the agreed default / preferred vendor logic where vendor-specific MOQ is required.
+- The displayed field is read-only.
+- The field is unbound and does not introduce redundant transaction-level database storage.
+- A missing MOQ does not produce an application error.
+- Existing PO, SO, Stock Item, and Vendor functionality remain unaffected.
+- MOQ values shown during order entry correspond with the values maintained against the relevant stock item / vendor configuration.
+
+## Expected business benefits
+
+The enhancement allows order-entry users to verify MOQ information without leaving the PO or SO screen.
+
+This reduces screen switching, improves order-entry efficiency, and lowers the risk of incorrect quantities resulting in unnecessary packaging, repacking, warehouse handling, and labour.

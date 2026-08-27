@@ -1,0 +1,37 @@
+---
+title: "Functional Requirements"
+sidebarTitle: "Functional Requirements"
+icon: "function"
+description: "Functional requirements for surfacing Vendor MOQ in Purchase Order and Sales Order entry grids, including read-only behavior and vendor context."
+---
+
+<Steps>
+  <Step title="PO order entry">
+    A **Vendor MOQ** field must be available in the PO order entry detail grid.
+
+    When an Inventory / Stock Item is selected or displayed on an order line, the system must retrieve and display the MOQ applicable to that item.
+  </Step>
+  <Step title="SO order entry">
+    A **Vendor MOQ** field must be available in the SO order entry detail grid.
+
+    When an Inventory / Stock Item is selected or displayed on an order line, the system must retrieve and display the relevant Vendor MOQ.
+  </Step>
+  <Step title="Read-only display">
+    The Vendor MOQ field must be read-only. Users must not be able to update the underlying MOQ from the PO or SO entry screen.
+
+    Any MOQ maintenance must continue to occur through the existing Stock Item / Vendor configuration.
+  </Step>
+  <Step title="Item changes">
+    If the stock item on an order line is changed, the Vendor MOQ field must refresh and display the MOQ associated with the newly selected item.
+
+    If the item is removed, the Vendor MOQ field must be cleared.
+  </Step>
+  <Step title="Missing MOQ">
+    Where no Vendor MOQ has been configured for the selected stock item, the field should display blank or the system-standard equivalent rather than generating an error.
+  </Step>
+  <Step title="Vendor context">
+    Where MOQ values are vendor-specific, the displayed value should correspond to the vendor relevant to the order where possible. For PO entry, this is the vendor selected on the Purchase Order.
+
+    For SO entry, where no direct vendor exists on the sales order, the system should use the defined business rule for determining the applicable vendor, such as the item's preferred / default vendor.
+  </Step>
+</Steps>
