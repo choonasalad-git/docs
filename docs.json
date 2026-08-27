@@ -108,5 +108,35 @@
   },
   "fonts": {
     "family": "Roboto"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    }
+  },
+  "interaction": {
+    "drilldown": true
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "assistant",
+      "view",
+      "download-pdf",
+      "download-spec",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "grok",
+      "aistudio",
+      "devin",
+      "windsurf",
+      "mcp",
+      "add-mcp",
+      "cursor",
+      "vscode",
+      "devin-mcp"
+    ],
+    "display": "header"
   }
 }
