@@ -1,0 +1,295 @@
+---
+title: "MYOB Acumatica Customization: Vendor MOQ Visibility in Purchase and Sales Order Entry"
+sidebarTitle: "document-control"
+icon: "device-desktop-analytics"
+description: "Functional & Technical Specification"
+---
+
+<Badge color="blue" size="lg" shape="pill" icon="arrow-up-1-0">Version 1.0.0</Badge>    <Badge color="yellow" size="lg" shape="pill" icon="app-window">Acumatica</Badge>    <Badge color="green" size="lg" shape="pill" icon="dock">Functional & Technical</Badge>
+
+<Card title="Vendor MOQ Visibility in Purchase and Sales Order Entry" type="info">
+  MYOB Acumatica Customization
+
+  Minimum Order Quantity - v25.201.0213.1
+</Card>
+
+## Document purpose
+
+This document defines:
+
+- Purpose and problem
+- Proposed solution and implementation strategy
+- Functional, technical, and data requirements
+- Integrations and system behavior
+- Key design considerations
+
+<Note>
+  It also serves as a shared reference, so stakeholders have a common understanding of the solution being delivered.
+</Note>
+
+## Objective
+
+Provide users with immediate visibility of the Vendor Minimum Order Quantity (MOQ) during Purchase Order (PO) and Sales Order (SO) entry, removing the need to navigate to the Stock Item screen.
+
+<Tabs>
+  <Tab title="Problem Statement" icon="message-circle-question-mark">
+    Vendor MOQ is currently visible on the Stock Item screen but is not readily available within the PO and SO order entry grids.
+
+    During order entry, users must leave or switch away from the order screen to check the MOQ for individual stock items. This becomes inefficient when processing large orders in a fast-paced environment and increases the likelihood of incorrect order quantities being entered.
+
+    Incorrect quantities can result in orders being created outside the appropriate MOQ or packaging quantity, causing unnecessary repacking, additional warehouse handling, and excess labour costs.
+
+    <Frame caption="Vendors tab on the stock item entry screen">
+      ![Stock Item All Fruits Vendor](/images/StockItemAllFruitsVendor.png "Stock Item All Fruits Vendor")
+    </Frame>
+  </Tab>
+  <Tab title="Proposed Solution" icon="check">
+    Add a **Vendor MOQ** field to both the **Purchase Order** and **Sales Order** entry grids.
+
+    The field will:
+
+    - Be displayed against each applicable order line.
+    - Automatically retrieve the relevant Vendor MOQ when a stock item is selected.
+    - Be informational / read-only and not directly editable by the user.
+    - Use an **unbound field** so no additional value is permanently stored against the PO or SO transaction.
+    - Display the current / true MOQ value from the relevant stock item / vendor configuration.
+
+    <Frame caption="Sales order entry screen with MOQ">
+      ![SO Screen](/images/SOScreen.png "SO Screen")
+    </Frame>
+  </Tab>
+</Tabs>
+
+# Functional Requirements
+
+<AccordionGroup>
+  <Accordion title="PO order entry" icon="truck">
+    A **Vendor MOQ** field must be available in the PO order entry detail grid.
+
+    When an Inventory / Stock Item is selected or displayed on an order line, the system must retrieve and display the MOQ applicable to that item.
+  </Accordion>
+
+  <Accordion title="SO order entry" icon="list-ordered">
+    A **Vendor MOQ** field must be available in the SO order entry detail grid.
+
+    When an Inventory / Stock Item is selected or displayed on an order line, the system must retrieve and display the relevant Vendor MOQ.
+  </Accordion>
+
+  <Accordion title="Read-only display" icon="screen-share-off">
+    The Vendor MOQ field must be read-only. Users must not be able to update the underlying MOQ from the PO or SO entry screen.
+
+    Any MOQ maintenance must continue to occur through the existing Stock Item / Vendor configuration.
+  </Accordion>
+
+  <Accordion title="Item changes" icon="sticky-note-off">
+    If the stock item on an order line is changed, the Vendor MOQ field must refresh and display the MOQ associated with the newly selected item.
+
+    If the item is removed, the Vendor MOQ field must be cleared.
+  </Accordion>
+
+  <Accordion title="Missing MOQ" icon="circle-question-mark">
+    Where no Vendor MOQ has been configured for the selected stock item, the field should display blank or the system-standard equivalent rather than generating an error.
+  </Accordion>
+
+  <Accordion title="Vendor context" icon="eye">
+    Where MOQ values are vendor-specific, the displayed value should correspond to the vendor relevant to the order where possible. For PO entry, this is the vendor selected on the Purchase Order.
+
+    For SO entry, where no direct vendor exists on the sales order, the system should use the defined business rule for determining the applicable vendor, such as the item's preferred / default vendor.
+  </Accordion>
+</AccordionGroup>
+
+# Technical Design
+
+Technical design for the Vendor MOQ customization: unbound field, FieldSelecting handler, data retrieval strategy, and performance considerations.
+
+<Steps>
+  <Step title="Unbound field" icon="code" stepNumber={1} titleSize="h2">
+    Create an unbound decimal / integer field with the following identifier
+
+    ```csharp lines
+    #region UsrVendorMOQ
+    public abstract class usrVendorMOQ
+        : BqlDecimal.Field<usrVendorMOQ>
+    {
+    }
+    
+    [PXDecimal(6)]
+    [PXUIField(DisplayName = "Minimum Order Qty", Enabled = false)]
+    public decimal? UsrVendorMOQ { get; set; }
+    #endregion
+    ```
+  </Step>
+  <Step title="DAC Extensions" icon="file-code" stepNumber={2} titleSize="h2">
+    The field is added to the relevant PO and SO order-line DAC extensions and exposed on the corresponding order entry grids.
+
+    ```csharp SOLineExt.cs lines
+    using System;
+    using PX.Data;
+    using PX.Data.BQL;
+    using PX.Objects.PO;
+    using PX.Objects.SO;
+    
+    namespace HCD.CST.SOW
+    {
+        public sealed class SOLineExt : PXCacheExtension<SOLine>
+        {
+            public static bool IsActive() => true;
+    
+            #region Unbound Fields
+            // Field goes here before or after other blocks
+            #endregion
+        }
+    }
+    ```
+
+    The field does not need to be persisted to the database because it represents reference information derived from the existing Vendor MOQ configuration.<br />
+  </Step>
+  <Step title="FieldSelecting event" icon="square-code" stepNumber={3} titleSize="h2">
+    Implement an event handler for the unbound field using the applicable `FieldSelecting` event.
+
+    The event handler will:
+
+    - Identify the Inventory ID for the current order line.
+    - Identify the applicable Vendor ID where required.
+    - Retrieve the current Vendor MOQ from the appropriate inventory / vendor record.
+    - Assign the retrieved value to the unbound `UsrVendorMOQ` field for display.
+    - Return blank / null when no applicable MOQ exists.
+
+    Conceptually:
+
+    ```text
+    Order Line → Inventory ID + Vendor Context → Vendor Inventory Record → MOQ → UsrVendorMOQ (unbound)
+    ```
+
+    ```csharp SOOrderEntryExt.cs lines
+    #region FieldSelecting
+    protected virtual void _(
+        Events.FieldSelecting<SOLine, SOLineExt.usrVendorMOQ> e
+    )
+    {
+        if (e.Row?.InventoryID == null)
+            return;
+    
+        POVendorInventory vendorInventory = SelectFrom<POVendorInventory>
+            .Where<
+                POVendorInventory.inventoryID
+                    .IsEqual<@P.AsInt>
+                .And<POVendorInventory.subItemID
+                    .IsEqual<@P.AsInt>>>
+            .View
+            .Select(
+                Base,
+                e.Row.InventoryID,
+                e.Row.SubItemID
+            )
+            .TopFirst;
+    
+        e.ReturnValue = vendorInventory?.MinOrdQty;
+    }
+    #endregion
+    ```
+  </Step>
+  <Step title="Data retrieval" icon="database" stepNumber={4} titleSize="h2">
+    The implementation must use the existing MOQ source of truth rather than duplicating MOQ data.
+
+    The lookup should use the appropriate inventory / vendor relationship and, where applicable, consider:
+
+    - Inventory ID
+    - Vendor ID
+    - Vendor Location
+    - Purchase Unit / UOM
+    - Active / default vendor configuration
+
+    ```csharp
+
+    /// BQL Query to match vendor with stock item
+        POVendorInventory vendorInventory = SelectFrom<POVendorInventory>
+                .Where<POVendorInventory.inventoryID
+                        .IsEqual<@P.AsInt>
+                    .And<POVendorInventory.subItemID
+                        .IsEqual<@P.AsInt>>>
+                .View
+                .Select(
+                    Base,
+                    e.Row.InventoryID,
+                    e.Row.SubItemID
+                )
+                .TopFirst;
+     
+    ```
+
+    <Note>
+      The exact lookup criteria should match the existing business rules used by the Stock Item screen to determine Vendor MOQ.
+    </Note>
+  </Step>
+  <Step title="Performance" icon="fast-forward" stepNumber={5} titleSize="h2">
+    Because `FieldSelecting` may execute frequently while grids are rendered or refreshed, the implementation should minimize unnecessary database queries.
+
+    Where possible:
+
+    - Use existing graph / cache records before querying the database.
+    - Use parameterised / select queries against indexed fields.
+    - Avoid repeated retrieval of the same Inventory / Vendor combination during a single screen operation.
+  </Step>
+</Steps>
+
+# Validation, Acceptance & Benefits
+
+Validation rules, acceptance criteria, and expected business benefits for the Vendor MOQ Visibility customization.
+
+### Validation and error handling
+
+The enhancement is informational and must not prevent order entry if MOQ information cannot be found. Failure to locate an MOQ should result in a blank field rather than an exception.
+
+This change does not introduce MOQ enforcement or prevent users from entering quantities below or above the MOQ. Any future requirement to validate order quantity against MOQ should be implemented separately.
+
+### Guard clauses
+
+Handle missing inputs early so the event handler exits safely without querying the database or throwing.
+
+Guard against a missing Inventory ID on the current row:
+
+```csharp
+if (e.Row?.InventoryID == null) return;
+```
+
+For PO entry, also guard against a missing vendor on the current document before attempting a vendor-specific MOQ lookup:
+
+```csharp
+if (line?.InventoryID == null) return;
+
+POOrder order = Base.Document.Current;
+
+if (order?.VendorID == null)
+    return;
+```
+
+### Behavior when MOQ is missing
+
+- The Vendor MOQ column remains blank.
+- No error, warning, or dialog is raised.
+- The user can save and process the order normally.
+
+## Acceptance criteria
+
+For the implementation to be accepted, all of the following must be true:
+
+- [ ] Vendor MOQ is visible as a column in the PO order entry grid.
+
+- [ ] Vendor MOQ is visible as a column in the SO order entry grid.
+
+- [ ] Selecting a stock item automatically displays its applicable MOQ.
+- [ ] Changing the stock item refreshes the displayed MOQ.
+- [ ] PO lines use the relevant PO vendor when determining vendor-specific MOQ.
+- [ ] SO lines use the agreed default / preferred vendor logic where vendor-specific MOQ is required.
+- [ ] The displayed field is read-only.
+- [ ] The field is unbound and does not introduce redundant transaction-level database storage.
+- [ ] A missing MOQ does not produce an application error.
+- [ ] Existing PO, SO, Stock Item, and Vendor functionality remain unaffected.
+- [ ] MOQ values shown during order entry correspond with the values maintained against the relevant stock item / vendor configuration.
+
+## Expected business benefits
+
+The enhancement allows order-entry users to verify MOQ information without leaving the PO or SO screen.
+
+This reduces screen switching, improves order-entry efficiency, and lowers the risk of incorrect quantities resulting in unnecessary packaging, repacking, warehouse handling, and labour.
