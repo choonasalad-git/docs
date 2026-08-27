@@ -3,9 +3,9 @@
   "theme": "almond",
   "name": "Acumatica Customization Guide",
   "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
+    "primary": "#2499f0",
+    "light": "#bbedec",
+    "dark": "#1f2b4e"
   },
   "favicon": "/favicon.svg",
   "navigation": {
