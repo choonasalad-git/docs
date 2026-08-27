@@ -146,7 +146,7 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
 
     The field does not need to be persisted to the database because it represents reference information derived from the existing Vendor MOQ configuration.<br />
   </Step>
-  <Step title="FieldSelecting event" icon="square-code" stepNumber={3} titleSize="h2">
+  <Step title="FieldSelecting event" icon="calendar-event" stepNumber={3} titleSize="h2">
     Implement an event handler for the unbound field using the applicable `FieldSelecting` event.
 
     The event handler will:
@@ -224,7 +224,7 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
       The exact lookup criteria should match the existing business rules used by the Stock Item screen to determine Vendor MOQ.
     </Note>
   </Step>
-  <Step title="Performance" icon="fast-forward" stepNumber={5} titleSize="h2">
+  <Step title="Performance" icon="run" stepNumber={5} titleSize="h2">
     Because `FieldSelecting` may execute frequently while grids are rendered or refreshed, the implementation should minimize unnecessary database queries.
 
     Where possible:
@@ -235,11 +235,9 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
   </Step>
 </Steps>
 
-# Validation, Acceptance & Benefits
+# Validation & Error Handling
 
-Validation rules, acceptance criteria, and expected business benefits for the Vendor MOQ Visibility customization.
-
-### Validation and error handling
+Validation rules and guards for the Minimum Order Quantity customization.
 
 The enhancement is informational and must not prevent order entry if MOQ information cannot be found. Failure to locate an MOQ should result in a blank field rather than an exception.
 
@@ -272,7 +270,7 @@ if (order?.VendorID == null)
 - No error, warning, or dialog is raised.
 - The user can save and process the order normally.
 
-## Acceptance criteria
+# Acceptance criteria
 
 For the implementation to be accepted, all of the following must be true:
 
@@ -288,7 +286,7 @@ For the implementation to be accepted, all of the following must be true:
 - [ ] Existing PO, SO, Stock Item, and Vendor functionality remain unaffected.
 - [ ] MOQ values shown during order entry correspond with the values maintained against the relevant stock item / vendor configuration.
 
-## Expected business benefits
+# Expected business benefits
 
 The enhancement allows order-entry users to verify MOQ information without leaving the PO or SO screen.
 

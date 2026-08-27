@@ -8,7 +8,7 @@ keywords: ["Acumatica", "MYOB", "HC Distributors", "C#"]
 mode: "default"
 ---
 
-<Badge color="blue" size="lg" shape="pill">Version 1.0.0</Badge>    <Badge color="green" size="lg" shape="pill">Acumatica</Badge>    <Badge color="yellow" size="lg" shape="pill">Functional & Technical</Badge>    
+<Badge color="blue" size="lg" shape="pill">Version 1.0.0</Badge>    <Badge color="green" size="lg" shape="pill">Acumatica</Badge>    <Badge color="yellow" size="lg" shape="pill">Functional & Technical</Badge>
 
 <Card title="Sales Order Bulk Load Visibility and Calculation" type="info">
   MYOB Acumatica Customization
@@ -237,7 +237,7 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
 
     The field does not need to be persisted to the database because it represents reference information derived from the existing Vendor MOQ configuration.<br />
   </Step>
-  <Step title="SOOrder Extension" icon="square-code" stepNumber={3} titleSize="h2">
+  <Step title="SOOrder Extension" icon="reorder" stepNumber={3} titleSize="h2">
     Extend `SOOrder` with unbound fields for the consolidated Load Summary.
 
     ```csharp
@@ -285,7 +285,7 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
       Because these fields provide an on-demand estimate, the values do not need to be persisted to the `SOOrder` table unless a future requirement calls for historical load calculations to be retained.
     </Info>
   </Step>
-  <Step title="Event Handlers" icon="database" stepNumber={4} titleSize="h2">
+  <Step title="Event Handlers" icon="calendar-event" stepNumber={4} titleSize="h2">
     Use appropriate event handlers, including `FieldSelecting` where applicable, to retrieve and display the Stock Item packaging values through the unbound `SOLine` fields.
 
     The event handler will:
@@ -299,7 +299,7 @@ Technical design for the Vendor MOQ customization: unbound field, FieldSelecting
          The implementation should minimize unnecessary database calls because `FieldSelecting` events may execute repeatedly during grid rendering.
        </Note>
   </Step>
-  <Step title="Calculation" icon="fast-forward" stepNumber={5} titleSize="h2">
+  <Step title="Calculation" icon="calculator" stepNumber={5} titleSize="h2">
     Create a graph extension action for **Calculate Load** on the Sales Order Entry screen.
 
     The action iterates through the current Sales Order lines, performs the required calculations, and populates the `SOOrder` unbound summary fields.
