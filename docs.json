@@ -1,11 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
-<<<<<<< HEAD
   "name": "Acumatica Customization Guide",
-=======
-  "name": "MYOB Acumatica Customizations",
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   "colors": {
     "primary": "#ef7025",
     "light": "#eec9bc",
@@ -85,33 +81,20 @@
   "navbar": {
     "links": [
       {
-<<<<<<< HEAD
         "label": "Community",
         "href": "https://community.acumatica.com/"
-=======
-        "label": "Support",
-        "href": "mailto:support@example.com"
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
       }
     ],
     "primary": {
       "type": "button",
-<<<<<<< HEAD
       "label": "Acumatica",
       "href": "https://www.acumatica.com/"
-=======
-      "label": "Get Started",
-      "href": "/introduction"
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
     }
   },
   "footer": {
-<<<<<<< HEAD
     "socials": {
       "linkedin": "https://www.linkedin.com/company/acumatica"
     }
-=======
-    "socials": {}
   },
   "background": {
     "decoration": "gradient"
@@ -125,6 +108,5 @@
   "banner": {
     "content": "7jtyr",
     "dismissible": true
->>>>>>> 2b0edb975587d301c259a33e7d22cd146a0e4d5d
   }
 }
