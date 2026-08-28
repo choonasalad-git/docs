@@ -1,0 +1,145 @@
+---
+title: "Pickface Replenishment Workflow in Acumatica"
+sidebarTitle: "Replenishment"
+description: "Introduce a system-driven replenishment workflow so pickfaces stay stocked, pallets stop getting mixed, and staff know exactly what to move and when."
+---
+
+<Warning>
+  There is no replenishment workflow today. Pallets end up as a mixed bunch of SKUs that may also exist elsewhere in the warehouse, and there is no practical way to tell which pickface locations need topping up. Checking every receipt manually is too tedious to sustain.
+</Warning>
+
+## The Problem
+
+Replenishment is the bridge between bulk/reserve storage and the pickface. Without a system-driven workflow, that bridge is invisible: no one knows what needs to move from reserve to pickface until a picker discovers an empty bin mid-order.
+
+<CardGroup cols={2}>
+  <Card title="Mixed Pallets" icon="boxes">
+    Pallets contain a mixed bunch of SKUs, some of which also live in other locations across the warehouse.
+  </Card>
+
+  <Card title="No Replenishment Signal" icon="bell-off">
+    There is no trigger telling anyone that a pickface bin is low or empty.
+  </Card>
+
+  <Card title="Empty Pickfaces Mid-Pick" icon="package-x">
+    Pickers only find out a pickface is empty when they try to pick from it.
+  </Card>
+
+  <Card title="Duplicate Locations" icon="copy">
+    The same SKU sits in multiple places with no clear rule on which to draw from first.
+  </Card>
+
+  <Card title="Manual Receipt Checks" icon="clipboard-list">
+    Checking each receipt by hand to figure out what to put where is too slow to keep up with volume.
+  </Card>
+
+  <Card title="Wasted Travel" icon="route">
+    Staff walk long paths chasing stock instead of following an optimised replenishment route.
+  </Card>
+</CardGroup>
+
+### Why this compounds
+
+<Steps>
+  <Step title="No pickface min/max">
+    Pickface bins have no defined minimum or maximum quantity, so the system has nothing to compare against.
+  </Step>
+  <Step title="No location strategy">
+    There is no rule for where a SKU lives (primary pickface vs reserve), so stock lands wherever there is space.
+  </Step>
+  <Step title="No replenishment task list">
+    Even when everyone agrees a SKU needs moving, there is no queue of replenishment tasks to work through.
+  </Step>
+  <Step title="Pickers absorb the pain">
+    The cost of the missing workflow shows up as delays, mis-picks, and short-shipped orders at the pick stage.
+  </Step>
+</Steps>
+
+## The Solution
+
+Introduce a proper **replenishment workflow inside Acumatica**: define pickface locations, set min/max quantities, generate replenishment tasks automatically, and give warehouse staff a screen that tells them exactly what to move and where from.
+
+<CardGroup cols={2}>
+  <Card title="Primary Pickface Locations" icon="map-pin">
+    Every SKU has a designated primary pickface location, separate from reserve/bulk storage.
+  </Card>
+
+  <Card title="Min/Max Thresholds" icon="sliders">
+    Each pickface bin has a minimum and maximum quantity that drives replenishment triggers.
+  </Card>
+
+  <Card title="Automatic Replenishment Tasks" icon="list-checks">
+    When a pickface drops below its minimum, Acumatica creates a replenishment task automatically.
+  </Card>
+
+  <Card title="Guided Replenishment Screen" icon="scan">
+    Warehouse staff work from a prioritised task list with scanner-driven pick-from and put-to steps.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Define location types">
+    Classify every warehouse location as pickface, reserve, staging, or quarantine. Enforce the classification in Acumatica.
+  </Step>
+  <Step title="Assign primary pickfaces">
+    Give every active SKU a single primary pickface location. Reserve stock lives in bulk locations only.
+  </Step>
+  <Step title="Set min/max per SKU">
+    Configure minimum and maximum quantities on each pickface bin based on velocity and pack size.
+  </Step>
+  <Step title="Trigger replenishment tasks">
+    Extend the inventory graph to create a replenishment task the moment a pickface drops to or below its minimum.
+  </Step>
+  <Step title="Prioritise the task queue">
+    Rank replenishment tasks by urgency (already empty, needed for open orders today, low but not urgent).
+  </Step>
+  <Step title="Build a replenishment screen">
+    Deliver a scanner-first screen that shows staff the next task: source location, SKU, quantity, destination pickface.
+  </Step>
+  <Step title="Close the loop on receipts">
+    On receipt, direct putaway to the correct pickface first (up to its max), then to reserve, so incoming stock automatically refills pickfaces.
+  </Step>
+  <Step title="Report and tune">
+    Monitor stockout events, replenishment cycle time, and pickface hit rate. Adjust min/max as demand shifts.
+  </Step>
+</Steps>
+
+<Note>
+  Replenishment is not the same as putaway. Putaway handles new receipts. Replenishment moves stock from reserve to pickface based on demand signals from the pick side.
+</Note>
+
+## Replenishment Signals
+
+| Trigger | What It Means | System Action |
+| --- | --- | --- |
+| Pickface at or below minimum | Bin is running low | Create a standard replenishment task |
+| Pickface empty | Bin is out | Create a high-priority replenishment task |
+| Open order requires more than on-hand pickface | Demand exceeds pickface stock | Create an urgent replenishment task |
+| Receipt arrives for a SKU below max | Incoming stock can top up the pickface | Direct putaway to pickface first |
+| Reserve empty for a SKU | No stock available to replenish | Flag as replenishment blocker for purchasing |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Fewer Stockouts at Pick" icon="circle-check">
+    Pickfaces stay stocked, so pickers stop hitting empty bins mid-order.
+  </Card>
+
+  <Card title="Clean Pallets" icon="boxes">
+    Reserve pallets stop being a mixed bunch because location strategy is enforced.
+  </Card>
+
+  <Card title="Faster Picks" icon="rocket">
+    Pickers travel less because SKUs consistently live where they are expected to be.
+  </Card>
+
+  <Card title="No More Manual Checks" icon="user-check">
+    Replenishment needs surface automatically instead of being discovered by scanning receipts by hand.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Pilot the workflow on the top 50 SKUs by pick frequency. Those SKUs cause most of the empty-pickface events, and fixing them first delivers the biggest visible win before rolling out warehouse-wide.
+</Tip>

@@ -1,0 +1,140 @@
+---
+title: "Eliminating Reserve Pallet Churn During Batch Picking"
+sidebarTitle: "Batch Pick Churn"
+description: "Stop pulling the same reserve pallet down and putting it back up multiple times per shift by consolidating SKU demand across batches and fixing pickface replenishment."
+---
+
+<Warning>
+  Batch picking is causing repeated reserve churn. When a SKU is needed in one batch and again shortly after in another, and it is not in the pickface because there is no replenishment workflow, the same reserve pallet gets brought down by the forklift, put back up, brought down again, and put back up again. This is extremely inefficient and burns forklift capacity that should be moving other stock.
+</Warning>
+
+## The Problem
+
+Two workflow gaps compound into a highly visible waste: batch picking does not consolidate SKU demand across batches, and there is no replenishment workflow keeping the pickface stocked. The forklift ends up as the shock absorber for both.
+
+<CardGroup cols={2}>
+  <Card title="Duplicate Pallet Trips" icon="arrows-up-down">
+    The same reserve pallet is pulled down and put back up multiple times per shift for the same SKU.
+  </Card>
+
+  <Card title="No Cross-Batch Consolidation" icon="layers">
+    Each batch is planned in isolation, so shared SKUs across batches are not combined into a single pull.
+  </Card>
+
+  <Card title="Empty Pickface" icon="package-x">
+    Without replenishment, high-velocity SKUs are not sitting in the pickface where batch picks expect them.
+  </Card>
+
+  <Card title="Forklift as Band-Aid" icon="truck">
+    The forklift becomes the workaround for a missing replenishment process, driving unnecessary trips.
+  </Card>
+
+  <Card title="Blocked Aisles" icon="alert-triangle">
+    Repeated pallet drops in the same location block other pickers and forklifts.
+  </Card>
+
+  <Card title="Damage and Safety Risk" icon="shield-alert">
+    Every extra pallet cycle raises the risk of damage to product, racking, and people.
+  </Card>
+</CardGroup>
+
+### Why this compounds
+
+<Steps>
+  <Step title="Batches are planned in isolation">
+    Batch A and Batch B are released without checking that both need the same SKU.
+  </Step>
+  <Step title="Pickface is empty for that SKU">
+    Because there is no replenishment workflow, the pickface is not backfilled between batches.
+  </Step>
+  <Step title="Forklift pulls the reserve pallet">
+    Batch A triggers a reserve pull. The pallet comes down, the pick is taken, the pallet goes back up.
+  </Step>
+  <Step title="Batch B needs it again">
+    A short time later, Batch B requires the same SKU. Because the pallet was returned to reserve, the whole cycle repeats.
+  </Step>
+  <Step title="Repeat, repeat, repeat">
+    On popular SKUs this pattern can happen several times a day for the same pallet.
+  </Step>
+</Steps>
+
+## The Solution
+
+Fix this from two directions at the same time: **consolidate demand across batches** so a SKU is only pulled once, and **replenish the pickface** so batches draw from the pickface instead of reserve at all.
+
+<CardGroup cols={2}>
+  <Card title="Cross-Batch Wave Planning" icon="waveform">
+    Group batches into a wave and pool SKU demand across the wave before releasing pick tasks.
+  </Card>
+
+  <Card title="Pickface Replenishment" icon="arrow-down-to-line">
+    A working replenishment workflow keeps high-velocity SKUs in the pickface (see the Replenishment improvement).
+  </Card>
+
+  <Card title="Reserve-Pull Consolidation" icon="layers">
+    When a reserve pull is needed, take enough to satisfy all near-term demand, not just one batch.
+  </Card>
+
+  <Card title="Forklift Task Queue" icon="list-checks">
+    A prioritised forklift task list replaces ad-hoc pallet trips triggered by whichever picker hit the wall first.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Introduce wave planning">
+    Group multiple batches into a wave (for example, a 1 to 2 hour window) and calculate total demand per SKU across the wave before releasing tasks.
+  </Step>
+  <Step title="Consolidate reserve pulls">
+    When any SKU in the wave requires a reserve pull, pull enough for the entire wave, not just the triggering batch.
+  </Step>
+  <Step title="Land pulled stock in the pickface">
+    Direct reserve pulls into the pickface first (up to its max), then send the rest to a staging or return-to-reserve location only if needed.
+  </Step>
+  <Step title="Wire up replenishment triggers">
+    Use the replenishment workflow to pre-emptively top up pickfaces for SKUs the next wave will need, based on the release plan.
+  </Step>
+  <Step title="Create a forklift task queue">
+    Build a screen listing prioritised forklift tasks (reserve pulls, replenishments, putaways) so the forklift is scheduled, not reactive.
+  </Step>
+  <Step title="Report on pallet churn">
+    Track how many times each pallet is touched per day. This is a direct measure of the waste and the improvement.
+  </Step>
+</Steps>
+
+<Note>
+  This improvement is tightly coupled to the [Replenishment](/improvement/workflow/replenishment) workflow. Wave planning reduces duplicate pulls; replenishment removes the need for most reserve pulls in the first place. Both together are what eliminate the churn.
+</Note>
+
+## Batch Planning Comparison
+
+| Approach | Behaviour on Shared SKUs | Reserve Churn |
+| --- | --- | --- |
+| Independent batches (current) | Each batch pulls what it needs, when it hits the wall | High: same pallet moves multiple times |
+| Wave planning with pooled demand | Wave calculates total SKU demand and pulls once | Low: single pull covers the wave |
+| Wave planning \+ pickface replenishment | Replenishment keeps pickface stocked; reserve rarely touched | Minimal: forklift trips only for genuine top-ups |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Fewer Forklift Trips" icon="truck">
+    Each reserve pallet is pulled once per wave instead of once per batch.
+  </Card>
+
+  <Card title="Faster Batches" icon="rocket">
+    Batches stop stalling while a forklift retrieves the same pallet for the third time that shift.
+  </Card>
+
+  <Card title="Clearer Aisles" icon="route">
+    Less pallet traffic means less aisle congestion and fewer blocked pick paths.
+  </Card>
+
+  <Card title="Lower Damage Risk" icon="shield-check">
+    Fewer pallet cycles mean fewer opportunities for product, rack, or person damage.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Start by pooling SKU demand across concurrent batches, even before introducing full wave planning. Just consolidating reserve pulls for SKUs shared by open batches removes a large share of the visible churn immediately.
+</Tip>

@@ -1,0 +1,379 @@
+---
+title: "Exposing Inventory Cross-Reference Barcodes to Crossfire"
+sidebarTitle: "Crossfire Barcode Access"
+description: "The Acumatica endpoint exposes the Alternate ID field but not its value. A small endpoint projection unblocks Crossfire without changing the data model."
+---
+
+<Warning>
+  Crossfire has reported that "Acumatica does not expose the Alternate ID field." That framing is not accurate. The endpoint does expose the field. It does not expose the value out of the box, because the values live on a child record (`INItemXRef`) that must be surfaced through an endpoint projection. This is a small, standard piece of Acumatica endpoint work, not a platform limitation.
+</Warning>
+
+## The Problem
+
+Barcodes, GTINs, vendor part numbers, and customer part numbers in Acumatica are stored on the **Inventory Cross-Reference** tab of the Stock Item screen. They are child records of the item, held in the `INItemXRef` table, differentiated by `AlternateType` (for example `BARCODE`, `GLOBAL`, `CPN`, `VPN`).
+
+<CardGroup cols={2}>
+  <Card title="Field Is Exposed" icon="circle-check">
+    The Alternate ID field exists on the Stock Item entity in the contract-based API.
+  </Card>
+
+  <Card title="Values Are Not, By Default" icon="circle-x">
+    The default Stock Item endpoint does not include the child `CrossReference` collection where the actual barcode values live.
+  </Card>
+
+  <Card title="Fix Is a Projection" icon="wrench">
+    Extending the endpoint to project the `CrossReference` detail into the Stock Item response is standard Acumatica work.
+  </Card>
+
+  <Card title="Not a Platform Limitation" icon="ban">
+    This is not a case of "Acumatica cannot do this." It is a case of "the endpoint has not been extended yet."
+  </Card>
+</CardGroup>
+
+### Why the framing matters
+
+<Steps>
+  <Step title="Wrong framing = wrong owner">
+    If Crossfire reports "Acumatica does not expose the field," the assumption becomes that Acumatica is blocked and cannot help.
+  </Step>
+  <Step title="Right framing = clear action">
+    "The endpoint needs a projection to include the cross-reference values" makes it obvious that the fix is a small piece of Acumatica customisation.
+  </Step>
+  <Step title="Missed action = missed integration">
+    Left unresolved, barcodes/GTINs never reach Crossfire, and every downstream flow that depends on them (ASN matching, marketplace item mapping, scan-based receipting) is compromised.
+  </Step>
+</Steps>
+
+## The Solution
+
+Extend Acumatica's contract-based web services endpoint so the Stock Item response includes the required `CrossReference` values, filtered to the alternate types Crossfire needs (typically `BARCODE` and `GLOBAL`).
+
+<CardGroup cols={2}>
+  <Card title="Extend the Endpoint" icon="code">
+    Add a `CrossReference` detail collection to the Stock Item entity in a new endpoint extension.
+  </Card>
+
+  <Card title="Project the Value" icon="filter">
+    Expose `AlternateID`, `AlternateType`, and `Description` on the projected detail.
+  </Card>
+
+  <Card title="Filter by Type" icon="tag">
+    Provide filtered views (for example `Barcodes`, `GTINs`) so Crossfire consumes only what it needs.
+  </Card>
+
+  <Card title="Version Cleanly" icon="git-branch">
+    Publish as a new endpoint version so existing consumers are not disturbed.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Confirm Crossfire's ask">
+    Have Crossfire confirm they need Stock Item plus `CrossReference` values, and list the `AlternateType` codes they need (usually `BARCODE`, sometimes `GLOBAL`, `CPN`, `VPN`).
+  </Step>
+  <Step title="Extend the web services endpoint">
+    In Acumatica, extend the default endpoint (or clone to a new version). Add a `CrossReference` detail to the `StockItem` entity mapped to the `CrossReferences` view on `InventoryItemMaint`.
+  </Step>
+  <Step title="Expose the right fields">
+    On the detail, expose at minimum `AlternateType`, `AlternateID`, and `Description`. Add `VendorID`/`BAccountID` if vendor part numbers are needed.
+  </Step>
+  <Step title="Add filtered variants (optional)">
+    If Crossfire only wants barcodes, expose a filtered detail (for example a `Barcodes` collection restricted to `AlternateType = 'BARCODE'`) so their mapping stays simple.
+  </Step>
+  <Step title="Publish and share the contract">
+    Publish the new endpoint version. Share the WSDL/OpenAPI-equivalent contract and a sample response with Crossfire.
+  </Step>
+  <Step title="Regression test existing integrations">
+    Confirm existing consumers on the previous endpoint version are unaffected.
+  </Step>
+  <Step title="Document ownership">
+    Record who owns the endpoint extension (Acumatica side) versus who owns the mapping (Crossfire side) so future changes have a clear owner.
+  </Step>
+</Steps>
+
+<Note>
+  This is a well-understood pattern in Acumatica. Endpoint extensions and projections exist precisely so that integration partners can consume the fields they need without changing the underlying data model.
+</Note>
+
+## Correcting the Language
+
+Language matters when scoping who does what. Use the accurate framing:
+
+| Inaccurate | Accurate |
+| --- | --- |
+| "Acumatica does not expose the Alternate ID field." | "The field is exposed on the entity. The value lives on a child cross-reference record that must be projected into the endpoint response." |
+| "The ERP is blocking us." | "The endpoint needs a projection extension to surface the cross-reference values." |
+| "This is a platform limitation." | "This is a standard Acumatica endpoint customisation, a few hours of work." |
+| "Crossfire cannot integrate barcodes." | "Crossfire can integrate barcodes once the endpoint projection is published." |
+
+## Why This Should Not Be Controversial
+
+<CardGroup cols={2}>
+  <Card title="Standard Pattern" icon="book-open">
+    Endpoint projections are the documented Acumatica way to expose child records to integrators.
+  </Card>
+
+  <Card title="Small Scope" icon="ruler">
+    Adding a `CrossReference` detail to Stock Item is a low-risk change with no impact on business logic.
+  </Card>
+
+  <Card title="Reversible" icon="rotate-ccw">
+    Endpoint versions are additive. Old versions keep working; new versions can be updated freely.
+  </Card>
+
+  <Card title="Unblocks Downstream" icon="unlock">
+    Barcodes and GTINs are prerequisites for scan-based workflows, marketplace item matching, and accurate ASNs.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Push back the moment "Acumatica doesn't expose it" gets used. Ask which endpoint and which entity they are consuming, whether they have tried a projection, and offer to extend the endpoint. This is customisation work that sits between Crossfire and Acumatica, and it will not happen unless someone explicitly owns it.
+</Tip>
+
+## Related Symptom: Looking on the Wrong Object
+
+A closely related version of this issue is Crossfire reporting that "the Purchase Order object does not expose the Alternate ID." That report is technically true and completely misleading, because barcodes do not belong on the Purchase Order.
+
+### Correct Acumatica data model
+
+<CardGroup cols={2}>
+  <Card title="Stock Item" icon="box">
+    `InventoryItem` holds product master data. The `InventoryID` is the key.
+  </Card>
+
+  <Card title="Cross-Reference" icon="tags">
+    `INItemXRef` holds every Alternate ID (barcode, GTIN, vendor part, customer part) as a child of Stock Item.
+  </Card>
+
+  <Card title="Purchase Order" icon="file-text">
+    `POOrder` and `POLine` hold transactional data. Each line references an `InventoryID`, not a barcode.
+  </Card>
+
+  <Card title="One Join Away" icon="link">
+    Barcodes are deliberately not duplicated onto PO lines. They are one lookup away via the referenced Stock Item.
+  </Card>
+</CardGroup>
+
+<Note>
+  Duplicating barcodes onto every PO line would denormalise master data onto every transaction. If a barcode changes, every historical PO line would drift. The data model is correct as it stands.
+</Note>
+
+### What Crossfire should be doing
+
+<Steps>
+  <Step title="Read the InventoryID from the PO line">
+    Every PO line references a Stock Item by `InventoryID`.
+  </Step>
+  <Step title="Look up the Stock Item">
+    Retrieve the Stock Item entity for that `InventoryID` from the Stock Item endpoint.
+  </Step>
+  <Step title="Read its cross-references">
+    Read the `CrossReference` collection on the Stock Item (extending the endpoint with a projection if needed).
+  </Step>
+  <Step title="Filter by type">
+    Filter to `AlternateType = 'BARCODE'` (or `GLOBAL` for GTIN) to get the value.
+  </Step>
+</Steps>
+
+### What to say back
+
+> The Alternate ID is not stored on the Purchase Order because it is not PO data. It is master data on the Stock Item, held in the Inventory Cross-Reference. Each PO line references an Inventory ID; the barcode is retrieved by looking up the referenced Stock Item and reading its cross-references. If you need it embedded in the PO response, extend the PO endpoint to project the referenced Stock Item's barcode cross-reference. That is standard Acumatica endpoint work.
+
+<Warning>
+  Reporting "the PO object does not expose the barcode" as a blocker suggests Crossfire has not attempted the correct lookup path. An integration specialist should be joining PO lines to Stock Item cross-references without needing to be told.
+</Warning>
+
+## Related Symptom: GI Requests That Contradict the Access Complaint
+
+There is a related pattern to watch for: Crossfire simultaneously reports "we cannot access X" and requests "please build us a Generic Inquiry for X." These two statements cannot both be true.
+
+- Generic Inquiries query the same underlying tables as the contract-based API (`InventoryItem`, `INItemXRef`, `INSiteStatus`, `POOrder`, `POLine`, and so on).
+- If the tables were genuinely inaccessible, a GI would not help either.
+- If a GI works, so does the contract-based endpoint (with a projection).
+
+<Note>
+  A GI-based workflow is a legitimate integration path. It is not, however, evidence that Acumatica is limited. It is evidence of a vendor tooling preference.
+</Note>
+
+### What this means in practice
+
+<CardGroup cols={2}>
+  <Card title="The Work Shifts to Your Team" icon="user-check">
+    Every field Crossfire wants becomes a GI your team must design, join, and maintain.
+  </Card>
+
+  <Card title="Performance Is Your Problem" icon="gauge">
+    Multi-table GIs consumed via OData can become slow under load. Someone owns tuning them.
+  </Card>
+
+  <Card title="On-Hand Levels Follow the Same Path" icon="database">
+    Forwarding on-hand levels to trading partners will require a GI joining `InventoryItem`, `INItemXRef`, and `INSiteStatus` (or `INLocationStatus`).
+  </Card>
+
+  <Card title="Ownership Must Be Explicit" icon="scale-balanced">
+    If your team builds the GIs and Crossfire consumes them, that is your team doing the integration data modelling. Say so out loud.
+  </Card>
+</CardGroup>
+
+### Questions to put to the project team
+
+<Steps>
+  <Step title="Which API surface is Crossfire using?">
+    Contract-based Web Services, OData/GIs, or both? Why not contract-based for master data?
+  </Step>
+  <Step title="Who extends the endpoint when a value is missing?">
+    Your Acumatica team, or Crossfire? Get this in writing before it becomes contested.
+  </Step>
+  <Step title="Who owns GI performance?">
+    Joined GIs consumed via OData can degrade quickly. Ownership of tuning and monitoring should be assigned now.
+  </Step>
+  <Step title="What is Crossfire actually building?">
+    List the artefacts Crossfire is delivering versus what your team is delivering. This is the honest picture of who is doing the integration work.
+  </Step>
+</Steps>
+
+## What Goes Wrong If The GI Workaround Becomes Permanent
+
+Building a Generic Inquiry so Crossfire can pull barcodes via OData is a valid short-term unblock. Treating it as the permanent integration path stores up a specific set of problems. This section documents them so the trade-off is made with eyes open, not by default.
+
+### Performance and scale
+
+<CardGroup cols={2}>
+  <Card title="Runtime Joins Every Call" icon="gauge">
+    GIs re-execute SQL joins on every request. What is fast at 500 SKUs is slow at 50,000 and painful at peak load.
+  </Card>
+
+  <Card title="OData Pagination Overhead" icon="hourglass">
+    Paging large result sets over OData is notoriously slow and hammers the database on every full pull.
+  </Card>
+
+  <Card title="No Caching Layer" icon="database">
+    There is no request cache. Every Crossfire poll re-computes the same joins.
+  </Card>
+
+  <Card title="Contention Under Peak" icon="alert-triangle">
+    Heavy OData reads during business hours contend with order entry, picking, and invoicing.
+  </Card>
+</CardGroup>
+
+### Integrity and consistency
+
+<CardGroup cols={2}>
+  <Card title="No Transactional View" icon="shield-alert">
+    GI reads are snapshot queries and are not transaction-aware. Updates mid-poll can produce inconsistent results.
+  </Card>
+
+  <Card title="Stale Data Risk" icon="clock">
+    Without change tracking, Crossfire has to pull everything or guess what changed. Both options carry staleness.
+  </Card>
+</CardGroup>
+
+### Fragility to change
+
+<CardGroup cols={2}>
+  <Card title="Not Really Versioned" icon="git-branch">
+    Endpoint projections have proper versions. GIs are edited in place or cloned; there is no clean upgrade path.
+  </Card>
+
+  <Card title="Breaks on Refactor" icon="wrench">
+    Renaming a field, adding a UDF, or changing a cross-reference type breaks the GI silently.
+  </Card>
+
+  <Card title="Upgrade Regression Load" icon="rotate-cw">
+    Contract-based endpoints are tested as part of Acumatica releases. GIs are user content and are not. Every upgrade means manual regression on every Crossfire GI.
+  </Card>
+
+  <Card title="Data Model Leakage" icon="unlock">
+    GIs expose raw DAC field names. Crossfire's mapping becomes tightly coupled to internal schema instead of a stable contract.
+  </Card>
+</CardGroup>
+
+### Security and audit
+
+<CardGroup cols={2}>
+  <Card title="Coarse Access Control" icon="key">
+    OData exposes the whole GI to whoever can call it. Endpoints allow finer-grained per-entity access.
+  </Card>
+
+  <Card title="Weaker Auditing" icon="file-search">
+    Tracking who read what through OData is harder than through the contract-based API.
+  </Card>
+</CardGroup>
+
+### Scope creep and sprawl
+
+<CardGroup cols={2}>
+  <Card title="One GI Per Field" icon="layers">
+    Every new field Crossfire needs becomes a new GI. Six months in, there are many overlapping, separately maintained GIs.
+  </Card>
+
+  <Card title="No Shared Entity Model" icon="puzzle-piece">
+    Each GI is its own view of the data. There is no single Stock Item contract the way an endpoint provides.
+  </Card>
+
+  <Card title="Ownership Rot" icon="user-x">
+    The teammate who built the GI leaves; no one else understands why certain joins and filters exist.
+  </Card>
+
+  <Card title="Lost on Refresh" icon="trash">
+    If GIs are not captured in the customisation project, database refreshes or upgrades can wipe or overwrite them.
+  </Card>
+</CardGroup>
+
+### Structural limits
+
+<CardGroup cols={2}>
+  <Card title="Read Only" icon="ban">
+    OData GIs cannot write. ASNs, updates, and cross-reference changes still require the contract-based endpoint eventually.
+  </Card>
+
+  <Card title="Split-Brain Integration" icon="arrows-split">
+    Reads via GI plus writes via endpoint means two mental models, two failure modes, and two things to keep in sync.
+  </Card>
+
+  <Card title="No Business Logic" icon="rule">
+    GIs bypass graph-level validation. Anything Crossfire reads must be assumed to be raw data with no business rules applied.
+  </Card>
+</CardGroup>
+
+### Business consequences
+
+<CardGroup cols={2}>
+  <Card title="Chargebacks From Trading Partners" icon="dollar-sign">
+    Stale or mis-mapped barcodes on ASNs trigger chargebacks that are hard to trace back through a black-box GI.
+  </Card>
+
+  <Card title="Slow Root Cause Analysis" icon="magnifying-glass">
+    When something goes wrong, a documented endpoint contract is easier to debug than a bespoke GI.
+  </Card>
+
+  <Card title="Reinforces Ownership Problem" icon="scale-balanced">
+    Every GI is our team's work, invisible in Crossfire's scope. Technical debt accumulates under our name, not theirs.
+  </Card>
+
+  <Card title="Blocks Future Bidirectional Flows" icon="arrows-up-down">
+    Any future need to push data back to Acumatica (ASN status, receipt confirmation, RMA updates) cannot use the GI path at all.
+  </Card>
+</CardGroup>
+
+### The recommendation
+
+<Steps>
+  <Step title="Use the GI as a bridge, not the destination">
+    Ship the GI now to unblock Crossfire, but scope the contract-based endpoint projection as the permanent solution.
+  </Step>
+  <Step title="Set a sunset date">
+    Agree a date to retire the GI once the endpoint projection is live. Otherwise "temporary" becomes "forever."
+  </Step>
+  <Step title="Log the technical debt">
+    Record the GI as a known workaround with its risks (this list). This makes it visible in future planning.
+  </Step>
+  <Step title="Track every GI added afterwards">
+    Every new "please build a GI" request is a signal that the endpoint strategy needs to be revisited, not another patch.
+  </Step>
+</Steps>
+
+<Warning>
+  A GI to unblock a demo is fine. A GI as the permanent integration surface for barcodes, on-hand, and everything else Crossfire needs is how you end up with a fragile, slow, undocumented integration owned by your team and credited to the vendor.
+</Warning>

@@ -1,0 +1,141 @@
+---
+title: "Fixing the Packing Bench Sorting Conflict"
+sidebarTitle: "Packing Bench Sorting"
+description: "Eliminate the packing bench bottleneck caused by two competing sort methods and missing tote data by carrying pick data through to packing."
+---
+
+<Warning>
+  The packing process is fighting itself. Picking moves forward through the warehouse in one sort order, but when items reach the packing bench they have to be re-married to orders manually because no tote or container data is carried along. For dropship, that means matching multi-customer picks against a sheet of 30 tiny barcodes stacked one on top of another, scanned one by one, just to reconnect items to orders.
+</Warning>
+
+## The Problem
+
+There are effectively two sorting systems competing at the same time and neither one knows about the other. Picking sorts by warehouse path. Packing needs items sorted by order and customer. Nothing connects them.
+
+<CardGroup cols={2}>
+  <Card title="Two Competing Sorts" icon="arrows-cross">
+    Picking is optimised for forward-facing warehouse travel; packing needs items grouped by order and customer.
+  </Card>
+
+  <Card title="No Tote Data" icon="package-x">
+    Totes carry no identity or contents record, so packing cannot look up what is in the tote or who it belongs to.
+  </Card>
+
+  <Card title="Manual Re-Marrying" icon="link">
+    Packers manually match picked items back to orders on the bench with no system assistance.
+  </Card>
+
+  <Card title="Barcode Sheet Nightmare" icon="scan">
+    Dropship orders arrive as a printed sheet with roughly 30 tiny barcodes stacked one above the other, scanned one at a time.
+  </Card>
+
+  <Card title="Slow, Error-Prone" icon="alert-triangle">
+    Tedious scanning and manual matching cause slowdowns, missed items, and mis-packed orders.
+  </Card>
+
+  <Card title="No Traceability" icon="file-search">
+    There is no system record of which tote held which items for which order.
+  </Card>
+</CardGroup>
+
+### Why this happens
+
+<Steps>
+  <Step title="Picking has no container identity">
+    Items are picked into generic totes with no tote ID, no order link, and no system record.
+  </Step>
+  <Step title="Sort order changes at the bench">
+    Warehouse-optimised pick sequence has to be re-sorted into order/customer sequence at pack time.
+  </Step>
+  <Step title="Data is on paper, not in the system">
+    Order data reaches the bench as a printed sheet of barcodes instead of a live record on a screen.
+  </Step>
+  <Step title="Every match is manual">
+    Packers rebuild the pick-to-order relationship by scanning barcodes off paper against items on the bench.
+  </Step>
+</Steps>
+
+## The Solution
+
+Carry pick data through to packing so the two sorts stop competing. Give every tote an identity, track its contents in Acumatica, and drive the packing bench from that data instead of paper.
+
+<CardGroup cols={2}>
+  <Card title="Identified Totes" icon="qr-code">
+    Every tote has a barcode. Scanning it opens its contents and destination orders on the packing screen.
+  </Card>
+
+  <Card title="Cart or Batch Pick with Slots" icon="grid-dots">
+    For dropship, use multi-order carts with a slot per order so items are sorted by order at pick time.
+  </Card>
+
+  <Card title="Put-to-Light or Put-Wall" icon="lightbulb">
+    A put-wall or put-to-light system directs each scanned item to the correct order slot at the bench.
+  </Card>
+
+  <Card title="Screen-Driven Packing" icon="monitor">
+    The packing bench runs off an Acumatica screen, not a paper sheet of 30 tiny barcodes.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Introduce tote identity">
+    Assign a permanent barcode to every tote. Track tote-to-order and tote-to-item relationships in Acumatica.
+  </Step>
+  <Step title="Pick into identified totes">
+    Extend the pick workflow so pickers scan the tote before picking into it. The system records exactly what went in.
+  </Step>
+  <Step title="Choose a sort strategy for dropship">
+    For multi-customer dropship picks, either sort at pick time using a slotted cart, or accept batch picking and sort at the bench using a put-wall.
+  </Step>
+  <Step title="Build the packing bench screen">
+    Deliver a purpose-built packing screen: scan tote, see all orders in the tote, scan each item, screen highlights which order slot it belongs to.
+  </Step>
+  <Step title="Retire the paper barcode sheet">
+    Replace the printed sheet with the packing screen. The only scan a packer performs is the item barcode; the system knows the order.
+  </Step>
+  <Step title="Add exception handling">
+    Handle short-picks, damaged items, and mis-picks through the screen with reason codes tied to the tote and order.
+  </Step>
+  <Step title="Measure and iterate">
+    Track pack rate per hour, re-scan events, and pack error rate. Adjust cart size and put-wall layout based on results.
+  </Step>
+</Steps>
+
+<Note>
+  The two competing sort methods are not solved by picking harder. They are solved by making the tote itself carry the data, so the pack bench never has to rebuild what picking already knew.
+</Note>
+
+## Sort Strategy Comparison
+
+| Approach | How It Works | Best For |
+| --- | --- | --- |
+| Discrete pick (one order per tote) | Picker walks each order individually | Low-volume, large orders |
+| Slotted cart / cluster pick | One tote per order rides the cart; picker sorts at pick time | Dropship with a manageable number of concurrent orders |
+| Batch pick \+ put-wall | Picker grabs everything for a batch, put-wall sorts to orders at the bench | High-volume dropship with many small orders |
+| Zone pick with consolidation | Each zone picks into its own tote; totes consolidate at the bench | Very large warehouses with heavy per-zone volume |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="No More Paper Barcode Sheets" icon="file-x">
+    The 30-barcodes-per-page sheet disappears. Data lives on the screen.
+  </Card>
+
+  <Card title="Faster Packing" icon="rocket">
+    Sorting happens once, at the right stage, instead of twice.
+  </Card>
+
+  <Card title="Fewer Mis-Packs" icon="circle-check">
+    Screen-driven, tote-based packing removes the manual matching step that causes most errors.
+  </Card>
+
+  <Card title="Full Traceability" icon="file-check">
+    Every item can be traced from pick, to tote, to pack, to order, to shipment.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Introduce identified totes first, even without a put-wall. Just knowing what is in each tote (and which orders it serves) removes most of the pain at the bench and makes the case for the larger investment.
+</Tip>

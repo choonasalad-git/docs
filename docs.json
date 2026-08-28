@@ -79,9 +79,15 @@
             "pages": [
               "improvement/inventory/brand-based-layout",
               "improvement/integration/external-app-sprawl",
+              "improvement/integration/crossfire-barcode-access",
+              "improvement/integration/crossfire-scope-and-ownership",
               "improvement/workflow/picking-packing-customisation",
               "improvement/workflow/open-future-orders-negative-stock",
-              "improvement/workflow/reverse-logistics-returns"
+              "improvement/workflow/reverse-logistics-returns",
+              "improvement/workflow/replenishment",
+              "improvement/workflow/packing-bench-sorting",
+              "improvement/workflow/batch-pick-reserve-churn",
+              "improvement/workflow/edi-expectations"
             ]
           }
         ]

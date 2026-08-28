@@ -1,0 +1,133 @@
+---
+title: "EDI Will Not Fix the Underlying Workflow Problems"
+sidebarTitle: "EDI Expectations"
+description: "EDI automates document exchange between trading partners. It does not solve replenishment, picking, packing, or integration issues that live inside our own operation."
+---
+
+<Warning>
+  EDI is being implemented soon, and there is a risk that management expects it to solve the picking, packing, replenishment, and integration problems already raised. EDI does one specific thing very well, but none of those internal workflow problems are on its list.
+</Warning>
+
+## The Problem
+
+EDI (Electronic Data Interchange) is a standardised way for **trading partners** to exchange business documents like purchase orders, ship notices, and invoices. It replaces email, PDFs, and portal downloads at the edge of the business.
+
+That is genuinely valuable. But every workflow problem raised in the other improvement pages is an **internal** problem, not a trading-partner document problem. EDI does not touch them.
+
+<CardGroup cols={2}>
+  <Card title="EDI ≠ Integration" icon="plug">
+    EDI connects to trading partners, not to Marketplacer, not to internal apps, not to our warehouse workflows.
+  </Card>
+
+  <Card title="EDI ≠ Replenishment" icon="arrow-down-to-line">
+    EDI does not know or care what is in the pickface. It cannot trigger a top-up.
+  </Card>
+
+  <Card title="EDI ≠ Pick/Pack Workflow" icon="hand-grab">
+    EDI does not design pick paths, sort strategies, tote handling, or packing screens.
+  </Card>
+
+  <Card title="EDI ≠ Inventory Accuracy" icon="database">
+    EDI does not fix negative stock, open future orders, or manual adjustments.
+  </Card>
+
+  <Card title="EDI ≠ Returns Process" icon="rotate-ccw">
+    EDI does not build RMAs, disposition workflows, or audit trails for reverse logistics.
+  </Card>
+
+  <Card title="EDI ≠ Layout Fix" icon="grid-dots">
+    EDI does not reslot inventory or reduce brand-based aisle congestion.
+  </Card>
+</CardGroup>
+
+## What EDI Actually Solves
+
+EDI is the right tool for a specific set of trading-partner problems:
+
+<CardGroup cols={2}>
+  <Card title="PO Ingestion" icon="file-input">
+    Customer purchase orders arrive as structured EDI documents (typically 850) instead of email or portal downloads.
+  </Card>
+
+  <Card title="ASN / Ship Notices" icon="file-output">
+    Advance ship notices (856) are transmitted to trading partners automatically once shipments are packed.
+  </Card>
+
+  <Card title="Invoicing" icon="file-invoice">
+    Invoices (810) go out through EDI, meeting trading-partner compliance requirements.
+  </Card>
+
+  <Card title="Inventory Advice" icon="clipboard-list">
+    Inventory advice documents (846) can be sent to partners on a schedule.
+  </Card>
+
+  <Card title="Fewer Manual Handoffs at the Edge" icon="user-check">
+    Staff stop keying customer POs and stop emailing ship confirmations.
+  </Card>
+
+  <Card title="Trading-Partner Compliance" icon="shield-check">
+    Chargebacks tied to late or missing EDI documents go away when EDI is implemented properly.
+  </Card>
+</CardGroup>
+
+## Where EDI Does Not Help
+
+Every improvement raised so far lives **inside** the operation, before or after the EDI boundary. Even with EDI running perfectly, these problems remain:
+
+| Problem Area | Still Broken After EDI? | Why |
+| --- | --- | --- |
+| Brand-based inventory layout congestion | Yes | EDI does not touch physical slotting. |
+| Marketplacer CSV import and manual data check | Yes | Marketplacer is not an EDI trading partner in this flow; it is an external app that needs API integration. |
+| Generic pick/pack screens | Yes | EDI does not customise screens or workflows. |
+| Open future orders driving stock negative | Yes | EDI does not add availability rules or auto-hold logic. |
+| Returns handled by spreadsheet and email | Yes | EDI is a forward-flow standard; reverse logistics needs an internal RMA workflow. |
+| No pickface replenishment | Yes | EDI has no view of the pickface. |
+| Packing bench sorting conflict / paper barcode sheet | Yes | EDI does not create tote identity or a packing screen. |
+| Forklift churn from batch-pick reserve pulls | Yes | EDI does not do wave planning. |
+
+<Note>
+  Every "Yes" above is a workflow, integration, or customisation problem inside Acumatica and the warehouse. EDI sits at the edge, exchanging documents with outside partners. Different layer, different problem.
+</Note>
+
+## Where EDI Actually Helps The Other Improvements
+
+EDI is not useless to these other problems. It helps in one specific way: **cleaner, structured PO ingestion** reduces the amount of bad input hitting the workflow, which makes the internal fixes more visible and more valuable. But EDI is an enabler, not a substitute.
+
+<CardGroup cols={2}>
+  <Card title="Cleaner PO Data" icon="circle-check">
+    Structured POs are easier for the availability-check and auto-hold logic to reason about.
+  </Card>
+
+  <Card title="Faster ASN Turnaround" icon="rocket">
+    A better packing bench workflow (with real tote data) produces ASNs that are actually accurate to what shipped.
+  </Card>
+
+  <Card title="Compliance Without Overtime" icon="clock">
+    Fixing the pack workflow means EDI 856/810 documents can be generated on time without staff scrambling.
+  </Card>
+
+  <Card title="Better Reporting" icon="chart-bar">
+    Structured EDI data plus a properly integrated ERP finally lets us measure trading-partner performance end to end.
+  </Card>
+</CardGroup>
+
+## Recommended Framing for Management
+
+<Steps>
+  <Step title="Position EDI accurately">
+    EDI is a trading-partner document standard. It solves how POs, ASNs, and invoices move between us and our partners.
+  </Step>
+  <Step title="Separate internal from external">
+    Split the improvement backlog into "trading-partner edge" (EDI territory) and "internal operation" (customisation and integration territory).
+  </Step>
+  <Step title="Sequence realistically">
+    EDI go-live does not close the picking, packing, replenishment, integration, or returns items. Those need their own scoped work.
+  </Step>
+  <Step title="Set expectations up front">
+    Communicate now that EDI is a foundation, not a fix, so the other improvements stay funded and prioritised after go-live.
+  </Step>
+</Steps>
+
+<Tip>
+  If EDI is being sold internally as the answer to everything, the fastest way to correct that is to walk through this table with management before go-live. Every row that remains "Yes" after EDI is a project that still needs to happen.
+</Tip>
