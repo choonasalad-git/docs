@@ -1,0 +1,134 @@
+---
+title: "Preventing Negative Stock from Open Future Orders"
+sidebarTitle: "Future Orders & Stock"
+description: "Stop future and data-entry orders from driving SKUs negative by enforcing hold statuses, availability rules, and allocation policies in Acumatica."
+---
+
+<Warning>
+  Data-entry and future-dated orders are being left in an open, allocatable state. When a large order (for example, 2,000 units) is placed against a SKU with insufficient stock, Acumatica happily commits the demand and the available quantity drops negative unless someone manually puts the order on hold.
+</Warning>
+
+## The Problem
+
+Orders that are not ready to ship (future orders, provisional data entry, quotes converted too early) behave like real, allocatable demand. That demand consumes available inventory even though the stock does not exist yet.
+
+<CardGroup cols={2}>
+  <Card title="Negative Available Quantity" icon="trending-down">
+    Large future orders push the SKU's available quantity below zero the moment they are saved.
+  </Card>
+
+  <Card title="Manual Hold Dependency" icon="hand">
+    The only thing preventing the negative is a person remembering to place the order on hold.
+  </Card>
+
+  <Card title="Broken Availability Signals" icon="alert-triangle">
+    Sales, purchasing, and warehouse teams see wrong availability numbers and make wrong decisions.
+  </Card>
+
+  <Card title="Purchasing Chaos" icon="shopping-cart">
+    Replenishment suggestions and reorder points react to phantom demand from orders that may not ship for months.
+  </Card>
+</CardGroup>
+
+### Why this happens
+
+<Steps>
+  <Step title="Orders default to open">
+    Newly entered sales orders enter an open, allocatable status by default, regardless of ship date.
+  </Step>
+  <Step title="No future-order guardrail">
+    There is no rule distinguishing a today-order from an order shipping in 90 days.
+  </Step>
+  <Step title="No availability check on entry">
+    Order entry does not block or warn when the requested quantity exceeds available stock.
+  </Step>
+  <Step title="Hold is manual">
+    The only mitigation is asking users to remember to click "Hold" on every future or oversized order.
+  </Step>
+</Steps>
+
+## The Solution
+
+Enforce order status and allocation rules automatically. Future and provisional orders should not consume real inventory, and oversized orders should never silently drive stock negative.
+
+<CardGroup cols={2}>
+  <Card title="Auto-Hold Future Orders" icon="calendar-clock">
+    Orders with a ship date beyond a defined threshold are automatically placed on hold.
+  </Card>
+
+  <Card title="Availability Validation" icon="shield-check">
+    Order entry checks available quantity and warns or blocks when demand exceeds supply.
+  </Card>
+
+  <Card title="Negative Stock Prevention" icon="ban">
+    System policy prevents allocation that would drive on-hand or available quantity below zero.
+  </Card>
+
+  <Card title="Provisional Order Type" icon="file-pen">
+    A dedicated non-allocating order type for data entry and quote-stage orders.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Define order status policy">
+    Decide the rules: which order types allocate immediately, which are held, and what "future" means (for example, ship date more than 7 days out).
+  </Step>
+  <Step title="Configure order types">
+    Create or adjust Acumatica order types so future/provisional orders use a non-allocating status by default.
+  </Step>
+  <Step title="Auto-hold via graph extension">
+    Extend the Sales Order graph to place orders on hold automatically when ship date, quantity, or availability triggers fire.
+  </Step>
+  <Step title="Add availability validation">
+    Hook `RowInserted` and `RowUpdated` on the order line to compare requested quantity against available stock and raise a warning or error.
+  </Step>
+  <Step title="Enforce non-negative allocation">
+    Configure inventory allocation settings and, where needed, custom validation, to prevent allocation that pushes available or on-hand negative.
+  </Step>
+  <Step title="Build a release workflow">
+    Give planners a screen to review held future orders and release them for allocation when stock is available or the ship date approaches.
+  </Step>
+  <Step title="Report on exceptions">
+    Add a dashboard showing SKUs with negative projected availability, held orders due to release soon, and orders blocked at entry.
+  </Step>
+</Steps>
+
+<Note>
+  Auto-hold does not stop the business from taking large orders. It stops those orders from silently corrupting availability numbers before they are ready to ship.
+</Note>
+
+## Order Handling Matrix
+
+| Scenario | Current Behaviour | Target Behaviour |
+| --- | --- | --- |
+| Ship today, stock available | Allocated | Allocated |
+| Ship today, insufficient stock | Allocated, SKU goes negative | Blocked or warned at entry |
+| Ship in 30\+ days | Allocated immediately | Auto-held, not allocated |
+| Provisional data entry | Allocated immediately | Non-allocating order type |
+| Large order (e.g. 2,000 units) exceeding stock | Allocated, negative available | Auto-held with a "review" flag |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Accurate Availability" icon="chart-bar">
+    Available quantity reflects real, near-term demand instead of speculative future orders.
+  </Card>
+
+  <Card title="Better Purchasing Decisions" icon="truck">
+    Reorder points and MRP suggestions run on clean demand signals.
+  </Card>
+
+  <Card title="No More Manual Holds" icon="user-check">
+    Staff no longer carry the burden of remembering to hold every future order.
+  </Card>
+
+  <Card title="Fewer Fulfilment Surprises" icon="circle-check">
+    Warehouse pickers stop seeing orders they cannot fill because stock never really existed.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Roll this out in two phases: first enforce auto-hold on future-dated orders (biggest win, lowest risk), then add the availability validation and non-negative allocation policy.
+</Tip>

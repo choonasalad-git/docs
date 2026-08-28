@@ -73,6 +73,16 @@
               "troubleshooting/debugging",
               "troubleshooting/faq"
             ]
+          },
+          {
+            "group": "Improvements",
+            "pages": [
+              "improvement/inventory/brand-based-layout",
+              "improvement/integration/external-app-sprawl",
+              "improvement/workflow/picking-packing-customisation",
+              "improvement/workflow/open-future-orders-negative-stock",
+              "improvement/workflow/reverse-logistics-returns"
+            ]
           }
         ]
       },

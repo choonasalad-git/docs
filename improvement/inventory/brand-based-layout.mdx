@@ -1,0 +1,110 @@
+---
+title: "Inventory Layout Congestion from Brand-Based Categorisation"
+sidebarTitle: "Brand-Based Layout"
+description: "Reorganise brand-grouped inventory to eliminate picker congestion when multiple orders target the same brand at once."
+---
+
+<Warning>
+  The current inventory layout is categorised by brand. When two or more orders require items from the same brand, pickers converge on a single aisle and block one another, slowing fulfilment and increasing the risk of picking errors.
+</Warning>
+
+## The Problem
+
+Inventory is arranged so that every SKU belonging to a given brand lives together in one section of the warehouse. This looks tidy on paper, but it creates a physical bottleneck during picking.
+
+<CardGroup cols={2}>
+  <Card title="Aisle Congestion" icon="users">
+    Multiple pickers crowd the same brand section whenever concurrent orders share that brand.
+  </Card>
+
+  <Card title="Idle Pickers" icon="clock">
+    Pickers wait for access to a single bin instead of working in parallel across the warehouse.
+  </Card>
+
+  <Card title="Slower Fulfilment" icon="truck">
+    Order cycle times increase during peak periods when brand overlap between orders is highest.
+  </Card>
+
+  <Card title="Picking Errors" icon="alert-triangle">
+    Congested aisles and rushed picks lead to mis-picks, wrong quantities, and mixed-up SKUs.
+  </Card>
+</CardGroup>
+
+### Why brand-based grouping breaks down
+
+<Steps>
+  <Step title="Orders arrive in parallel">
+    Multiple sales orders enter the fulfilment queue at the same time.
+  </Step>
+  <Step title="Orders share brands">
+    A large share of orders contain SKUs from the same top-selling brands.
+  </Step>
+  <Step title="Pickers converge">
+    Every picker assigned to those orders is routed to the same physical section.
+  </Step>
+  <Step title="Throughput drops">
+    Only one picker can work efficiently in that section at a time; the rest wait.
+  </Step>
+</Steps>
+
+## The Solution
+
+Move away from a purely brand-based layout and toward a **velocity- and dispersion-based slotting strategy**. High-velocity SKUs are spread across the warehouse so that concurrent orders can be picked in parallel without contention.
+
+<CardGroup cols={2}>
+  <Card title="Velocity Slotting" icon="chart-bar">
+    Slot SKUs by pick frequency (A/B/C classes) rather than by brand, so fast movers get prime locations.
+  </Card>
+
+  <Card title="Zone Picking" icon="grid-dots">
+    Divide the warehouse into zones and split popular brands across zones to distribute picker load.
+  </Card>
+
+  <Card title="Duplicate Pick Faces" icon="copy">
+    Give the highest-velocity SKUs more than one pick location so two pickers can grab the same item at once.
+  </Card>
+
+  <Card title="Wave Planning" icon="waves-electricity">
+    Release orders in waves that balance brand overlap, keeping pickers spread across the floor.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Analyse pick data">
+    Pull the last 3 to 6 months of order lines from Acumatica and rank SKUs by pick frequency and by brand overlap across orders.
+  </Step>
+  <Step title="Classify SKUs">
+    Assign each SKU an ABC velocity class. A-class items are the fastest movers and the biggest contributors to congestion.
+  </Step>
+  <Step title="Redesign the slotting map">
+    Distribute A-class SKUs across zones. Keep slow movers grouped where convenient, but never let a single brand monopolise one aisle.
+  </Step>
+  <Step title="Add duplicate pick faces">
+    For the top A-class SKUs, add a secondary pick location in a different zone.
+  </Step>
+  <Step title="Enable zone and wave picking">
+    Configure the warehouse management workflow to assign pickers to zones and release orders in balanced waves.
+  </Step>
+  <Step title="Measure and iterate">
+    Track picks per hour, aisle wait time, and mis-pick rate. Reslot quarterly as demand patterns shift.
+  </Step>
+</Steps>
+
+<Note>
+  Velocity slotting does not eliminate brand grouping entirely. Slow-moving brands can still be shelved together. The change targets the high-velocity SKUs that cause the congestion.
+</Note>
+
+## Expected Outcomes
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Aisle contention on top brands | High | Low |
+| Concurrent pickers per order batch | 1 to 2 effective | 4\+ effective |
+| Average pick cycle time | Baseline | 20 to 35% faster |
+| Mis-pick rate | Baseline | Reduced |
+
+<Tip>
+  Start with the top 20 SKUs by pick frequency. Reslotting that small set typically clears the majority of the congestion before touching the rest of the warehouse.
+</Tip>

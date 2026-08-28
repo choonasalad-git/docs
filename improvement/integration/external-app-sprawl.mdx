@@ -1,0 +1,144 @@
+---
+title: "Reducing External App Sprawl with Native ERP Integration"
+sidebarTitle: "External App Sprawl"
+description: "Replace manual CSV handoffs between external tools and Acumatica with native, automated integrations that keep data in the ERP."
+---
+
+<Warning>
+  Too many business processes rely on external applications instead of running natively inside Acumatica. Data is exported, transformed, manually validated, and re-imported, which is slow, error-prone, and hides the ERP's audit trail.
+</Warning>
+
+## The Problem
+
+Critical workflows live outside the ERP and are stitched together with spreadsheets and manual checks. Dropship order intake is the clearest example.
+
+### Current dropship flow
+
+<Steps>
+  <Step title="Order placed in Marketplacer">
+    A dropship order is captured in Marketplacer, outside Acumatica.
+  </Step>
+  <Step title="Export to CSV">
+    A user exports the orders from Marketplacer as a CSV file.
+  </Step>
+  <Step title="Manual data check">
+    Someone opens the CSV and manually validates SKUs, customers, pricing, and shipping details.
+  </Step>
+  <Step title="Import into Acumatica">
+    The cleaned CSV is imported into Acumatica as sales orders.
+  </Step>
+  <Step title="Reconcile discrepancies">
+    Any mismatches (missing SKUs, wrong customers, price changes) are fixed after the fact.
+  </Step>
+</Steps>
+
+### Why this hurts the business
+
+<CardGroup cols={2}>
+  <Card title="Manual Effort" icon="clock">
+    Every order batch consumes staff time on exports, validation, and imports that add no value.
+  </Card>
+
+  <Card title="Data Errors" icon="alert-triangle">
+    CSV handoffs drop fields, mangle formats, and let bad data reach the ERP before anyone notices.
+  </Card>
+
+  <Card title="Delayed Fulfilment" icon="truck">
+    Orders sit in a CSV instead of the ERP, so picking, invoicing, and shipping start late.
+  </Card>
+
+  <Card title="No Single Source of Truth" icon="database">
+    Marketplacer, spreadsheets, and Acumatica each hold a version of the order, and they drift apart.
+  </Card>
+
+  <Card title="Weak Audit Trail" icon="file-search">
+    Changes made in CSVs are invisible to Acumatica's audit log, making issues hard to trace.
+  </Card>
+
+  <Card title="Does Not Scale" icon="chart-line">
+    Order volume growth is capped by how fast a person can validate a spreadsheet.
+  </Card>
+</CardGroup>
+
+## The Solution
+
+Consolidate workflows into Acumatica by building **native integrations** that push data directly into the ERP, with automated validation and exception handling. Marketplacer becomes a source system, not a manual step in the chain.
+
+<CardGroup cols={2}>
+  <Card title="Direct API Integration" icon="plug">
+    Connect Marketplacer to Acumatica through its REST/contract-based API so orders flow in automatically.
+  </Card>
+
+  <Card title="Automated Validation" icon="shield-check">
+    Run SKU, customer, and pricing checks inside Acumatica the moment an order arrives.
+  </Card>
+
+  <Card title="Exception Queue" icon="inbox">
+    Route only the orders that fail validation to a review screen, instead of manually checking every order.
+  </Card>
+
+  <Card title="Single Source of Truth" icon="database">
+    Acumatica holds the authoritative order record from creation through fulfilment and invoicing.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Map the data contract">
+    Document every field Marketplacer sends and map it to Acumatica sales order fields, customer records, and inventory items.
+  </Step>
+  <Step title="Build the integration">
+    Use Acumatica's contract-based Web Services API (or an integration platform) to receive Marketplacer orders in real time or on a short schedule.
+  </Step>
+  <Step title="Automate validation">
+    Implement graph-level validation for SKU existence, customer matching, price list lookup, and shipping address checks.
+  </Step>
+  <Step title="Create an exceptions screen">
+    Build a custom screen listing orders that failed validation, with the specific error and one-click resolution actions.
+  </Step>
+  <Step title="Retire the CSV process">
+    Once volumes stabilise, decommission the manual export/import workflow and remove access to it.
+  </Step>
+  <Step title="Extend the pattern">
+    Apply the same approach to other external apps still relying on CSV handoffs (returns, purchase orders, price updates, stock feeds).
+  </Step>
+</Steps>
+
+<Note>
+  Not every external tool needs to be replaced. The goal is to eliminate manual CSV steps and keep transactional data flowing directly into Acumatica.
+</Note>
+
+## Candidate Workflows to Integrate
+
+| Workflow | Current State | Target State |
+| --- | --- | --- |
+| Marketplacer dropship orders | CSV export, manual check, import | Direct API into Acumatica sales orders |
+| Marketplace stock levels | Periodic manual upload | Scheduled push from Acumatica inventory |
+| Price and promotion updates | Spreadsheet uploads | Native Acumatica price lists synced out |
+| Returns and RMAs | Email plus spreadsheet | Integrated return orders in Acumatica |
+| Shipping confirmations | Manual status updates | Automated webhook back to Marketplacer |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Faster Order Turnaround" icon="rocket">
+    Orders reach fulfilment in minutes instead of hours or a full day.
+  </Card>
+
+  <Card title="Lower Error Rate" icon="circle-check">
+    Automated validation catches issues before they become customer problems.
+  </Card>
+
+  <Card title="Reclaimed Staff Time" icon="user-check">
+    Staff move from data entry to exception handling and higher-value work.
+  </Card>
+
+  <Card title="Scalable Volume" icon="chart-line">
+    Order volume can grow without adding headcount to the import process.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Start with the highest-volume external workflow (dropship orders from Marketplacer). Prove the pattern there, measure the time saved, and use those results to justify integrating the next workflow.
+</Tip>

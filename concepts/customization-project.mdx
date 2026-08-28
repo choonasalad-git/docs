@@ -17,7 +17,7 @@ Think of a project as a named package. When you publish it, the platform compile
     C# source files for DACs, graph extensions, and business logic classes that the platform compiles on publish.
   </Card>
 
-  <Card title="Screen Definitions" icon="layout-panel-top">
+  <Card title="Screen Definitions" icon="app-window">
     ASPX page customizations and control-level changes stored as XML diff records rather than full page replacements.
   </Card>
 
@@ -34,20 +34,11 @@ Think of a project as a named package. When you publish it, the platform compile
 
 On disk, a Customization Project is represented as a directory exported to a `.zip` archive. Inside that archive the platform maintains a well-defined layout:
 
-```text
+```text wrap
+MyProject/ ├── ProjectMetadata.xml      # Manifest: name, version, dependencies ├── App\_RuntimeCode/ │   ├── MyCustomRecord.cs    # DAC definitions │   └── SOOrderEntryExt.cs   # Graph extensions ├── Pages/ │   └── SO/ │       └── SO301000.aspx    # Screen customization diffs └── CustomFiles/ └── Reports/ └── MyCustomReport.rpx
 ```
-MyProject/
-├── ProjectMetadata.xml      # Manifest: name, version, dependencies
-├── App_RuntimeCode/
-│   ├── MyCustomRecord.cs    # DAC definitions
-│   └── SOOrderEntryExt.cs   # Graph extensions
-├── Pages/
-│   └── SO/
-│       └── SO301000.aspx    # Screen customization diffs
-└── CustomFiles/
-    └── Reports/
-        └── MyCustomReport.rpx
-```
+
+```text wrap
 
 ### XML Manifest
 
@@ -100,3 +91,6 @@ A typical team workflow looks like this:
 
   Merge conflicts in the XML manifest are the trickiest part of multi-developer workflows. Two developers adding different customization items to the same project will produce conflicting manifest XML. To minimize this, keep projects small and focused on a single business domain, and use short-lived feature branches. When conflicts do occur, resolve them by carefully merging the `<Items>` list in the manifest — do not let your merge tool simply accept one side wholesale or you will silently drop the other developer's items.
 </Note>
+```
+
+/

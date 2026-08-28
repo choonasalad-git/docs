@@ -1,0 +1,133 @@
+---
+title: "Customising the Picking and Packing Workflow in Acumatica"
+sidebarTitle: "Picking & Packing"
+description: "Acumatica ships as a core platform. Tailor the picking and packing workflow to match how the business actually fulfils orders."
+---
+
+<Warning>
+  The picking and packing workflow is being run on Acumatica's out-of-the-box screens, but Acumatica is a platform, not a finished product. Core functionality is intentionally generic and must be customised to fit the way the company actually picks and packs.
+</Warning>
+
+## The Problem
+
+Acumatica is a customisation-first ERP. The standard picking and packing screens cover the fundamentals, but they were never designed to match one specific fulfilment operation. Using them as-is forces the warehouse to change its process to fit the software, instead of the software fitting the process.
+
+<CardGroup cols={2}>
+  <Card title="Generic Screens" icon="layout">
+    Standard pick and pack screens expose every field for every scenario, not the ones this warehouse needs.
+  </Card>
+
+  <Card title="Extra Clicks" icon="mouse-pointer-click">
+    Staff navigate through steps and fields that do not apply, slowing every order.
+  </Card>
+
+  <Card title="Missing Business Rules" icon="rule">
+    Company-specific rules (batching, priority, carrier logic, packaging) are not enforced by the ERP.
+  </Card>
+
+  <Card title="Workarounds Outside the ERP" icon="clipboard">
+    Teams fall back to paper, spreadsheets, and tribal knowledge to bridge the gaps.
+  </Card>
+</CardGroup>
+
+### Why leaving it "out of the box" is the wrong choice
+
+<Steps>
+  <Step title="Acumatica is a framework">
+    The value of Acumatica is its extensibility: DACs, graph extensions, custom screens, and event handlers exist so the ERP can be shaped around the business.
+  </Step>
+  <Step title="Core is a starting point">
+    Standard screens deliver the plumbing. They are not intended to be the final user experience for every operation.
+  </Step>
+  <Step title="Custom processes are the norm">
+    Picking and packing are almost always company-specific: how orders are batched, which carrier is chosen, how items are verified, how packing slips print.
+  </Step>
+  <Step title="No customisation, no fit">
+    Without customisation, the warehouse either forces its process into the generic screens or works around them entirely.
+  </Step>
+</Steps>
+
+## The Solution
+
+Treat picking and packing as a **first-class customisation project**. Build the workflow inside Acumatica using the platform's extension model so the ERP mirrors the real warehouse process.
+
+<CardGroup cols={2}>
+  <Card title="Custom Pick Screen" icon="hand-grab">
+    Purpose-built screen showing only the fields pickers need, in the order they need them.
+  </Card>
+
+  <Card title="Custom Pack Screen" icon="package">
+    Guided packing with carton selection, weight capture, and packing slip generation built in.
+  </Card>
+
+  <Card title="Graph Extensions" icon="code">
+    Encode batching, priority, and validation rules directly in the sales order and shipment graphs.
+  </Card>
+
+  <Card title="Barcode-Driven UX" icon="scan">
+    Scanner-first flows for SKU verification, bin confirmation, and carton labelling.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Map the real workflow">
+    Sit with pickers and packers and document every step of the actual process, including exceptions and workarounds.
+  </Step>
+  <Step title="Identify the gaps">
+    Compare that workflow against Acumatica's standard screens and list every mismatch: missing fields, extra clicks, unenforced rules, absent validations.
+  </Step>
+  <Step title="Design custom screens">
+    Design custom pick and pack screens that show only what the operator needs, in a scanner-friendly layout. Keep the standard screens for admin/backoffice use.
+  </Step>
+  <Step title="Build graph extensions">
+    Extend the Sales Order and Shipment graphs to enforce business rules (order batching, priority queues, packaging logic, carrier selection).
+  </Step>
+  <Step title="Add event handlers">
+    Hook events like `RowInserted`, `RowUpdated`, and action handlers to automate steps that operators currently do manually.
+  </Step>
+  <Step title="Deploy and iterate">
+    Roll out to a pilot group, measure impact, gather feedback, and iterate. Warehouse workflows are refined, not shipped once.
+  </Step>
+</Steps>
+
+<Note>
+  Customisation does not mean forking Acumatica. Everything lives inside a customisation project that is versioned, publishable, and upgrade-safe.
+</Note>
+
+## What "Customised" Looks Like
+
+| Area | Out of the Box | Customised |
+| --- | --- | --- |
+| Pick screen | Generic Shipments screen | Purpose-built pick screen, scanner-first |
+| Order batching | Manual selection | Automated by carrier, zone, priority |
+| SKU verification | Optional | Enforced barcode scan on every line |
+| Carton selection | Free text | Guided list based on order dimensions |
+| Weight capture | Manual entry | Scale integration, auto-populated |
+| Packing slip | Standard template | Branded template with company-specific fields |
+| Exception handling | Ad-hoc | Dedicated screen with resolution actions |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Faster Fulfilment" icon="rocket">
+    Fewer clicks and guided steps cut pick and pack time per order.
+  </Card>
+
+  <Card title="Higher Accuracy" icon="circle-check">
+    Enforced scans and validations reduce mis-picks and mis-packs.
+  </Card>
+
+  <Card title="Lower Training Cost" icon="graduation-cap">
+    New staff learn a focused screen faster than a generic one with dozens of unused fields.
+  </Card>
+
+  <Card title="ERP as System of Record" icon="database">
+    Every action is captured in Acumatica instead of on paper or in spreadsheets.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Start with the single highest-volume workflow (typically standard retail picks). Customise that path end to end, prove the gains, then extend the same pattern to dropship, backorder, and returns flows.
+</Tip>

@@ -1,0 +1,149 @@
+---
+title: "Building Reverse Logistics and Returns Inside Acumatica"
+sidebarTitle: "Reverse Logistics"
+description: "Bring returns and reverse logistics into Acumatica with RMAs, disposition workflows, and controlled stock adjustments instead of spreadsheets and email."
+---
+
+<Warning>
+  Reverse logistics currently bypasses Acumatica entirely. Returns are logged in an Excel spreadsheet, coordinated over email with photo attachments, and stock is adjusted at will. There is no audit trail, no financial impact tracking, and no visibility across the business.
+</Warning>
+
+## The Problem
+
+Returns are one of the most sensitive workflows in the business: they touch inventory, revenue, customer refunds, and supplier claims. Today none of that happens inside the ERP.
+
+### Current returns flow
+
+<Steps>
+  <Step title="Admin logs the return">
+    A customer return is captured in an Excel spreadsheet maintained by admin.
+  </Step>
+  <Step title="Warehouse finds the parcel">
+    The physical return arrives at the warehouse and is discovered ad-hoc, not against a system record.
+  </Step>
+  <Step title="Warehouse emails admin">
+    Warehouse staff email admin with photos of the item and its condition, asking for instructions.
+  </Step>
+  <Step title="Admin decides disposition">
+    Admin replies over email with what to do (restock, scrap, return to supplier, refund).
+  </Step>
+  <Step title="Stock adjusted manually">
+    Someone adjusts stock directly in Acumatica with no linked RMA, no reason code, and no audit chain.
+  </Step>
+</Steps>
+
+### Why this is dangerous
+
+<CardGroup cols={2}>
+  <Card title="No Audit Trail" icon="file-search">
+    Nothing links the physical return, the customer, the decision, and the stock movement together.
+  </Card>
+
+  <Card title="Stock Integrity Risk" icon="database">
+    Manual adjustments "at will" corrupt inventory accuracy and hide shrinkage.
+  </Card>
+
+  <Card title="Financial Blind Spot" icon="dollar-sign">
+    Refunds, credits, and cost of returned goods do not flow through Acumatica's financials cleanly.
+  </Card>
+
+  <Card title="Slow Turnaround" icon="clock">
+    Email round-trips between warehouse and admin delay refunds and restocking for days.
+  </Card>
+
+  <Card title="No Reporting" icon="chart-bar">
+    Return rates by SKU, brand, customer, or reason are invisible because the data lives in inboxes.
+  </Card>
+
+  <Card title="Compliance Exposure" icon="shield-alert">
+    No documented chain of custody makes disputes, chargebacks, and audits difficult to defend.
+  </Card>
+</CardGroup>
+
+## The Solution
+
+Move reverse logistics fully inside Acumatica using **RMAs (Return Merchandise Authorisations)**, a defined disposition workflow, and controlled stock adjustments with reason codes. The spreadsheet and email chain are retired.
+
+<CardGroup cols={2}>
+  <Card title="RMA Order Type" icon="rotate-ccw">
+    Every return starts life as an RMA in Acumatica, linked to the original sales order.
+  </Card>
+
+  <Card title="Warehouse Receiving Screen" icon="scan">
+    A dedicated screen for warehouse staff to receive returns against an RMA, capture condition, and attach photos.
+  </Card>
+
+  <Card title="Disposition Workflow" icon="git-branch">
+    Structured decisions (restock, quarantine, repair, scrap, supplier return) with approvals baked in.
+  </Card>
+
+  <Card title="Controlled Adjustments" icon="lock">
+    Stock movements happen only through the RMA workflow, with mandatory reason codes and audit records.
+  </Card>
+</CardGroup>
+
+### Recommended implementation
+
+<Steps>
+  <Step title="Configure RMA order types">
+    Set up Acumatica RMA order types with the statuses the business needs: Awaiting Receipt, Received, Under Review, Dispositioned, Closed.
+  </Step>
+  <Step title="Customer-facing intake">
+    Give customer service (and optionally customers via a portal) a form that creates the RMA directly in Acumatica, replacing the spreadsheet.
+  </Step>
+  <Step title="Warehouse receiving screen">
+    Build a custom warehouse screen to scan an RMA, confirm the SKU and quantity, capture condition, and upload photos as Acumatica file attachments.
+  </Step>
+  <Step title="Disposition workflow">
+    Add a disposition step where the reviewer chooses an outcome (restock, quarantine, repair, scrap, supplier return) with a mandatory reason code and notes.
+  </Step>
+  <Step title="Lock down manual adjustments">
+    Restrict role permissions so ad-hoc inventory adjustments require an approved reason and cannot be used to bypass an RMA.
+  </Step>
+  <Step title="Trigger financials automatically">
+    Configure credit memos, refunds, and supplier claims to be raised from the RMA record so financial impact tracks the physical event.
+  </Step>
+  <Step title="Add reporting">
+    Publish dashboards for return rate by SKU, brand, and customer, average time to disposition, and returned-value trends.
+  </Step>
+</Steps>
+
+<Note>
+  The spreadsheet and email process is fully replaced. If a return exists in the warehouse but does not exist as an RMA in Acumatica, that is now the exception to investigate, not the norm.
+</Note>
+
+## Returns Handling Matrix
+
+| Step | Current State | Target State |
+| --- | --- | --- |
+| Return logged | Excel spreadsheet by admin | RMA created in Acumatica |
+| Warehouse notified | Ad-hoc discovery | RMA visible on warehouse screen |
+| Condition captured | Email with photos | Photos attached to RMA record |
+| Disposition decision | Email reply from admin | Structured disposition step with reason code |
+| Stock adjustment | Manual, at will | Triggered by RMA disposition, audited |
+| Financial impact | Handled separately, if at all | Credit memo/refund raised from RMA |
+| Reporting | None | Dashboards on return rate, reasons, cycle time |
+
+## Expected Outcomes
+
+<CardGroup cols={2}>
+  <Card title="Full Audit Trail" icon="file-check">
+    Every return has a linked chain: customer, RMA, receipt, photos, decision, stock movement, refund.
+  </Card>
+
+  <Card title="Stock Accuracy" icon="database">
+    Adjustments are controlled and traceable, closing a major source of inventory drift.
+  </Card>
+
+  <Card title="Faster Refunds" icon="rocket">
+    Structured workflow removes email delays, shortening the time from receipt to customer refund.
+  </Card>
+
+  <Card title="Actionable Insight" icon="chart-line">
+    Return data becomes reportable, exposing problem SKUs, brands, and customer patterns.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Start by mandating that every return has an RMA, even if the first version of the workflow is minimal. Once the data is inside Acumatica, layer on the disposition, financials, and reporting improvements.
+</Tip>
