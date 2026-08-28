@@ -55,7 +55,7 @@ The generic parameter `TPrimary` tells the framework which DAC is the "master" r
 Understanding when a graph is created and destroyed helps you write efficient event handlers and avoid subtle bugs.
 
 <Steps>
-  <Step title="Instantiation">
+  <Step title="Instantiation" stepNumber={1}>
     The framework creates a new graph instance for each HTTP request that involves that screen. You should never store mutable state in static fields on a graph; use instance fields or `PXCache` instead.
   </Step>
   <Step title="View population">

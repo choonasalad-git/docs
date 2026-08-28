@@ -8,9 +8,9 @@ Custom tables give you a first-class way to persist data that has no home in the
 
 ## What custom tables are
 
-A custom table is a user-defined relational table that lives in the same application database as every standard ERP table. You create it by authoring a DAC — a C# class that implements the `IBqlTable` marker interface and declares its columns as strongly-typed inner classes called *fields*. When you publish your customization, the platform inspects every DAC in the project and issues the necessary `CREATE TABLE` or `ALTER TABLE` statements automatically. You never write schema migration scripts by hand.
+A custom table is a user-defined relational table that lives in the same application database as every standard ERP table. You create it by authoring a DAC — a C# class that implements the `IBqlTable` marker interface and declares its columns as strongly-typed inner classes called _fields_. When you publish your customization, the platform inspects every DAC in the project and issues the necessary `CREATE TABLE` or `ALTER TABLE` statements automatically. You never write schema migration scripts by hand.
 
-Each field in the DAC maps to a database column through a *field attribute* such as `PXDBString` or `PXDBDecimal`. The attribute specifies the SQL type, length, nullability, and other column-level constraints. Alongside the DB-mapped attributes you add UI and behavior attributes — `PXUIField` to set a display name, `PXDefault` to supply a default value, `PXSelector` to attach a lookup — so that one class definition covers both the database schema and the screen behavior.
+Each field in the DAC maps to a database column through a _field attribute_ such as `PXDBString` or `PXDBDecimal`. The attribute specifies the SQL type, length, nullability, and other column-level constraints. Alongside the DB-mapped attributes you add UI and behavior attributes — `PXUIField` to set a display name, `PXDefault` to supply a default value, `PXSelector` to attach a lookup — so that one class definition covers both the database schema and the screen behavior.
 
 ## How custom tables integrate with the ERP
 
@@ -34,16 +34,19 @@ Custom tables are the right tool whenever you need to store structured, relation
 ## Explore the custom tables documentation
 
 <CardGroup cols={2}>
-  <Card title="Creating a DAC" icon="code" href="/custom-tables/creating-dac">
+  <Card title="Creating a DAC" color="#3ae1ff" icon="code" href="/custom-tables/creating-dac">
     Step-by-step walkthrough for declaring a DAC class, defining fields, and publishing the table to the database.
   </Card>
-  <Card title="Field Types" icon="database" href="/custom-tables/field-types">
+
+  <Card title="Field Types" color="#3ae1ff" icon="database" href="/custom-tables/field-types">
     Reference for every supported DB-mapped and unbound field attribute, with parameters and code examples.
   </Card>
-  <Card title="Relationships" icon="diagram-project" href="/custom-tables/relationships">
+
+  <Card title="Relationships" color="#3ae1ff" icon="yin-yang" href="/custom-tables/relationships">
     How to wire up foreign-key lookups, master-detail parent links, and many-to-many join patterns between DACs.
   </Card>
-  <Card title="DAC Extensions" icon="puzzle-piece" href="/extensions/dac-extensions">
+
+  <Card title="DAC Extensions" color="#3ae1ff" icon="plug-connected" href="/extensions/dac-extensions">
     Prefer to add fields to an existing ERP table rather than creating a new one? Start with DAC extensions instead.
   </Card>
 </CardGroup>
@@ -53,7 +56,7 @@ Custom tables are the right tool whenever you need to store structured, relation
 Both features let you add custom fields to the system, but they serve different purposes. Use the table below to decide which approach fits your requirement.
 
 | Consideration | Custom table | DAC extension |
-|---|---|---|
+| --- | --- | --- |
 | **Data belongs to** | A brand-new entity (no existing table fits) | An existing ERP entity (e.g., `Customer`, `SOOrder`) |
 | **Database impact** | Creates a new SQL table | Adds columns to an existing SQL table |
 | **Ownership** | You own the full schema | You extend a schema you do not own |

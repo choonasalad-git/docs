@@ -18,21 +18,17 @@ Make sure you have saved all pending changes in the Customization Project editor
 
 <Steps>
   <Step title="Open the Customization Projects screen">
-    In the ERP application, navigate to **Customization > Customization Projects**. The screen lists all projects that have been created or imported on this instance. Each row shows the project name, current status, and the last publish date.
+    In the ERP application, navigate to **Customization \> Customization Projects**. The screen lists all projects that have been created or imported on this instance. Each row shows the project name, current status, and the last publish date.
   </Step>
-
   <Step title="Select the project or projects to publish">
     Check the box next to each project you want to include in the publish operation. If you are publishing multiple projects together, the platform merges them in the order defined by their **Publish Order** value (lower numbers publish first). Make sure the ordering is correct before proceeding—see [Publish order for multiple projects](#publish-order-when-multiple-projects-are-active) below.
   </Step>
-
   <Step title="Review the publish log for warnings">
-    Click **Validate** (or open the project and choose **Actions > Validate**) before triggering the full publish. The validation step runs the C# compiler and checks DB scripts without committing any changes. Read through the output carefully—warnings about deprecated API usage or schema conflicts are much cheaper to fix before a full publish than after.
+    Click **Validate** (or open the project and choose **Actions \> Validate**) before triggering the full publish. The validation step runs the C# compiler and checks DB scripts without committing any changes. Read through the output carefully—warnings about deprecated API usage or schema conflicts are much cheaper to fix before a full publish than after.
   </Step>
-
   <Step title="Click Publish and wait for completion">
     Click the **Publish** button in the toolbar. The ERP application will restart its web application, so your browser session will briefly disconnect. Wait for the browser to reload automatically—this typically takes 15–60 seconds depending on the size of the project and server performance. Do not close the browser or navigate away while the publish is in progress.
   </Step>
-
   <Step title="Verify the customization is active">
     After the page reloads, navigate to the screen or feature introduced by your customization and confirm it behaves as expected. Check the **Customization Projects** screen to confirm the project status shows **Published**. If any errors occurred, the status will show **Failed** and the publish log will contain the details.
   </Step>
@@ -43,16 +39,19 @@ Make sure you have saved all pending changes in the Customization Project editor
 Each project is described by a `ProjectMetadata.xml` manifest—the Customization Project XML file that lists every artifact in the project and its version. When you trigger a publish, the platform reads this manifest to determine what to compile, which DB scripts to run, and which screen definitions to deploy. Understanding each stage helps you interpret errors and predict side effects.
 
 <CardGroup cols={2}>
-  <Card title="C# Compilation" icon="code">
+  <Card title="C# Compilation" color="#3ae1ff" icon="code">
     All `.cs` files in the project are compiled against the ERP application assemblies. The resulting assembly is placed in the application's `bin` folder and loaded by the runtime. Compilation errors appear immediately in the publish log.
   </Card>
-  <Card title="Database Schema Migration" icon="database">
+
+  <Card title="Database Schema Migration" color="#3ae1ff" icon="database">
     SQL scripts generated from your DAC definitions and any hand-authored scripts in the **Db Scripts** section are executed against the application database. New columns are added, indexes are created, and default values are applied. The platform tracks which scripts have already run so they are not executed twice.
   </Card>
-  <Card title="Sitemap Update" icon="sitemap">
+
+  <Card title="Sitemap Update" color="#3ae1ff" icon="sitemap">
     Any new screens registered in the project are added to the application sitemap, making them accessible from the navigation menu and the search bar. Existing screens that were modified have their definitions refreshed.
   </Card>
-  <Card title="Screen Deployment" icon="display">
+
+  <Card title="Screen Deployment" color="#3ae1ff" icon="screen-share">
     ASPX layout files and page controller definitions are written to the application's `Pages` directory. The ASP.NET runtime picks up the new files on the next request without requiring an additional restart.
   </Card>
 </CardGroup>
@@ -61,7 +60,7 @@ Each project is described by a `ProjectMetadata.xml` manifest—the Customizatio
 
 When more than one project is selected for publishing, the platform merges them into a single compilation unit before building the output assembly. The merge follows the **Publish Order** numeric field on each project row—projects with a lower number are processed first. If two projects define conflicting versions of the same item (for example, two different layouts for the same screen), the project with the **higher** publish order wins.
 
-To view or change publish order, open **Customization > Customization Projects**, double-click a project to open it, and update the **Publish Order** field on the project header. Use round numbers (10, 20, 30) rather than sequential integers so you can insert new projects between existing ones without renumbering everything.
+To view or change publish order, open **Customization \> Customization Projects**, double-click a project to open it, and update the **Publish Order** field on the project header. Use round numbers (10, 20, 30) rather than sequential integers so you can insert new projects between existing ones without renumbering everything.
 
 <Tip>
   Keep each project focused on a single functional area (for example, one project for custom fields, another for workflow changes). Smaller, single-purpose projects are easier to order, test, and roll back independently.
@@ -71,9 +70,9 @@ To view or change publish order, open **Customization > Customization Projects**
 
 If a published customization causes problems, you can remove it from the running application by unpublishing the project.
 
-1. Navigate to **Customization > Customization Projects**.
+1. Navigate to **Customization \> Customization Projects**.
 2. Select the project you want to remove.
-3. Click **Actions > Unpublish**.
+3. Click **Actions \> Unpublish**.
 4. Confirm the prompt. The application will restart and the customization will no longer be active.
 
 <Note>

@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
-  "name": "Acumatica Customization Guide",
+  "name": "HCD Docs",
   "colors": {
     "primary": "#00ddf9",
     "light": "#d3d3d3",
@@ -79,15 +79,15 @@
             "pages": [
               "improvement/inventory/brand-based-layout",
               "improvement/integration/external-app-sprawl",
-              "improvement/integration/crossfire-barcode-access",
-              "improvement/integration/crossfire-scope-and-ownership",
-              "improvement/workflow/picking-packing-customisation",
-              "improvement/workflow/open-future-orders-negative-stock",
-              "improvement/workflow/reverse-logistics-returns",
-              "improvement/workflow/replenishment",
-              "improvement/workflow/packing-bench-sorting",
-              "improvement/workflow/batch-pick-reserve-churn",
-              "improvement/workflow/edi-expectations"
+              "improvement/integration/crossfire/crossfire-barcode-access",
+              "improvement/integration/crossfire/crossfire-scope-and-ownership",
+              "improvement/shipping/picking-packing-customisation",
+              "improvement/shipping/open-future-orders-negative-stock",
+              "improvement/shipping/reverse-logistics-returns",
+              "improvement/inventory/replenishment",
+              "improvement/shipping/packing-bench-sorting",
+              "improvement/shipping/batch-pick-reserve-churn",
+              "improvement/integration/crossfire/edi-expectations"
             ]
           }
         ]
@@ -127,5 +127,8 @@
   },
   "interaction": {
     "drilldown": true
+  },
+  "variables": {
+    "brandColor": "#00daff"
   }
 }

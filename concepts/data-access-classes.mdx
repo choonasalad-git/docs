@@ -60,7 +60,6 @@ The platform enforces a specific naming convention to keep the two halves of eac
 
 | Part | Casing | Example |
 | --- | --- | --- |
-
 | Abstract inner class | `camelCase` | `recordID`, `description` |
 | Concrete property | `PascalCase` | `RecordID`, `Description` |
 | Database column (auto-derived) | `PascalCase` | `RecordID`, `Description` |
@@ -72,28 +71,27 @@ The framework derives the database column name directly from the concrete proper
 Choose the correct `PXDB*` attribute for each field based on the type of data you are storing:
 
 <CardGroup cols={2}>
-  <Card title="PXDBIdentity" icon="key">
+  <Card title="PXDBIdentity" color="#3ae1ff" icon="key">
     Auto-incrementing integer primary key. The database generates the value on insert; you should never set it manually.
   </Card>
 
-  <Card title="PXDBString(length)" icon="text-cursor-input">
+  <Card title="PXDBString(length)" color="#3ae1ff" icon="alphabet-latin">
     Variable-length string. Always specify `IsUnicode = true` for any user-visible text to support international characters.
   </Card>
 
-  <Card title="PXDBInt" icon="hashtag">
+  <Card title="PXDBInt" color="#3ae1ff" icon="number-1">
     32-bit integer. Use for foreign keys and small numeric counters.
   </Card>
 
-  <Card title="PXDBDecimal(precision)" icon="calculator">
+  <Card title="PXDBDecimal(precision)" color="#3ae1ff" icon="calculator">
     Fixed-precision decimal for monetary and quantity values. The `precision` argument controls the number of decimal places.
   </Card>
 
-  <Card title="PXDBBool" icon="toggle-left">
+  <Card title="PXDBBool" color="#3ae1ff" icon="toggle-left">
     Boolean (maps to a `bit` column). Always pair with `[PXDefault(true)]` or `[PXDefault(false)]` to avoid null surprises.
   </Card>
 
-
-  <Card title="PXDBDate" icon="calendar">
+  <Card title="PXDBDate" color="#3ae1ff" icon="calendar">
     Date-only value. Use `PXDBDateAndTime` when you also need to store the time component.
   </Card>
 </CardGroup>
@@ -164,7 +162,5 @@ public abstract class orderNbr : PX.Data.BQL.BqlString.Field<orderNbr> { }
 ```
 
 <Note>
-
   **DAC extensions vs. new DACs** — If you need to add fields to an _existing_ base ERP table (for example, adding a custom approval status to `SOOrder`), do not create a new DAC. Instead, create a `PXCacheExtension<TDAC>` that extends the existing DAC. Extension fields are stored in the same database table via automatically managed extension columns, and the framework merges the extension properties onto the base DAC transparently. Create a brand-new DAC only when you are introducing an entirely new table with no relationship to an existing base record.
 </Note>
-

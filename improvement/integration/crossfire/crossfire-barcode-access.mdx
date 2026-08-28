@@ -13,19 +13,19 @@ description: "The Acumatica endpoint exposes the Alternate ID field but not its 
 Barcodes, GTINs, vendor part numbers, and customer part numbers in Acumatica are stored on the **Inventory Cross-Reference** tab of the Stock Item screen. They are child records of the item, held in the `INItemXRef` table, differentiated by `AlternateType` (for example `BARCODE`, `GLOBAL`, `CPN`, `VPN`).
 
 <CardGroup cols={2}>
-  <Card title="Field Is Exposed" icon="circle-check">
+  <Card title="Field Is Exposed" color="#3ae1ff" icon="circle-check">
     The Alternate ID field exists on the Stock Item entity in the contract-based API.
   </Card>
 
-  <Card title="Values Are Not, By Default" icon="circle-x">
+  <Card title="Values Are Not, By Default" color="#3ae1ff" icon="circle-x">
     The default Stock Item endpoint does not include the child `CrossReference` collection where the actual barcode values live.
   </Card>
 
-  <Card title="Fix Is a Projection" icon="wrench">
+  <Card title="Fix Is a Projection" color="#3ae1ff" icon="source-code">
     Extending the endpoint to project the `CrossReference` detail into the Stock Item response is standard Acumatica work.
   </Card>
 
-  <Card title="Not a Platform Limitation" icon="ban">
+  <Card title="Not a Platform Limitation" color="#3ae1ff" icon="ban">
     This is not a case of "Acumatica cannot do this." It is a case of "the endpoint has not been extended yet."
   </Card>
 </CardGroup>
@@ -49,19 +49,19 @@ Barcodes, GTINs, vendor part numbers, and customer part numbers in Acumatica are
 Extend Acumatica's contract-based web services endpoint so the Stock Item response includes the required `CrossReference` values, filtered to the alternate types Crossfire needs (typically `BARCODE` and `GLOBAL`).
 
 <CardGroup cols={2}>
-  <Card title="Extend the Endpoint" icon="code">
+  <Card title="Extend the Endpoint" color="#3ae1ff" icon="code">
     Add a `CrossReference` detail collection to the Stock Item entity in a new endpoint extension.
   </Card>
 
-  <Card title="Project the Value" icon="filter">
+  <Card title="Project the Value" color="#3ae1ff" icon="filter">
     Expose `AlternateID`, `AlternateType`, and `Description` on the projected detail.
   </Card>
 
-  <Card title="Filter by Type" icon="tag">
+  <Card title="Filter by Type" color="#3ae1ff" icon="tag">
     Provide filtered views (for example `Barcodes`, `GTINs`) so Crossfire consumes only what it needs.
   </Card>
 
-  <Card title="Version Cleanly" icon="git-branch">
+  <Card title="Version Cleanly" color="#3ae1ff" icon="git-branch">
     Publish as a new endpoint version so existing consumers are not disturbed.
   </Card>
 </CardGroup>
@@ -110,19 +110,19 @@ Language matters when scoping who does what. Use the accurate framing:
 ## Why This Should Not Be Controversial
 
 <CardGroup cols={2}>
-  <Card title="Standard Pattern" icon="book-open">
+  <Card title="Standard Pattern" color="#3ae1ff" icon="grid-pattern">
     Endpoint projections are the documented Acumatica way to expose child records to integrators.
   </Card>
 
-  <Card title="Small Scope" icon="ruler">
+  <Card title="Small Scope" color="#3ae1ff" icon="ruler">
     Adding a `CrossReference` detail to Stock Item is a low-risk change with no impact on business logic.
   </Card>
 
-  <Card title="Reversible" icon="rotate-ccw">
+  <Card title="Reversible" color="#3ae1ff" icon="arrow-back-up">
     Endpoint versions are additive. Old versions keep working; new versions can be updated freely.
   </Card>
 
-  <Card title="Unblocks Downstream" icon="unlock">
+  <Card title="Unblocks Downstream" color="#3ae1ff" icon="download-off">
     Barcodes and GTINs are prerequisites for scan-based workflows, marketplace item matching, and accurate ASNs.
   </Card>
 </CardGroup>
@@ -172,13 +172,13 @@ A closely related version of this issue is Crossfire reporting that "the Purchas
     Read the `CrossReference` collection on the Stock Item (extending the endpoint with a projection if needed).
   </Step>
   <Step title="Filter by type">
-    Filter to `AlternateType = 'BARCODE'` (or `GLOBAL` for GTIN) to get the value.
+    Filter to `AlternateType = 'BAR'`  for `BARCODE`(or `'GTIN'`for `GTIN`) to get the value.
   </Step>
 </Steps>
 
 ### What to say back
 
-> The Alternate ID is not stored on the Purchase Order because it is not PO data. It is master data on the Stock Item, held in the Inventory Cross-Reference. Each PO line references an Inventory ID; the barcode is retrieved by looking up the referenced Stock Item and reading its cross-references. If you need it embedded in the PO response, extend the PO endpoint to project the referenced Stock Item's barcode cross-reference. That is standard Acumatica endpoint work.
+> The Alternate ID is not stored on the Purchase Order because it is not PO data. It is master data on the Stock Item, held in the Inventory Cross-Reference. Each PO line references an Inventory ID and already holds the Alternate ID that is empty for populating; the barcode is retrieved by looking up the referenced Stock Item and reading its cross-references. If you need it embedded in the PO response, extend the PO endpoint to project the referenced Stock Item's barcode cross-reference. That is standard Acumatica endpoint work.
 
 <Warning>
   Reporting "the PO object does not expose the barcode" as a blocker suggests Crossfire has not attempted the correct lookup path. An integration specialist should be joining PO lines to Stock Item cross-references without needing to be told.

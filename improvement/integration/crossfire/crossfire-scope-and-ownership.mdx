@@ -1,0 +1,160 @@
+---
+title: "Crossfire Scope: Who Is Actually Doing the Integration?"
+sidebarTitle: "Crossfire Scope"
+description: 'Crossfire calling their work as "integrating" is misleading and false. They are only transporting (data) & translating (data). This does not meet the definition of the word integration. We should know this and be able to prepare for any system customisation that needs to happen.'
+---
+
+<Warning>
+  There is a scoping gap on the Crossfire project that needs to be surfaced. Crossfire is positioned as an integration partner, but the pattern in practice is that they are more like a bridge. They do not delve into systems to **combine or coordinate to form a single, harmonious, and functioning whole**.
+</Warning>
+
+## The Problem
+
+"Integration" is being used to mean two very different things in the same room, and no one has separated them out.
+
+<CardGroup cols={2}>
+  <Card title="What The Boss Hears" color="#3ae1ff" icon="building-warehouse">
+    "Crossfire is our integration partner. They will connect Acumatica to Marketplacer and trading partners."
+  </Card>
+
+  <Card title="What Is Actually Happening" color="#3ae1ff" icon="eye">
+    Crossfire consumes GIs and endpoints our others build. When a value is missing, they escalate it back to us as an Acumatica problem.
+  </Card>
+
+  <Card title="The Missing Distinction" color="#3ae1ff" icon="question-mark">
+    Document transport, format translation, and mapping are prerequisites for integration, not integration itself. Integration means the whole system behaves as a single, coordinated whole. Moving a document from A to B does not achieve that on its own.
+  </Card>
+
+  <Card title="The Risk" color="#3ae1ff" icon="alert-triangle">
+    Unforecasted costs that were thought to be part of the "integration". More roadblocks and unowned work in the plan.
+  </Card>
+</CardGroup>
+
+### The pattern to name out loud
+
+<Steps>
+  <Step title="Crossfire hits a missing field">
+    A field they want (barcode, on-hand, cross-reference) is not on the entity they are calling.
+  </Step>
+  <Step title="They report a limitation">
+    The report comes back as "Acumatica does not expose X." It is framed as a platform problem.
+  </Step>
+  <Step title="Workaround needed">
+    A teammate creates a Generic Inquiry or extends an endpoint so the value can be consumed via OData.
+  </Step>
+  <Step title="Crossfire consumes it">
+    Crossfire points their connector at the new GI or endpoint and reports "integrated."
+  </Step>
+  <Step title="Credit goes to Crossfire">
+    Because Crossfire is the named integration vendor, the delivery is attributed to them. Our team's ERP work is invisible in the plan.
+  </Step>
+</Steps>
+
+## Start With The Definition
+
+Before scoping anything, hold the word to its actual meaning.
+
+> **Integrated** — combined or coordinated to form a single, harmonious, and functioning whole.
+
+By that definition, integration is an **outcome**, not an activity. It describes the end state of the whole business, not one component in the middle of it.
+
+<CardGroup cols={2}>
+  <Card title="Transfer" color="#3ae1ff" icon="arrow-autofit-content">
+    Moving a document from A to B, possibly translating its format on the way. This is what Crossfire delivers.
+  </Card>
+
+  <Card title="Interoperability" color="#3ae1ff" icon="plug">
+    Two systems can exchange messages. Necessary, but not sufficient for integration.
+  </Card>
+
+  <Card title="Coordination" color="#3ae1ff" icon="users">
+    Business rules fire consistently across systems. Exceptions surface in one place. Data means the same thing everywhere.
+  </Card>
+
+  <Card title="Integration" color="#3ae1ff" icon="transfer">
+    All of the above plus the systems behaving as one coordinated whole. This is the outcome. It requires much more than transport.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Do not let "integration" be redefined to mean "we can send a document from A to B." That is transfer. Transfer is a prerequisite for integration, not a substitute for it. Every time the word gets loosened, the actual coordinated-whole work becomes invisible, and the team doing it goes uncredited.
+</Warning>
+
+### The pattern to refuse
+
+A common vendor pattern: take a strong word with a clear meaning, quietly redefine it to mean something weaker, then sell the weaker thing under the stronger word.
+
+- "Integration" gets redefined to mean "document transfer."
+- "Real-time" gets redefined to mean "every 15 minutes."
+- "Automated" gets redefined to mean "runs on a schedule someone still has to check."
+
+Each time, the strong word does the marketing work while the weaker reality does the delivery. When the gap is noticed, the answer is "that is what the word means in our industry." The dictionary does not have an industry asterisk. Hold the line.
+
+## The Core Point
+
+If our team designs, builds, and maintains the data access layer that Crossfire consumes, **the integration work is being done by our team**. Crossfire is doing the piece on the other side of that boundary: format translation, document transport, and trading-partner mapping.
+
+That is a legitimate service. It is not the same service that is called **Integration**.
+
+<Note>
+  This is not a complaint that Crossfire is unnecessary. It is a request to be honest about who is doing what, so the right work gets scoped, staffed, and credited.
+</Note>
+
+## Where the Boundary Actually Sits
+
+<CardGroup cols={2}>
+  <Card title="Our Team (Acumatica Side)" color="#3ae1ff" icon="database">
+    Data model, endpoint extensions, projections, Generic Inquiries, validation logic, screens for exceptions, business rules.
+  </Card>
+
+  <Card title="Crossfire (Transport Side)" color="#3ae1ff" icon="plug">
+    EDI documents to trading partners, format translation (EDI ↔ JSON/XML/CSV), Marketplacer connector, retailer mappings, VAN or AS2 transport.
+  </Card>
+
+  <Card title="Joint" color="#3ae1ff" icon="connection">
+    Field mapping between Acumatica entities and trading-partner document formats. Exception routing when documents fail.
+  </Card>
+
+  <Card title="Nobody, Currently" color="#3ae1ff" icon="help-octagon">
+    Ownership of the internal workflow gaps (replenishment, pick/pack, returns) that neither side is scoped to fix.
+  </Card>
+</CardGroup>
+
+## Is Crossfire tasked with an Integration, or something else?
+
+In plain terms:
+
+- Crossfire is not doing the ERP-side data modelling.
+- Crossfire is not extending Acumatica endpoints when values are missing.
+- Crossfire is not building extensions.
+
+If all of the above sits outside of crossfire's scope, then the integration Crossfire is delivering is: **document transport between endpoints others build and trading-partner formats.** That is a real service, but it is not "the integration." It is one layer of it.
+
+## Recommended Action
+
+<Steps>
+  <Step title="Write the boundary down">
+    Produce a one-page diagram showing Acumatica ↔ Crossfire ↔ Trading Partners / Marketplacer, with responsibilities labelled on each arrow.
+  </Step>
+  <Step title="List every artefact by owner">
+    For each field, GI, projection, endpoint extension, screen, and mapping, mark which team builds it.
+  </Step>
+  <Step title="Get scoping decisions on record">
+    Decide explicitly: do we expect Crossfire to extend Acumatica endpoints themselves? If not, who will?
+  </Step>
+  <Step title="Track the pattern going forward">
+    Log every "Acumatica does not expose X" ticket. Note who resolved it. Over three months, the pattern will be undeniable.
+  </Step>
+</Steps>
+
+## Talking Points
+
+- Crossfire is a transport and translation vendor, not an ERP customisation vendor.
+- Every "Acumatica doesn't expose it" report so far has been resolved by our team building a GI or extending an endpoint.
+- The barcode issue is a live example: barcodes are on the Stock Item cross-reference, not on the PO. Reaching them is a straightforward join. Crossfire has asked us to build the access for them instead which is fine but unplanned and messy.
+- The on-hand levels for trading partners will follow the same pattern: our team will build a GI joining Stock Item, cross-reference, and site status. Crossfire will consume it.
+- This is fine, but it needs to be named. Otherwise we will be told the integration is delivered while our team is still carrying the workload.
+
+<Tip>
+  The clearest test question for the General Manager: "For every field Crossfire needs from Acumatica, who is building the access — Crossfire or us?" If the honest answer is "us," then Crossfire is not integrating Acumatica. They are consuming what our team integrated.
+</Tip>
