@@ -11,128 +11,118 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
-        "menu": [
+        "tab": "Functional & Technical Spec.",
+        "icon": "a-b-2",
+        "pages": [
+          "fts/hcd/cst/sow/bulk-load-planner",
+          "fts/hcd/cst/inw/minimum-order-quantity"
+        ]
+      },
+      {
+        "tab": "Reference",
+        "icon": "code",
+        "groups": [
           {
-            "item": "Improvements",
-            "anchors": [
-              {
-                "anchor": "EDI",
-                "pages": [
-                  "improvement/integration/crossfire/edi-expectations",
-                  "improvement/integration/crossfire/crossfire-barcode-access",
-                  "improvement/integration/crossfire/crossfire-scope-and-ownership"
-                ],
-                "icon": "transfer",
-                "color": {
-                  "light": "#3ae1ff",
-                  "dark": "#3ae1ff"
-                }
-              },
-              {
-                "anchor": "Workflows",
-                "pages": [
-                  "improvement/shipping/picking-packing-customisation",
-                  "improvement/shipping/open-future-orders-negative-stock",
-                  "improvement/shipping/reverse-logistics-returns",
-                  "improvement/inventory/replenishment",
-                  "improvement/shipping/packing-bench-sorting",
-                  "improvement/shipping/batch-pick-reserve-churn",
-                  "improvement/integration/external-app-sprawl"
-                ],
-                "icon": "brand-webflow",
-                "color": {
-                  "light": "#3ae1ff",
-                  "dark": "#3ae1ff"
-                }
-              },
-              {
-                "anchor": "Warehouse",
-                "pages": [
-                  "improvement/inventory/brand-based-layout"
-                ],
-                "icon": "building-warehouse",
-                "color": {
-                  "light": "#3ae1ff",
-                  "dark": "#3ae1ff"
-                }
-              }
-            ],
-            "icon": "activity"
-          },
-          {
-            "item": "Reference",
-            "icon": "info-circle",
-            "dropdowns": [
-              {
-                "dropdown": "Get Started",
-                "icon": "golf",
-                "pages": [
-                  "introduction",
-                  "getting-started/prerequisites",
-                  "getting-started/setup",
-                  "getting-started/first-customization"
-                ]
-              },
-              {
-                "dropdown": "Troubleshooting",
-                "pages": [
-                  "troubleshooting/common-errors",
-                  "troubleshooting/debugging",
-                  "troubleshooting/faq"
-                ]
-              },
-              {
-                "dropdown": "Deployment",
-                "pages": [
-                  "deployment/publishing",
-                  "deployment/packaging",
-                  "deployment/upgrading"
-                ]
-              },
-              {
-                "dropdown": "Extensions",
-                "pages": [
-                  "extensions/overview",
-                  "extensions/graph-extensions",
-                  "extensions/dac-extensions",
-                  "extensions/event-handlers"
-                ]
-              },
-              {
-                "dropdown": "Custom Screens",
-                "pages": [
-                  "screens/overview",
-                  "screens/creating-screens",
-                  "screens/layouts-and-controls",
-                  "screens/navigation-and-menus"
-                ]
-              },
-              {
-                "dropdown": "Custom Tables",
-                "pages": [
-                  "custom-tables/overview",
-                  "custom-tables/creating-dac",
-                  "custom-tables/field-types",
-                  "custom-tables/relationships"
-                ]
-              },
-              {
-                "dropdown": "Core Concepts",
-                "pages": [
-                  "concepts/customization-project",
-                  "concepts/dag-and-bql",
-                  "concepts/data-access-classes",
-                  "concepts/graph-extensions"
-                ]
-              }
+            "group": "Get Started",
+            "icon": "golf",
+            "pages": [
+              "introduction",
+              "getting-started/prerequisites",
+              "getting-started/setup",
+              "getting-started/first-customization"
             ]
           },
           {
-            "item": "Functional & Technical Specification",
+            "group": "Troubleshooting",
+            "icon": "info-triangle",
             "pages": [
-              "fts/hcd/cst/sow/bulk-load-planner",
-              "fts/hcd/cst/inw/minimum-order-quantity"
+              "troubleshooting/common-errors",
+              "troubleshooting/debugging",
+              "troubleshooting/faq"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "icon": "live-view",
+            "pages": [
+              "deployment/publishing",
+              "deployment/packaging",
+              "deployment/upgrading"
+            ]
+          },
+          {
+            "group": "Extensions",
+            "icon": "plug-connected",
+            "pages": [
+              "extensions/overview",
+              "extensions/graph-extensions",
+              "extensions/dac-extensions",
+              "extensions/event-handlers"
+            ]
+          },
+          {
+            "group": "Custom Screens",
+            "icon": "device-desktop",
+            "pages": [
+              "screens/overview",
+              "screens/creating-screens",
+              "screens/layouts-and-controls",
+              "screens/navigation-and-menus"
+            ]
+          },
+          {
+            "group": "Custom Tables",
+            "icon": "table-down",
+            "pages": [
+              "custom-tables/overview",
+              "custom-tables/creating-dac",
+              "custom-tables/field-types",
+              "custom-tables/relationships"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "row-insert-bottom",
+            "pages": [
+              "concepts/customization-project",
+              "concepts/dag-and-bql",
+              "concepts/data-access-classes",
+              "concepts/graph-extensions"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Improvements",
+        "icon": "checklist",
+        "groups": [
+          {
+            "group": "EDI",
+            "icon": "transfer",
+            "pages": [
+              "improvement/integration/crossfire/edi-expectations",
+              "improvement/integration/crossfire/crossfire-barcode-access",
+              "improvement/integration/crossfire/crossfire-scope-and-ownership"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "icon": "brand-webflow",
+            "pages": [
+              "improvement/shipping/picking-packing-customisation",
+              "improvement/shipping/open-future-orders-negative-stock",
+              "improvement/shipping/reverse-logistics-returns",
+              "improvement/inventory/replenishment",
+              "improvement/shipping/packing-bench-sorting",
+              "improvement/shipping/batch-pick-reserve-churn",
+              "improvement/integration/external-app-sprawl"
+            ]
+          },
+          {
+            "group": "Warehouse",
+            "icon": "building-warehouse",
+            "pages": [
+              "improvement/inventory/brand-based-layout"
             ]
           }
         ]
