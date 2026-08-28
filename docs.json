@@ -14,9 +14,10 @@
         "tab": "Functional & Technical Spec.",
         "icon": "a-b-2",
         "pages": [
-          "fts/hcd/cst/sow/bulk-load-planner",
           "funtional-and-technical-spec/hcd/cst/inw/minimum-order-quantity",
-          "fts/hcd/cst/inw/minimum-order-quantity"
+          "funtional-and-technical-spec/hcd/cst/sow/bulk-load-planner",
+          "funtional-and-technical-spec/hcd/gi/mobile-packing-queue",
+          "funtional-and-technical-spec/hcd/gi/mobile-picking-queue"
         ]
       },
       {
@@ -105,13 +106,10 @@
             ]
           },
           {
-            "group": "Integration",
-            "icon": "transfer",
+            "group": "Warehouse",
+            "icon": "building-warehouse",
             "pages": [
-              "improvement/integration/edi-expectations",
-              "improvement/integration/crossfire-barcode-access",
-              "improvement/integration/crossfire-scope-and-ownership",
-              "improvement/integration/external-app-sprawl"
+              "improvement/warehouse/brand-based-layout"
             ]
           },
           {
@@ -127,10 +125,13 @@
             ]
           },
           {
-            "group": "Warehouse",
-            "icon": "building-warehouse",
+            "group": "Integration",
+            "icon": "transfer",
             "pages": [
-              "improvement/warehouse/brand-based-layout"
+              "improvement/integration/edi-expectations",
+              "improvement/integration/crossfire-barcode-access",
+              "improvement/integration/crossfire-scope-and-ownership",
+              "improvement/integration/external-app-sprawl"
             ]
           }
         ]
