@@ -4,7 +4,7 @@ sidebarTitle: "Overview"
 description: "A single view of every improvement raised across the warehouse, ERP, and integration surface, with the shared themes that connect them."
 ---
 
-This overview brings together every improvement raised across MYOB Acumatica, Crossfire's Integration, and warehouse operations. Each page captures one specific problem, its root cause, and a concrete solution. Read individually they read as separate issues; read together they describe a consistent pattern of messy workflows, missing ownership, and out-of-the-box software being used where customisation is the whole point.
+There is no doubt the efficiency rating within warehouse operations has increased. There is much room for improvement as the hype wears off and the true cracks start to appear. This overview brings together every improvement raised across MYOB Acumatica, Crossfire's Integration, and warehouse operations. Each page captures one specific problem, its root cause, and a concrete solution. Read individually they read as separate issues; read together they describe a consistent pattern of messy workflows, missing ownership, and out-of-the-box software being used where customisation is the whole point.
 
 ## Why This Section Exists
 
@@ -52,19 +52,17 @@ Every improvement page follows the same shape:
 
 The improvements group naturally into three areas. Each area has its own root cause and its own owner.
 
-<CardGroup cols={3}>
-  <Card title="Warehouse" color="#3ae1ff" icon="building-warehouse" href="/improvement/inventory/brand-based-layout">
-    Physical layout, slotting, and the sorting conflicts that show up on the pack bench.
-  </Card>
+<Card title="Warehouse" color="#3ae1ff" icon="building-warehouse" href="/improvement/inventory/brand-based-layout">
+  Physical layout, slotting, and the sorting conflicts that show up on the pack bench.
+</Card>
 
-  <Card title="Workflows" color="#3ae1ff" icon="brand-webflow" href="/improvement/shipping/picking-packing-customisation">
-    Pick, pack, replenishment, returns, and order handling inside Acumatica. Most of these need customisation, not new software.
-  </Card>
+<Card title="Workflows" color="#3ae1ff" icon="brand-webflow" href="/improvement/shipping/picking-packing-customisation">
+  Pick, pack, replenishment, returns, and order handling inside Acumatica. Most of these need customisation, not new software.
+</Card>
 
-  <Card title="EDI & Integration" color="#3ae1ff" icon="transfer" href="/improvement/integration/crossfire/edi-expectations">
-    The Crossfire project, what EDI does and does not solve, and where the integration ownership boundary actually sits.
-  </Card>
-</CardGroup>
+<Card title="EDI & Integration" color="#3ae1ff" icon="transfer" href="/improvement/integration/crossfire/edi-expectations">
+  The Crossfire project, what EDI does and does not solve, and where the integration ownership boundary actually sits.
+</Card>
 
 ## Warehouse
 
@@ -93,7 +91,7 @@ The largest area. These improvements all point at the same underlying fact: **Ac
     The same reserve pallet is pulled and re-shelved multiple times per shift because batches are planned in isolation. Fix with wave planning and pooled demand.
   </Card>
 
-  <Card title="Replenishment" color="#3ae1ff" icon="arrow-down-to-line" href="/improvement/inventory/replenishment">
+  <Card title="Replenishment" color="#3ae1ff" icon="truck" href="/improvement/inventory/replenishment">
     There is no replenishment workflow. Introduce pickface locations, min/max thresholds, auto-generated tasks, and a guided replenishment screen.
   </Card>
 
@@ -101,12 +99,8 @@ The largest area. These improvements all point at the same underlying fact: **Ac
     Open future orders drive SKUs negative because there is no auto-hold or availability check. Enforce order status and allocation rules automatically.
   </Card>
 
-  <Card title="Reverse Logistics" color="#3ae1ff" icon="rotate-ccw" href="/improvement/shipping/reverse-logistics-returns">
+  <Card title="Reverse Logistics" color="#3ae1ff" icon="shopping-cart-x" href="/improvement/shipping/reverse-logistics-returns">
     Returns bypass Acumatica entirely (Excel \+ email \+ photos \+ ad-hoc stock adjustments). Build a full RMA workflow with audit trail and disposition.
-  </Card>
-
-  <Card title="External App Sprawl" color="#3ae1ff" icon="plug" href="/improvement/integration/external-app-sprawl">
-    Marketplacer dropship orders arrive via CSV export, manual check, and import. Replace with a native API integration and automated validation.
   </Card>
 </CardGroup>
 
@@ -115,7 +109,7 @@ The largest area. These improvements all point at the same underlying fact: **Ac
 The Crossfire project raises its own set of issues that are less about warehouse operations and more about **who is doing what**, and about holding vendor language to its actual meaning.
 
 <CardGroup cols={2}>
-  <Card title="EDI Expectations" color="#3ae1ff" icon="circle-question" href="/improvement/integration/crossfire/edi-expectations">
+  <Card title="EDI Expectations" color="#3ae1ff" icon="question-mark" href="/improvement/integration/crossfire/edi-expectations">
     EDI automates document exchange with trading partners. It does not solve replenishment, picking, packing, returns, or the Marketplacer flow. Set expectations accordingly.
   </Card>
 
@@ -123,7 +117,11 @@ The Crossfire project raises its own set of issues that are less about warehouse
     Barcodes live on the Stock Item cross-reference, not on the PO. The endpoint field is exposed; the value needs a projection. GIs are a bridge, not a destination.
   </Card>
 
-  <Card title="Crossfire Scope" color="#3ae1ff" icon="scale-balanced" href="/improvement/integration/crossfire/crossfire-scope-and-ownership">
+  <Card title="External App Sprawl" color="#3ae1ff" icon="plug" href="/improvement/integration/external-app-sprawl">
+    Marketplacer dropship orders arrive via CSV export, manual check, and import. Replace with a native API integration and automated validation.Crossfire Barcode Access
+  </Card>
+
+  <Card title="Crossfire Scope" color="#3ae1ff" icon="telescope" href="/improvement/integration/crossfire/crossfire-scope-and-ownership">
     If our team builds every GI, projection, and mapping Crossfire consumes, then our team is doing the integration and Crossfire is doing document transport. Name the boundary.
   </Card>
 </CardGroup>
@@ -137,19 +135,19 @@ Read individually, each page is a specific fix. Read together, four themes recur
     Out-of-the-box screens are a starting point, not the finished product. Almost every workflow issue is solved by using Acumatica's extension model as intended.
   </Card>
 
-  <Card title="Missing Workflows Cost More Than Missing Features" color="#3ae1ff" icon="workflow">
+  <Card title="Missing Workflows Cost More Than Missing Features" color="#3ae1ff" icon="device-imac-dollar">
     Replenishment, wave planning, tote identity, RMAs: none of these are "features to buy." They are workflows to design and customise. Their absence causes visible daily waste.
   </Card>
 
-  <Card title="Integration Is An Outcome, Not A Product" color="#3ae1ff" icon="puzzle-piece">
+  <Card title="Integration Is An Outcome, Not A Product" color="#3ae1ff" icon="pipeline">
     Transport and translation are not the same as integration. Real integration requires ERP-side data access, business rules, and exception handling. That work has to be scoped and owned.
   </Card>
 
-  <Card title="Language Precision Matters" color="#3ae1ff" icon="message-square">
-    "Integration," "real-time," "automated," and "exposed" get quietly redefined by vendors. Holding the words to their actual meaning keeps the real work visible.
+  <Card title="Language Precision Matters" color="#3ae1ff" icon="a-b">
+    "Integration", "real-time", "automated", and "exposed" get quietly redefined by vendors. Holding the words to their actual meaning keeps the real work visible.
   </Card>
 </CardGroup>
 
 <Tip>
-  If you have limited time to argue for any of this, start with the workflow pages: they show the daily operational cost of the missing customisation work. The integration pages then follow naturally, because they explain why the EDI project alone will not close those gaps.
+  Start with the warehouse pages, then workflow pages: they show the daily operational cost of the missing customisation work. The integration pages then follow naturally, because they explain why the EDI project alone is past due and once it's running, it will not close those gaps.
 </Tip>

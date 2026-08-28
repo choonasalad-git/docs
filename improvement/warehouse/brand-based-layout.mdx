@@ -1,7 +1,7 @@
 ---
 title: "Inventory Layout Congestion from Brand-Based Categorisation"
 sidebarTitle: "Brand-Based Layout"
-description: "Reorganise brand-grouped inventory to eliminate picker congestion when multiple orders target the same brand at once."
+description: "With the goal being growth, reorganising brand-grouped inventory to eliminate picker congestion when multiple orders target the same brand at once is becoming more important and not going away."
 ---
 
 <Warning>
@@ -21,11 +21,11 @@ Inventory is arranged so that every SKU belonging to a given brand lives togethe
     Pickers wait for access to a single bin instead of working in parallel across the warehouse.
   </Card>
 
-  <Card title="Slower Fulfilment" icon="truck">
-    Order cycle times increase during peak periods when brand overlap between orders is highest.
+  <Card title="Replenishment" icon="truck">
+    We are essentially replenishing and picking from one area. This works if the space is large only
   </Card>
 
-  <Card title="Picking Errors" icon="alert-triangle">
+  <Card title="Higher Error Rate" icon="alert-triangle">
     Congested aisles and rushed picks lead to mis-picks, wrong quantities, and mixed-up SKUs.
   </Card>
 </CardGroup>
@@ -47,13 +47,37 @@ Inventory is arranged so that every SKU belonging to a given brand lives togethe
   </Step>
 </Steps>
 
+## When Can Brand Categorization Work?
+
+Brand can be a useful secondary grouping where: 
+
+<CardGroup cols={2}>
+  <Card title="Customers & Space" icon="chart-bar">
+    Customer orders are predominantly brand-specific and space allows it.
+  </Card>
+
+  <Card title="Pick & Pass" icon="grid-dots">
+    Dedicated brand picking or packing teams exist.
+  </Card>
+
+  <Card title="Seperation" icon="copy">
+    Suppliers retain ownership of consignment stock.
+  </Card>
+
+  <Card title="Law" icon="no-copyright">
+    Brands require separate security, presentation or compliance.
+  </Card>
+</CardGroup>
+
+The main risk is that a brand-only layout places a brand’s fast and slow movers together. Pickers travel farther, prime locations are wasted on slow stock, and operational performance becomes dependent on a commercial classification that may change.
+
 ## The Solution
 
 Move away from a purely brand-based layout and toward a **velocity- and dispersion-based slotting strategy**. High-velocity SKUs are spread across the warehouse so that concurrent orders can be picked in parallel without contention.
 
 <CardGroup cols={2}>
   <Card title="Velocity Slotting" icon="chart-bar">
-    Slot SKUs by pick frequency (A/B/C classes) rather than by brand, so fast movers get prime locations.
+    Slot SKUs by pick frequency (A/B/C classes that Acumatica provides) rather than by brand, so fast movers get prime locations.
   </Card>
 
   <Card title="Zone Picking" icon="grid-dots">
