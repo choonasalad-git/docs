@@ -12,82 +12,104 @@
     "tabs": [
       {
         "tab": "Documentation",
-        "groups": [
+        "menu": [
           {
-            "group": "Get Started",
-            "pages": [
-              "introduction",
-              "getting-started/prerequisites",
-              "getting-started/setup",
-              "getting-started/first-customization"
+            "item": "Improvements",
+            "anchors": [
+              {
+                "anchor": "EDI",
+                "pages": [
+                  "improvement/integration/crossfire/edi-expectations",
+                  "improvement/integration/crossfire/crossfire-barcode-access",
+                  "improvement/integration/crossfire/crossfire-scope-and-ownership"
+                ]
+              },
+              {
+                "anchor": "Workflows",
+                "pages": [
+                  "improvement/shipping/picking-packing-customisation",
+                  "improvement/shipping/open-future-orders-negative-stock",
+                  "improvement/shipping/reverse-logistics-returns",
+                  "improvement/inventory/replenishment",
+                  "improvement/shipping/packing-bench-sorting",
+                  "improvement/shipping/batch-pick-reserve-churn",
+                  "improvement/integration/external-app-sprawl"
+                ]
+              },
+              {
+                "anchor": "Warehouse",
+                "pages": [
+                  "improvement/inventory/brand-based-layout"
+                ]
+              }
             ]
           },
           {
-            "group": "Core Concepts",
-            "pages": [
-              "concepts/customization-project",
-              "concepts/dag-and-bql",
-              "concepts/data-access-classes",
-              "concepts/graph-extensions"
-            ]
-          },
-          {
-            "group": "Custom Tables",
-            "pages": [
-              "custom-tables/overview",
-              "custom-tables/creating-dac",
-              "custom-tables/field-types",
-              "custom-tables/relationships"
-            ]
-          },
-          {
-            "group": "Custom Screens",
-            "pages": [
-              "screens/overview",
-              "screens/creating-screens",
-              "screens/layouts-and-controls",
-              "screens/navigation-and-menus"
-            ]
-          },
-          {
-            "group": "Extensions",
-            "pages": [
-              "extensions/overview",
-              "extensions/graph-extensions",
-              "extensions/dac-extensions",
-              "extensions/event-handlers"
-            ]
-          },
-          {
-            "group": "Deployment",
-            "pages": [
-              "deployment/publishing",
-              "deployment/packaging",
-              "deployment/upgrading"
-            ]
-          },
-          {
-            "group": "Troubleshooting",
-            "pages": [
-              "troubleshooting/common-errors",
-              "troubleshooting/debugging",
-              "troubleshooting/faq"
-            ]
-          },
-          {
-            "group": "Improvements",
-            "pages": [
-              "improvement/inventory/brand-based-layout",
-              "improvement/integration/external-app-sprawl",
-              "improvement/integration/crossfire/crossfire-barcode-access",
-              "improvement/integration/crossfire/crossfire-scope-and-ownership",
-              "improvement/shipping/picking-packing-customisation",
-              "improvement/shipping/open-future-orders-negative-stock",
-              "improvement/shipping/reverse-logistics-returns",
-              "improvement/inventory/replenishment",
-              "improvement/shipping/packing-bench-sorting",
-              "improvement/shipping/batch-pick-reserve-churn",
-              "improvement/integration/crossfire/edi-expectations"
+            "item": "Reference",
+            "icon": "info-circle",
+            "dropdowns": [
+              {
+                "dropdown": "Get Started",
+                "icon": "golf",
+                "pages": [
+                  "introduction",
+                  "getting-started/prerequisites",
+                  "getting-started/setup",
+                  "getting-started/first-customization"
+                ]
+              },
+              {
+                "dropdown": "Troubleshooting",
+                "pages": [
+                  "troubleshooting/common-errors",
+                  "troubleshooting/debugging",
+                  "troubleshooting/faq"
+                ]
+              },
+              {
+                "dropdown": "Deployment",
+                "pages": [
+                  "deployment/publishing",
+                  "deployment/packaging",
+                  "deployment/upgrading"
+                ]
+              },
+              {
+                "dropdown": "Extensions",
+                "pages": [
+                  "extensions/overview",
+                  "extensions/graph-extensions",
+                  "extensions/dac-extensions",
+                  "extensions/event-handlers"
+                ]
+              },
+              {
+                "dropdown": "Custom Screens",
+                "pages": [
+                  "screens/overview",
+                  "screens/creating-screens",
+                  "screens/layouts-and-controls",
+                  "screens/navigation-and-menus"
+                ]
+              },
+              {
+                "dropdown": "Custom Tables",
+                "pages": [
+                  "custom-tables/overview",
+                  "custom-tables/creating-dac",
+                  "custom-tables/field-types",
+                  "custom-tables/relationships"
+                ]
+              },
+              {
+                "dropdown": "Core Concepts",
+                "pages": [
+                  "concepts/customization-project",
+                  "concepts/dag-and-bql",
+                  "concepts/data-access-classes",
+                  "concepts/graph-extensions"
+                ]
+              }
             ]
           }
         ]

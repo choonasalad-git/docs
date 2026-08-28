@@ -260,7 +260,7 @@ Building a Generic Inquiry so Crossfire can pull barcodes via OData is a valid s
 ### Integrity and consistency
 
 <CardGroup cols={2}>
-  <Card title="No Transactional View" icon="shield-alert">
+  <Card title="No Transactional View" icon="transform">
     GI reads are snapshot queries and are not transaction-aware. Updates mid-poll can produce inconsistent results.
   </Card>
 
@@ -276,15 +276,15 @@ Building a Generic Inquiry so Crossfire can pull barcodes via OData is a valid s
     Endpoint projections have proper versions. GIs are edited in place or cloned; there is no clean upgrade path.
   </Card>
 
-  <Card title="Breaks on Refactor" icon="wrench">
+  <Card title="Breaks on Refactor" icon="page-break">
     Renaming a field, adding a UDF, or changing a cross-reference type breaks the GI silently.
   </Card>
 
-  <Card title="Upgrade Regression Load" icon="rotate-cw">
+  <Card title="Upgrade Regression Load" icon="arrow-bar-to-up">
     Contract-based endpoints are tested as part of Acumatica releases. GIs are user content and are not. Every upgrade means manual regression on every Crossfire GI.
   </Card>
 
-  <Card title="Data Model Leakage" icon="unlock">
+  <Card title="Data Model Leakage" icon="database">
     GIs expose raw DAC field names. Crossfire's mapping becomes tightly coupled to internal schema instead of a stable contract.
   </Card>
 </CardGroup>
@@ -304,11 +304,11 @@ Building a Generic Inquiry so Crossfire can pull barcodes via OData is a valid s
 ### Scope creep and sprawl
 
 <CardGroup cols={2}>
-  <Card title="One GI Per Field" icon="layers">
+  <Card title="One GI Per Field" icon="adjustments">
     Every new field Crossfire needs becomes a new GI. Six months in, there are many overlapping, separately maintained GIs.
   </Card>
 
-  <Card title="No Shared Entity Model" icon="puzzle-piece">
+  <Card title="No Shared Entity Model" icon="share-2">
     Each GI is its own view of the data. There is no single Stock Item contract the way an endpoint provides.
   </Card>
 
