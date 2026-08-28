@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
-  "name": "HCD Docs",
+  "name": "HC Distributors - Docs & Specs",
   "colors": {
     "primary": "#00ddf9",
     "light": "#d3d3d3",
@@ -97,6 +97,43 @@
         "pages": [
           "fts/hcd/cst/sow/bulk-load-planner",
           "fts/hcd/cst/inw/minimum-order-quantity"
+        ]
+      },
+      {
+        "tab": "Improvement",
+        "icon": "checkbox",
+        "groups": [
+          {
+            "group": "integration",
+            "pages": [
+              "improvement/integration/external-app-sprawl",
+              {
+                "group": "crossfire",
+                "pages": [
+                  "improvement/integration/crossfire/crossfire-barcode-access",
+                  "improvement/integration/crossfire/crossfire-scope-and-ownership",
+                  "improvement/integration/crossfire/edi-expectations"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "inventory",
+            "pages": [
+              "improvement/inventory/brand-based-layout",
+              "improvement/inventory/replenishment"
+            ]
+          },
+          {
+            "group": "shipping",
+            "pages": [
+              "improvement/shipping/batch-pick-reserve-churn",
+              "improvement/shipping/open-future-orders-negative-stock",
+              "improvement/shipping/packing-bench-sorting",
+              "improvement/shipping/picking-packing-customisation",
+              "improvement/shipping/reverse-logistics-returns"
+            ]
+          }
         ]
       }
     ]
