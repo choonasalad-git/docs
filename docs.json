@@ -15,6 +15,7 @@
         "icon": "a-b-2",
         "pages": [
           "fts/hcd/cst/sow/bulk-load-planner",
+          "funtional-and-technical-spec/hcd/cst/inw/minimum-order-quantity",
           "fts/hcd/cst/inw/minimum-order-quantity"
         ]
       },
@@ -27,67 +28,67 @@
             "icon": "golf",
             "pages": [
               "introduction",
-              "reference/getting-started/prerequisites",
-              "reference/getting-started/setup",
-              "reference/getting-started/first-customization"
+              "reference/acumatica-customisations/getting-started/prerequisites",
+              "reference/acumatica-customisations/getting-started/setup",
+              "reference/acumatica-customisations/getting-started/first-customization"
             ]
           },
           {
             "group": "Troubleshooting",
             "icon": "info-triangle",
             "pages": [
-              "reference/troubleshooting/common-errors",
-              "reference/troubleshooting/debugging",
-              "reference/troubleshooting/faq"
+              "reference/acumatica-customisations/troubleshooting/common-errors",
+              "reference/acumatica-customisations/troubleshooting/debugging",
+              "reference/acumatica-customisations/troubleshooting/faq"
             ]
           },
           {
             "group": "Deployment",
             "icon": "live-view",
             "pages": [
-              "reference/deployment/publishing",
-              "reference/deployment/packaging",
-              "reference/deployment/upgrading"
+              "reference/acumatica-customisations/deployment/publishing",
+              "reference/acumatica-customisations/deployment/packaging",
+              "reference/acumatica-customisations/deployment/upgrading"
             ]
           },
           {
             "group": "Extensions",
             "icon": "plug-connected",
             "pages": [
-              "reference/extensions/overview",
-              "reference/extensions/graph-extensions",
-              "reference/extensions/dac-extensions",
-              "reference/extensions/event-handlers"
+              "reference/acumatica-customisations/extensions/overview",
+              "reference/acumatica-customisations/extensions/graph-extensions",
+              "reference/acumatica-customisations/extensions/dac-extensions",
+              "reference/acumatica-customisations/extensions/event-handlers"
             ]
           },
           {
             "group": "Custom Screens",
             "icon": "device-desktop",
             "pages": [
-              "reference/screens/overview",
-              "reference/screens/creating-screens",
-              "reference/screens/layouts-and-controls",
-              "reference/screens/navigation-and-menus"
+              "reference/acumatica-customisations/screens/overview",
+              "reference/acumatica-customisations/screens/creating-screens",
+              "reference/acumatica-customisations/screens/layouts-and-controls",
+              "reference/acumatica-customisations/screens/navigation-and-menus"
             ]
           },
           {
             "group": "Custom Tables",
             "icon": "table-down",
             "pages": [
-              "reference/custom-tables/overview",
-              "reference/custom-tables/creating-dac",
-              "reference/custom-tables/field-types",
-              "reference/custom-tables/relationships"
+              "reference/acumatica-customisations/custom-tables/overview",
+              "reference/acumatica-customisations/custom-tables/creating-dac",
+              "reference/acumatica-customisations/custom-tables/field-types",
+              "reference/acumatica-customisations/custom-tables/relationships"
             ]
           },
           {
             "group": "Core Concepts",
             "icon": "row-insert-bottom",
             "pages": [
-              "reference/concepts/customization-project",
-              "reference/concepts/dag-and-bql",
-              "reference/concepts/data-access-classes",
-              "reference/concepts/graph-extensions"
+              "reference/acumatica-customisations/concepts/customization-project",
+              "reference/acumatica-customisations/concepts/dag-and-bql",
+              "reference/acumatica-customisations/concepts/data-access-classes",
+              "reference/acumatica-customisations/concepts/graph-extensions"
             ]
           }
         ]
