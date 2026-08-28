@@ -11,6 +11,7 @@ Publishing a custom screen to the ERP is only half the job — users also need t
 The sitemap is a hierarchical tree of nodes. Top-level nodes correspond to ERP modules (Finance, Inventory, Projects, and so on). Below each module are folders (menu groups) and leaf nodes (individual screens). When you open the ERP's navigation menu, you are browsing this tree.
 
 Each leaf node stores:
+
 - The **Screen ID** (e.g., `AC000001`)
 - The **URL** to the ASPX file (e.g., `~/Pages/AC/AC000001.aspx`)
 - The **display title** shown in the menu
@@ -26,7 +27,6 @@ When you add a sitemap node inside your Customization Project and publish, the p
 
     All sitemap nodes for custom screens must live inside a Customization Project. Never edit the sitemap directly in the ERP's **Sitemap** maintenance screen for entries you intend to deploy — those changes are not captured in the project and will be lost when the project is re-published or the site is reinstalled.
   </Step>
-
   <Step title="Add a Sitemap node for the screen">
     Inside the Customization Project editor, navigate to the **Site Map** section in the left panel and click **Add Node**.
 
@@ -36,12 +36,11 @@ When you add a sitemap node inside your Customization Project and publish, the p
       If you need your screen to appear under a new submenu that does not yet exist, first create a **Folder** node as the parent, then create your **Screen** node as a child of that folder. Folder nodes require a title but no Screen ID or URL.
     </Note>
   </Step>
-
   <Step title="Set the Screen ID, URL, title, and parent menu">
     Fill in the four required fields for the sitemap node:
 
     | Field | What to enter | Example |
-    |---|---|---|
+    | --- | --- | --- |
     | **Screen ID** | Your 8-character screen code | `AC000001` |
     | **URL** | Path to the ASPX file relative to the site root | `~/Pages/AC/AC000001.aspx` |
     | **Title** | Display name shown in the menu and browser tab | `My Custom Records` |
@@ -55,7 +54,6 @@ When you add a sitemap node inside your Customization Project and publish, the p
       Keep the **Title** short — menu labels that exceed approximately 30 characters are truncated in the standard navigation sidebar. Use the full descriptive name for the ASPX page `<title>` attribute, and a concise action-oriented label for the menu title (e.g., "Pending Approvals" rather than "View All Records Pending Manager Approval").
     </Tip>
   </Step>
-
   <Step title="Publish and verify the screen appears in the menu">
     Save the Customization Project and click **Publish**. After the publish completes:
 
@@ -77,7 +75,7 @@ When you add a sitemap node inside your Customization Project and publish, the p
 
 ## Role-based access rights
 
-Registering a screen in the sitemap makes it *exist* in the navigation, but it does not automatically make it *visible* to every user. The ERP's access rights system controls which roles can see and interact with each screen. A user without view access will not see the screen in the menu and will receive an access denied message if they navigate to it directly.
+Registering a screen in the sitemap makes it _exist_ in the navigation, but it does not automatically make it _visible_ to every user. The ERP's access rights system controls which roles can see and interact with each screen. A user without view access will not see the screen in the menu and will receive an access denied message if they navigate to it directly.
 
 ### Granting access to a custom screen
 
@@ -88,7 +86,7 @@ After publishing your sitemap node:
 3. For each role that should access the screen, set the permission level:
 
 | Permission level | What the role can do |
-|---|---|
+| --- | --- |
 | **View** | Open the screen and read records — no edits |
 | **Edit** | View and modify existing records |
 | **Insert** | View, edit, and create new records |
@@ -108,7 +106,7 @@ Users whose roles do not have at least **View** permission will not see the scre
 
 Every screen in the ERP has a stable URL based on its Screen ID and ASPX path. You can navigate directly to a screen by constructing a URL:
 
-```
+```text
 https://yourerpsite.com/Pages/AC/AC000001.aspx
 ```
 
@@ -116,7 +114,7 @@ https://yourerpsite.com/Pages/AC/AC000001.aspx
 
 For inquiry screens backed by a `PXFilter` or `PXProcessing` view, you can pre-populate filter fields by appending query string parameters. The parameter names match the DAC field names on the filter DAC.
 
-```
+```text
 https://yourerpsite.com/Pages/AC/AC000001.aspx?Status=O&CustomerID=10042
 ```
 
@@ -126,7 +124,7 @@ This URL opens the screen with **Status** pre-set to `O` (Open) and **CustomerID
 
 For maintenance screens (master record screens backed by `PXSelect` with a primary key), append the primary key value to navigate directly to a known record:
 
-```
+```text
 https://yourerpsite.com/Pages/AC/AC000001.aspx?RecordCD=REC-0042
 ```
 

@@ -34,7 +34,7 @@ Layout containers define the structural skeleton of your screen. They hold contr
     **Key properties:**
 
     | Property | Description |
-    |---|---|
+    | --- | --- |
     | `DataMember` | Name of the graph data view this form is bound to |
     | `DataSourceID` | ID of the `PXDataSource` control on the page (always `ds`) |
     | `Caption` | Text shown in the form's header bar |
@@ -73,7 +73,7 @@ Layout containers define the structural skeleton of your screen. They hold contr
     **Key properties:**
 
     | Property | Description |
-    |---|---|
+    | --- | --- |
     | `DataMember` | Graph data view that supplies the rows |
     | `SkinID` | `Details` for a detail grid; `Inquire` for a read-only inquiry grid |
     | `AutoSize` | Enables the grid to fill remaining vertical space on the page |
@@ -97,7 +97,7 @@ Layout containers define the structural skeleton of your screen. They hold contr
                 DataField="Email" />
           </Template>
         </px:PXTabItem>
-
+    
         <px:PXTabItem Text="Settings">
           <Template>
             <px:PXLayoutRule runat="server" StartRow="True"
@@ -145,13 +145,13 @@ Layout containers define the structural skeleton of your screen. They hold contr
         StartRow="True"
         ControlSize="M"
         LabelsWidth="SM" />
-
+    
     <%-- Span the next control across both columns --%>
     <px:PXLayoutRule runat="server"
         StartColumn="True"
         ColumnSpan="2" />
     <px:PXTextEdit ID="edNotes" runat="server" DataField="Notes" />
-
+    
     <%-- Begin a new column within the same row --%>
     <px:PXLayoutRule runat="server" StartColumn="True" />
     ```
@@ -159,7 +159,7 @@ Layout containers define the structural skeleton of your screen. They hold contr
     **Key attributes:**
 
     | Attribute | Description |
-    |---|---|
+    | --- | --- |
     | `StartRow` | Begins a new layout row |
     | `StartColumn` | Moves to the next column in the current row |
     | `ColumnSpan` | Number of columns the next control should occupy |
@@ -204,7 +204,7 @@ UI controls are the interactive elements users see and type into. Every control 
     <px:PXNumberEdit ID="edQuantity" runat="server"
         DataField="Qty"
         Width="80px" />
-
+    
     <px:PXNumberEdit ID="edUnitPrice" runat="server"
         DataField="UnitPrice"
         Width="100px" />
@@ -218,7 +218,7 @@ UI controls are the interactive elements users see and type into. Every control 
     [PXUIField(DisplayName = "Unit Price")]
     [PXDefault(TypeCode.Decimal, "0.0")]
     public decimal? UnitPrice { get; set; }
-
+    
     // Integer field — whole-number quantities
     [PXDBInt]
     [PXUIField(DisplayName = "Quantity")]
@@ -254,7 +254,7 @@ UI controls are the interactive elements users see and type into. Every control 
     ```xml
     <px:PXCheckBox ID="chkIsActive" runat="server"
         DataField="IsActive" />
-
+    
     <px:PXCheckBox ID="chkRequiresApproval" runat="server"
         DataField="RequiresApproval"
         CommitChanges="True" />
@@ -339,7 +339,7 @@ UI controls are the interactive elements users see and type into. Every control 
 
     ```csharp
     public PXAction<MyRecord> Approve;
-
+    
     [PXButton(CommitChanges = true)]
     [PXUIField(DisplayName = "Approve")]
     protected virtual IEnumerable approve(PXAdapter adapter)
@@ -365,7 +365,7 @@ UI controls are the interactive elements users see and type into. Every control 
 All UI controls share a set of properties that you will configure regularly, regardless of control type.
 
 | Property | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `DataField` | `string` | DAC property name the control binds to. Must match exactly (case-insensitive). |
 | `CommitChanges` | `bool` | When `True`, changing this control's value immediately posts a callback to the server so dependent fields can recalculate. Defaults to `False`. |
 | `Width` | `string` | CSS width of the input element, e.g. `120px` or `100%`. |

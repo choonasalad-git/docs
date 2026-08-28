@@ -14,12 +14,12 @@ Custom screens appear in the ERP exactly like any standard screen: they have a u
 
 ### How custom screens differ from screen extensions
 
-When you *extend* an existing screen you add fields, change visibility rules, or inject extra logic into a graph that already exists. The original screen's purpose and data model stay the same — you are layering on top of it.
+When you _extend_ an existing screen you add fields, change visibility rules, or inject extra logic into a graph that already exists. The original screen's purpose and data model stay the same — you are layering on top of it.
 
-When you *create* a custom screen you define everything from the ground up: a new graph, a new ASPX layout, a new sitemap entry, and (usually) new DAC tables. The screen is entirely yours to own and evolve independently of the standard codebase.
+When you _create_ a custom screen you define everything from the ground up: a new graph, a new ASPX layout, a new sitemap entry, and (usually) new DAC tables. The screen is entirely yours to own and evolve independently of the standard codebase.
 
-| | Screen Extension | Custom Screen |
-|---|---|---|
+|  | Screen Extension | Custom Screen |
+| --- | --- | --- |
 | Owns the graph | No — modifies existing | Yes — new PXGraph |
 | Owns the layout | Partially | Yes — new ASPX |
 | Separate Screen ID | No | Yes |
@@ -36,7 +36,7 @@ Every custom screen is built from three coordinated pieces registered inside a s
 
 **Sitemap registration** — An entry in the ERP sitemap that maps your Screen ID to the ASPX file and places the screen inside the correct module menu. Without this entry the screen exists but is unreachable from the navigation.
 
-```
+```text
 Customization Project
 ├── Graph          MyScreenGraph.cs       (C# business logic)
 ├── Screen         AC000001.aspx          (XML layout definition)
@@ -57,12 +57,15 @@ When you need to add fields or logic to a screen that already exists, you use a 
   <Card title="Custom data entry form" icon="pen-to-square">
     Collect structured input that doesn't fit any standard document — configuration wizards, onboarding checklists, custom master records — with full validation and save logic.
   </Card>
+
   <Card title="Custom inquiry or report screen" icon="magnifying-glass-chart">
     Surface aggregated or cross-entity data in a filterable grid. Power users get a tailored search experience without navigating multiple standard screens.
   </Card>
+
   <Card title="Approval dashboard" icon="list-check">
     Centralise records pending review across multiple document types. Combine a grid of pending items with form-level detail and one-click approve/reject buttons.
   </Card>
+
   <Card title="Integration staging screen" icon="arrows-left-right">
     Expose inbound records from an external system in a dedicated screen where staff can review, correct, and push data into the core ERP entities.
   </Card>
@@ -74,12 +77,15 @@ When you need to add fields or logic to a screen that already exists, you use a 
   <Card title="Creating Screens" icon="screwdriver-wrench" href="/screens/creating-screens">
     Step-by-step walkthrough: create the graph, define the layout, assign a Screen ID, and publish your first custom screen.
   </Card>
+
   <Card title="Layouts & Controls" icon="table-columns" href="/screens/layouts-and-controls">
     Reference for every layout container and UI control, including common properties and binding patterns.
   </Card>
+
   <Card title="Navigation & Menus" icon="compass" href="/screens/navigation-and-menus">
     Register your screen in the sitemap, place it in the right menu, and control who can access it with role-based permissions.
   </Card>
+
   <Card title="Customization Projects" icon="folder-open" href="/concepts/customization-project">
     Understand how graphs, screens, and sitemap nodes are packaged together for deployment.
   </Card>

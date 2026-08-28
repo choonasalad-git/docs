@@ -1,0 +1,259 @@
+---
+title: "Frequently asked questions about the Customization Platform"
+sidebarTitle: "FAQ"
+description: "Answers to the most common questions about ERP customizations—covering DAC extensions, graph logic, toolbar buttons, cross-screen data, and upgrades."
+---
+
+The following questions are drawn from real scenarios that developers encounter when working with the ERP Customization Platform for the first time or when tackling more advanced integration and deployment challenges. Each answer is written to give you the conceptual grounding you need as well as the practical steps to act on immediately.
+
+<Accordion title="Can I modify base ERP code directly?">
+  No—and you should not attempt to. The ERP application ships as compiled assemblies. You do not have access to the base source code, and directly editing the application files would be overwritten during every ERP update, making your changes impossible to maintain.
+
+  Instead, the platform provides structured extension points:
+
+  - **DAC Extensions** — add fields to existing tables without modifying the base DAC class.
+  - **Graph Extensions** — override or augment business logic on existing graphs by subclassing `PXGraphExtension<TGraph>`.
+  - **Event Handlers** — subscribe to row-level and field-level events to intercept and modify behavior.
+  - **Screen Layout Customization** — add, remove, and reposition controls on existing screens through the Layout Editor.
+
+  All of these extension mechanisms are version-safe: they sit on top of the base code, compile separately, and survive ERP updates as long as the underlying API they extend has not changed.
+</Accordion>
+
+<Accordion title="How do I add a field to an existing ERP table?">
+  Create a DAC Extension for the existing DAC and add your field there. The platform handles the database column creation automatically when you publish.
+
+  ```csharp
+  // DAC Extension adding a custom field to the SOOrder table
+  public class SOOrderExtension : PXCacheExtension<SOOrder>
+  {
+      // Database-backed string field, max 50 characters
+      [PXDBString(50, IsUnicode = true)]
+      [PXUIField(DisplayName = "Custom Reference")]
+      public virtual string UsrCustomReference { get; set; }
+      public abstract class usrCustomReference : PX.Data.BQL.BqlString.Field<usrCustomReference> { }
+  }
+  ```
+
+  Follow these conventions when naming custom fields:
+
+  - Prefix the C# property name with `Usr` (for "user-defined") to distinguish it from base fields and avoid naming collisions across projects.
+  - Use the same `Usr` prefix consistently—other developers and the ERP upgrade tooling recognizes this convention.
+  - Register the field on the screen through the **Layout Editor** after adding it to the DAC extension.
+
+  After publishing, the platform adds the corresponding column to the database table automatically via the generated DB script.
+</Accordion>
+
+<Accordion title="What is the difference between a DAC and a DAC Extension?">
+  A **DAC** (Data Access Class) is a C# class that maps directly to a database table. Each property on the DAC corresponds to a column, and the ERP BQL engine uses the DAC to generate SQL queries. Base ERP DACs are defined in the application assemblies and you cannot modify them.
+
+  A **DAC Extension** is a partial extension of an existing DAC that adds new fields (columns) to the same table without touching the original class. It uses `PXCacheExtension<TBaseDac>` as its base class. When the cache loads a record, it automatically merges the base DAC fields and all registered extension fields into a single in-memory object.
+
+  |  | DAC | DAC Extension |
+  | --- | --- | --- |
+  | Defines a new table | ✅ Yes | ❌ No |
+  | Adds fields to an existing table | ❌ No | ✅ Yes |
+  | Can be modified after ERP update | N/A (base code) | ✅ Yes |
+  | Owned by your customization | ✅ (for new tables) | ✅ |
+
+  When you create a brand-new table for your customization, you write a full DAC. When you need to store additional data alongside an existing ERP record (such as adding a field to a sales order), you write a DAC extension.
+</Accordion>
+
+<Accordion title="How do I call a graph method from another graph?">
+  Use the `PXGraph.CreateInstance<TGraph>()` factory method to instantiate the target graph, then call the method directly. This is the correct pattern for service-style graph calls where you need to invoke business logic without a UI context.
+
+  ```csharp
+  // Call a method on SOOrderEntry from within a custom processing graph
+  public class MyProcessingGraph : PXGraph<MyProcessingGraph>
+  {
+      public void ProcessOrders(List<SOOrder> orders)
+      {
+          SOOrderEntry orderGraph = PXGraph.CreateInstance<SOOrderEntry>();
+  
+          foreach (SOOrder order in orders)
+          {
+              // Load the order into the graph
+              orderGraph.Document.Current = orderGraph.Document.Search<SOOrder.orderNbr>(
+                  order.OrderNbr, order.OrderType);
+  
+              // Call a custom action defined on SOOrderEntry or its graph extension
+              orderGraph.Actions["CustomAction"].Press();
+          }
+      }
+  }
+  ```
+
+  Keep in mind that each `CreateInstance` call creates a fresh graph with a new cache and unit of work. If you need to share a transaction across multiple graph operations, use `PXGraph.CreateInstance` with a shared connection or manage the transaction explicitly. Avoid holding a graph instance as a class-level field—graphs are not thread-safe and should be scoped to a single logical operation.
+</Accordion>
+
+<Accordion title="Can two Customization Projects modify the same screen?">
+  Yes, but it requires careful coordination. When multiple projects are published together, the platform merges their screen definitions in **Publish Order** sequence—the project with the higher publish order wins any conflicting layout changes to the same control.
+
+  To avoid conflicts:
+
+  - Assign clear ownership of each screen to one project. Project A owns Screen X; Project B owns Screen Y.
+  - When two projects genuinely need to modify the same screen (for example, one adds a tab and another adds a field to the main area), test the merged result carefully by publishing both together in development before deploying to UAT or production.
+  - Use the **Compare with Package** tool to inspect the merged screen definition and confirm no changes from either project were lost.
+
+  If the same control is modified by both projects (for example, both change the `DisplayName` of the same field), only the version from the higher-order project will be active after publish. The other project's change is silently discarded—it is not an error, but it can cause confusion if you are not aware of the ordering.
+</Accordion>
+
+<Accordion title="How do I add a custom button to a standard toolbar?">
+  Add a `PXAction` to a Graph Extension for the target graph, then register the action on the screen's toolbar through the Layout Editor.
+
+  ```csharp
+  public class SOOrderEntryExtension : PXGraphExtension<SOOrderEntry>
+  {
+      // Declare the action
+      public PXAction<SOOrder> SendCustomNotification;
+  
+      [PXButton(CommitChanges = true)]
+      [PXUIField(DisplayName = "Send Notification", MapEnableRights = PXCacheRights.Update)]
+      protected virtual IEnumerable sendCustomNotification(PXAdapter adapter)
+      {
+          SOOrder order = Base.Document.Current;
+          if (order == null) yield break;
+  
+          // Your business logic here
+          PXTrace.WriteInformation("Sending notification for order {0}", order.OrderNbr);
+  
+          yield return order;
+      }
+  }
+  ```
+
+  After publishing the code, open the screen in the **Layout Editor** within the Customization Project editor:
+
+  1. Select the **Toolbar** element at the top of the screen tree.
+  2. Click **Add Control \> Button** and set its **Command Name** to the action name (`SendCustomNotification`).
+  3. Optionally, set an icon and position the button relative to existing toolbar items.
+  4. Publish again to see the button in the live screen.
+</Accordion>
+
+<Accordion title="Why is my RowSelected event firing multiple times?">
+  `RowSelected` is one of the most frequently fired events in the ERP framework. It fires every time the current record changes, every time a related record is refreshed, after every save operation, and after any field update that causes a cache refresh. Seeing it fire three, five, or even ten times in rapid succession is entirely normal.
+
+  The important thing is to make your `RowSelected` handler **idempotent and inexpensive**. It should only set control states (enabled/disabled/visible) and should not perform database queries, send external requests, or execute side-effect logic.
+
+  If you need logic that runs only once per user action rather than every time the row is displayed, use a different event:
+
+  | Event | When to use it |
+  | --- | --- |
+  | `RowSelected` | Setting UI control states based on the current record's field values |
+  | `RowPersisting` | Validating data before a save |
+  | `RowPersisted` | Triggering side effects after a successful save (external API calls, email sends) |
+  | `FieldUpdated` | Reacting to a change in a specific field's value |
+
+  If `RowSelected` is genuinely firing too many times and causing a performance problem, add a trace log entry counting invocations, then identify which ERP operation is triggering the extra calls and add a guard condition to skip redundant processing.
+</Accordion>
+
+<Accordion title="How do I handle required fields in custom DACs?">
+  Mark fields as required by adding `[PXDefault]` for non-nullable fields and combining it with `[PXUIField(Required = true)]` to show the required indicator in the UI.
+
+  ```csharp
+  public class MyCustomDac : IBqlTable
+  {
+      // Required string field — validation fires on save
+      [PXDBString(50, IsUnicode = true)]
+      [PXDefault(PersistingCheck = PXPersistingCheck.NullOrBlank)]
+      [PXUIField(DisplayName = "Reference Number", Required = true)]
+      public virtual string ReferenceNbr { get; set; }
+      public abstract class referenceNbr : PX.Data.BQL.BqlString.Field<referenceNbr> { }
+  
+      // Required foreign key — must not be null on persist
+      [PXDBInt]
+      [PXDefault]
+      [PXUIField(DisplayName = "Customer")]
+      [PXSelector(typeof(BAccount.bAccountID), SubstituteKey = typeof(BAccount.acctCD))]
+      public virtual int? CustomerID { get; set; }
+      public abstract class customerID : PX.Data.BQL.BqlInt.Field<customerID> { }
+  }
+  ```
+
+  `PXPersistingCheck.NullOrBlank` prevents saving if the field is null or an empty string. `PXPersistingCheck.Null` allows empty strings but not null. If you want to suppress the required check conditionally (for example, the field is only required when a checkbox is checked), set `PersistingCheck = PXPersistingCheck.Nothing` in the attribute and perform the validation manually in a `RowPersisting` event handler.
+</Accordion>
+
+<Accordion title="How do I run custom code on application startup?">
+  The recommended pattern for attaching logic that runs early in the application lifecycle is to use `PXGraph.InstanceCreated` — a static event that fires every time any graph instance is created. You register your handler in the static constructor of a Graph Extension so that it is wired up as soon as the assembly is loaded.
+
+  ```csharp
+  using PX.Data;
+  
+  // Graph Extension for SOOrderEntry — registers a global handler
+  // via the static constructor, which runs when the type is first loaded.
+  public class SOOrderEntryStartupExtension : PXGraphExtension<SOOrderEntry>
+  {
+      static SOOrderEntryStartupExtension()
+      {
+          // Runs once per application domain when SOOrderEntry is first instantiated.
+          PXGraph.InstanceCreated.AddHandler<SOOrderEntry>(graph =>
+          {
+              graph.RowPersisted.AddHandler<SOOrder>(SOOrder_RowPersisted);
+          });
+      }
+  
+      private static void SOOrder_RowPersisted(
+          PXCache cache, PXRowPersistedEventArgs e)
+      {
+          SOOrder row = e.Row as SOOrder;
+          if (row == null || e.TranStatus != PXTranStatus.Open) return;
+  
+          PXTrace.WriteInformation(
+              "SOOrder persisted: {0}, status {1}", row.OrderNbr, row.Status);
+      }
+  }
+  ```
+
+  If you need logic that runs once regardless of which graph is involved — for example, registering a global audit handler — place the `PXGraph.InstanceCreated` subscription in the static constructor of any Graph Extension that ships with your customization. Keep this code fast and side-effect-free: it runs on every graph instantiation, and any exception will propagate to the caller and can break unrelated screens.
+
+  <Note>
+    If you need to execute one-time initialization that is truly independent of any graph (for example, seeding reference data), use a `RowInserted` or `RowPersisted` event in a dedicated setup screen rather than a static constructor, so the logic is testable and does not risk blocking the application startup.
+  </Note>
+</Accordion>
+
+<Accordion title="How do I pass data between screens?">
+  The ERP framework provides several mechanisms for passing data between screens depending on the scenario:
+
+  **URL parameters (redirect with parameters):** Use `PXRedirectHelper` to navigate to a target screen and pre-populate fields by passing key field values as URL parameters:
+
+  ```csharp
+  SOOrderEntry graph = PXGraph.CreateInstance<SOOrderEntry>();
+  graph.Document.Insert(new SOOrder { OrderType = "SO" });
+  graph.Document.Current.CustomerID = sourceRow.CustomerID;
+  throw new PXRedirectRequiredException(graph, "New Sales Order");
+  ```
+
+  **Session / PXContext:** For non-persisted temporary values within the same session, store values in `PXContext` or use a session-scoped variable. Use this sparingly—session state can cause unexpected behavior if the user opens multiple browser tabs.
+
+  **Database (via a custom DAC):** For data that must survive navigation and be accessible across multiple screens, persist it to a custom table and query it from the target screen. This is the most reliable approach for multi-step workflows.
+
+  **ProcessingResult / PXLongOperation:** For mass-processing screens that launch background jobs, use `PXLongOperation` to pass results back to the UI. The results are stored in the server-side long operation cache and retrieved automatically when the operation completes.
+</Accordion>
+
+<Accordion title="What happens to my customization during an ERP update?">
+  When the ERP vendor releases an update and you apply it to your instance, the base application assemblies are replaced with the new versions. Your customization project source files remain intact in the database, but the compiled output assembly is discarded along with the old application files.
+
+  After the update, you **must republish** your customization projects. The publish step recompiles your code against the new ERP assemblies. If the new version changed any API your code depends on—renamed methods, removed fields, changed signatures—the compile will fail with errors that you must resolve before the customization is active again.
+
+  This is why it is critical to:
+
+  1. Test every ERP update on a development instance before applying it to production.
+  2. Export and archive your customization packages before any update.
+  3. Resolve all compile errors and re-validate runtime behavior before promoting the update to UAT and production.
+
+  See the [Upgrading guide](/deployment/upgrading) for a complete checklist and troubleshooting steps for common post-upgrade issues.
+</Accordion>
+
+<Accordion title="How do I remove a published customization?">
+  To remove a customization from a running instance:
+
+  1. Navigate to **Customization \> Customization Projects**.
+  2. Select the project you want to remove.
+  3. Click **Actions \> Unpublish**. The application restarts and the customization is no longer active.
+  4. If you want to delete the project entirely (removing it from the project list), select the project row and click **Delete** in the toolbar.
+
+  **Important caveats:**
+
+  - Unpublishing removes compiled code, screen changes, and sitemap entries, but **does not remove database columns or tables** created by the project. If you need to remove custom database objects, run the appropriate `DROP COLUMN` or `DROP TABLE` scripts against the database manually or add rollback scripts to the project before unpublishing.
+  - If other customization projects depend on code from the project you are removing (for example, they import a class defined in it), those projects will fail to compile after you unpublish. Remove dependent projects first or refactor the shared code into a standalone project that you keep published.
+  - On production, schedule the unpublish during a maintenance window—just like publishing, unpublishing restarts the web application.
+</Accordion>

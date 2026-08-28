@@ -18,7 +18,7 @@ Building a custom screen involves writing a C# graph that manages your data, des
 
     ```csharp
     using PX.Data;
-
+    
     [PXCacheName("My Record")]
     public class MyRecord : IBqlTable
     {
@@ -26,39 +26,39 @@ Building a custom screen involves writing a C# graph that manages your data, des
         [PXDBIdentity]
         public int? RecordID { get; set; }
         public abstract class recordID : PX.Data.BQL.BqlInt.Field<recordID> { }
-
+    
         // Human-readable business key
         [PXDBString(15, IsKey = true, IsUnicode = true)]
         [PXUIField(DisplayName = "Record ID", Visibility = PXUIVisibility.SelectorVisible)]
         public string RecordCD { get; set; }
         public abstract class recordCD : PX.Data.BQL.BqlString.Field<recordCD> { }
-
+    
         // Free-text description
         [PXDBString(256, IsUnicode = true)]
         [PXUIField(DisplayName = "Description")]
         public string Description { get; set; }
         public abstract class description : PX.Data.BQL.BqlString.Field<description> { }
-
+    
         // Decimal amount stored with 2 decimal places
         [PXDBDecimal(2)]
         [PXUIField(DisplayName = "Amount")]
         [PXDefault(TypeCode.Decimal, "0.0")]
         public decimal? Amount { get; set; }
         public abstract class amount : PX.Data.BQL.BqlDecimal.Field<amount> { }
-
+    
         // Integer foreign-key reference
         [PXDBInt]
         [PXUIField(DisplayName = "Category")]
         public int? CategoryID { get; set; }
         public abstract class categoryID : PX.Data.BQL.BqlInt.Field<categoryID> { }
-
+    
         // Boolean flag
         [PXDBBool]
         [PXUIField(DisplayName = "Active")]
         [PXDefault(true)]
         public bool? IsActive { get; set; }
         public abstract class isActive : PX.Data.BQL.BqlBool.Field<isActive> { }
-
+    
         // Framework-managed audit timestamp
         [PXDBCreatedDateTime]
         public DateTime? CreatedDateTime { get; set; }
@@ -69,16 +69,14 @@ Building a custom screen involves writing a C# graph that manages your data, des
     Common DAC field attributes and what they store:
 
     | Attribute | SQL type | Typical use |
-    |---|---|---|
+    | --- | --- | --- |
     | `PXDBString(n)` | `nvarchar(n)` | Text codes, names, descriptions |
     | `PXDBInt` | `int` | Integer keys, counters, foreign keys |
     | `PXDBDecimal(n)` | `decimal(19,n)` | Quantities, amounts, rates |
     | `PXDBBool` | `bit` | Flags and toggles |
     | `PXDBIdentity` | `int IDENTITY` | Auto-increment primary key |
     | `PXDBCreatedDateTime` | `datetime` | Framework-managed audit timestamp |
-
   </Step>
-
   <Step title="Create the PXGraph for the screen">
     Every custom screen is backed by a **PXGraph** — the C# class that owns the data views, actions, and business logic. The graph works with a **PXCache** for each DAC it references: the cache holds the current in-memory state of records and raises lifecycle events that your event handler methods subscribe to.
 
@@ -86,34 +84,34 @@ Building a custom screen involves writing a C# graph that manages your data, des
 
     ```csharp
     using PX.Data;
-
+    
     public class MyScreenGraph : PXGraph<MyScreenGraph, MyRecord>
     {
         // Primary data view — drives the current record shown in the form
         public PXSelect<MyRecord> Records;
-
+    
         // Standard toolbar actions wired up automatically by the framework
         public PXSave<MyRecord> Save;
         public PXCancel<MyRecord> Cancel;
-
+    
         // RowSelected fires every time a record is loaded into the form.
         // Use it to adjust field visibility and editability based on record state.
         protected void _(Events.RowSelected<MyRecord> e)
         {
             MyRecord row = e.Row;
             if (row == null) return;
-
+    
             // Make Amount read-only once the record is inactive
             PXUIFieldAttribute.SetEnabled<MyRecord.amount>(
                 e.Cache, row, row.IsActive == true);
         }
-
+    
         // RowInserted fires after a new record is added to the cache.
         protected void _(Events.RowInserted<MyRecord> e)
         {
             e.Cache.SetValueExt<MyRecord.amount>(e.Row, 0m);
         }
-
+    
         // RowUpdated fires after an existing record's values change in the cache.
         protected void _(Events.RowUpdated<MyRecord> e)
         {
@@ -122,7 +120,7 @@ Building a custom screen involves writing a C# graph that manages your data, des
                 // recalculate derived fields here
             }
         }
-
+    
         // RowDeleted fires after a record is marked for deletion in the cache.
         protected void _(Events.RowDeleted<MyRecord> e)
         {
@@ -132,6 +130,7 @@ Building a custom screen involves writing a C# graph that manages your data, des
     ```
 
     Key points about this graph:
+
     - `PXGraph<TGraph, TPrimary>` — the second type parameter tells the framework which DAC is the "primary" record for the screen's navigation keys.
     - `PXSelect<MyRecord>` — declares a data view that returns all rows of `MyRecord`. You can restrict this with a `Where` clause when needed.
     - `PXSave` and `PXCancel` — these two action declarations are enough for the framework to render the standard Save and Cancel toolbar buttons automatically.
@@ -145,13 +144,11 @@ Building a custom screen involves writing a C# graph that manages your data, des
         Where<MyDetailRecord.parentID, Equal<Current<MyRecord.recordID>>>
     > Details;
     ```
-
   </Step>
-
   <Step title="Define the Screen ID">
     Every custom screen requires a unique **Screen ID**: an 8-character code made up of your company's 2-character prefix followed by 6 digits.
 
-    ```
+    ```text
     Format:   XX 000000
               ↑↑ ↑↑↑↑↑↑
               │└ 6-digit number (000001 – 999999)
@@ -165,11 +162,11 @@ Building a custom screen involves writing a C# graph that manages your data, des
     </Note>
 
     The Screen ID becomes:
+
     - The filename of your ASPX file (e.g., `AC000001.aspx`)
     - The URL path to the screen (e.g., `/Pages/AC/AC000001.aspx`)
     - The identifier used in access rights, audit logs, and deep-link URLs
   </Step>
-
   <Step title="Use the Screen Editor to create the ASPX screen definition">
     Open the **Screen Editor** inside the ERP's Customization interface. The Screen Editor provides a visual designer where you drag controls onto a canvas and configure their properties through a property panel — without writing raw XML by hand.
 
@@ -182,14 +179,13 @@ Building a custom screen involves writing a C# graph that manages your data, des
 
     The Screen Editor saves your layout as an XML document inside the Customization Project. You can switch to the **Source** tab at any time to view or edit the raw XML directly.
   </Step>
-
   <Step title="Configure the PXFormView and primary data view">
     With the new screen open in the Screen Editor, add a **PXFormView** control to the canvas. This is the primary container for a single-record form layout.
 
     Set the following properties on the `PXFormView`:
 
     | Property | Value |
-    |---|---|
+    | --- | --- |
     | `ID` | `form` (convention) |
     | `DataMember` | The name of your graph's primary data view — e.g., `Records` |
     | `DataSourceID` | `ds` (the auto-generated PXDataSource control ID) |
@@ -216,7 +212,6 @@ Building a custom screen involves writing a C# graph that manages your data, des
 
     Add controls inside the `<Template>` block. Each control's `DataField` attribute matches the property name on your DAC. Use `PXLayoutRule` elements to control the number of columns and where new rows begin.
   </Step>
-
   <Step title="Add the screen to the Customization Project">
     Confirm that both the graph code file and the ASPX screen definition are listed under the correct sections of your Customization Project:
 
@@ -227,15 +222,16 @@ Building a custom screen involves writing a C# graph that manages your data, des
 
     This is also the point at which you add the **Sitemap** node that places the screen in the ERP menu. See the [Navigation & Menus](/screens/navigation-and-menus) guide for full details on that step.
   </Step>
-
   <Step title="Publish and navigate to the screen">
     With the Customization Project complete, click **Publish** (or **Publish All** if you want to push the entire project). The platform compiles the C# code, deploys the ASPX file, and registers the sitemap node.
 
     After publishing:
+
     - Navigate directly to your screen using its URL: `/Pages/AC/AC000001.aspx`
     - Or find it in the ERP menu under the module and menu path you configured in the sitemap
 
     If the screen does not appear in the menu, verify that:
+
     1. The sitemap node was saved inside the project before publishing.
     2. Your user account has been granted access to the screen via **Access Rights**.
     3. The Customization Project published without errors (check the publish log for compilation failures).

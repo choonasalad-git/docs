@@ -27,67 +27,67 @@
             "icon": "golf",
             "pages": [
               "introduction",
-              "getting-started/prerequisites",
-              "getting-started/setup",
-              "getting-started/first-customization"
+              "reference/getting-started/prerequisites",
+              "reference/getting-started/setup",
+              "reference/getting-started/first-customization"
             ]
           },
           {
             "group": "Troubleshooting",
             "icon": "info-triangle",
             "pages": [
-              "troubleshooting/common-errors",
-              "troubleshooting/debugging",
-              "troubleshooting/faq"
+              "reference/troubleshooting/common-errors",
+              "reference/troubleshooting/debugging",
+              "reference/troubleshooting/faq"
             ]
           },
           {
             "group": "Deployment",
             "icon": "live-view",
             "pages": [
-              "deployment/publishing",
-              "deployment/packaging",
-              "deployment/upgrading"
+              "reference/deployment/publishing",
+              "reference/deployment/packaging",
+              "reference/deployment/upgrading"
             ]
           },
           {
             "group": "Extensions",
             "icon": "plug-connected",
             "pages": [
-              "extensions/overview",
-              "extensions/graph-extensions",
-              "extensions/dac-extensions",
-              "extensions/event-handlers"
+              "reference/extensions/overview",
+              "reference/extensions/graph-extensions",
+              "reference/extensions/dac-extensions",
+              "reference/extensions/event-handlers"
             ]
           },
           {
             "group": "Custom Screens",
             "icon": "device-desktop",
             "pages": [
-              "screens/overview",
-              "screens/creating-screens",
-              "screens/layouts-and-controls",
-              "screens/navigation-and-menus"
+              "reference/screens/overview",
+              "reference/screens/creating-screens",
+              "reference/screens/layouts-and-controls",
+              "reference/screens/navigation-and-menus"
             ]
           },
           {
             "group": "Custom Tables",
             "icon": "table-down",
             "pages": [
-              "custom-tables/overview",
-              "custom-tables/creating-dac",
-              "custom-tables/field-types",
-              "custom-tables/relationships"
+              "reference/custom-tables/overview",
+              "reference/custom-tables/creating-dac",
+              "reference/custom-tables/field-types",
+              "reference/custom-tables/relationships"
             ]
           },
           {
             "group": "Core Concepts",
             "icon": "row-insert-bottom",
             "pages": [
-              "concepts/customization-project",
-              "concepts/dag-and-bql",
-              "concepts/data-access-classes",
-              "concepts/graph-extensions"
+              "reference/concepts/customization-project",
+              "reference/concepts/dag-and-bql",
+              "reference/concepts/data-access-classes",
+              "reference/concepts/graph-extensions"
             ]
           }
         ]
@@ -97,32 +97,39 @@
         "icon": "checklist",
         "groups": [
           {
-            "group": "EDI",
+            "group": "Introduction",
+            "icon": "list",
+            "pages": [
+              "improvement/introduction/overview"
+            ]
+          },
+          {
+            "group": "Integration",
             "icon": "transfer",
             "pages": [
-              "improvement/integration/crossfire/edi-expectations",
-              "improvement/integration/crossfire/crossfire-barcode-access",
-              "improvement/integration/crossfire/crossfire-scope-and-ownership"
+              "improvement/integration/edi-expectations",
+              "improvement/integration/crossfire-barcode-access",
+              "improvement/integration/crossfire-scope-and-ownership",
+              "improvement/integration/external-app-sprawl"
             ]
           },
           {
             "group": "Workflows",
             "icon": "brand-webflow",
             "pages": [
-              "improvement/shipping/picking-packing-customisation",
-              "improvement/shipping/open-future-orders-negative-stock",
-              "improvement/shipping/reverse-logistics-returns",
-              "improvement/inventory/replenishment",
-              "improvement/shipping/packing-bench-sorting",
-              "improvement/shipping/batch-pick-reserve-churn",
-              "improvement/integration/external-app-sprawl"
+              "improvement/workflows/picking-packing-customisation",
+              "improvement/workflows/open-future-orders-negative-stock",
+              "improvement/workflows/reverse-logistics-returns",
+              "improvement/workflows/replenishment",
+              "improvement/workflows/packing-bench-sorting",
+              "improvement/workflows/batch-pick-reserve-churn"
             ]
           },
           {
             "group": "Warehouse",
             "icon": "building-warehouse",
             "pages": [
-              "improvement/inventory/brand-based-layout"
+              "improvement/warehouse/brand-based-layout"
             ]
           }
         ]

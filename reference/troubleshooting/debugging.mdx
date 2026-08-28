@@ -14,23 +14,19 @@ Attaching a debugger gives you full breakpoint support—inspect variable values
   <Step title="Build the project in Debug configuration">
     In Visual Studio, switch the solution configuration to **Debug** and build the customization project. This generates a `.pdb` symbols file alongside the compiled assembly. Copy both the `.dll` and the `.pdb` to the ERP application's `bin` folder. Without the `.pdb`, Visual Studio cannot map executable code back to your source lines.
   </Step>
-
   <Step title="Open the Attach to Process dialog">
-    In Visual Studio, click **Debug > Attach to Process** (or press `Ctrl+Alt+P`). The dialog lists every running process on the machine.
+    In Visual Studio, click **Debug \> Attach to Process** (or press `Ctrl+Alt+P`). The dialog lists every running process on the machine.
   </Step>
-
   <Step title="Select the IIS worker process">
-    Look for `w3wp.exe` in the process list. If there are multiple worker processes, identify the correct one by its **User Name**—the IIS application pool identity for the ERP site. If you are not sure which pool the ERP site uses, open **IIS Manager > Application Pools**, find the pool assigned to the ERP site, then match the pool identity to the `w3wp.exe` user name column.
+    Look for `w3wp.exe` in the process list. If there are multiple worker processes, identify the correct one by its **User Name**—the IIS application pool identity for the ERP site. If you are not sure which pool the ERP site uses, open **IIS Manager \> Application Pools**, find the pool assigned to the ERP site, then match the pool identity to the `w3wp.exe` user name column.
 
     Check the **Managed (.NET)** code type option before clicking **Attach**, or select **Automatically determine the type to debug**.
   </Step>
-
   <Step title="Set breakpoints and reproduce the issue">
     After attaching, open the source file where you want to pause execution and click the gutter to set a breakpoint. Trigger the relevant action in the ERP application (for example, save a record or click a custom action button). Visual Studio will pause execution at the breakpoint and show the current call stack, local variable values, and the watch window.
   </Step>
-
   <Step title="Detach cleanly when finished">
-    When you have collected the information you need, click **Debug > Detach All**. Do not close Visual Studio while attached—doing so terminates the IIS worker process and disconnects all active user sessions.
+    When you have collected the information you need, click **Debug \> Detach All**. Do not close Visual Studio while attached—doing so terminates the IIS worker process and disconnects all active user sessions.
   </Step>
 </Steps>
 
@@ -79,7 +75,7 @@ PXTrace.WriteInformation("Cache status for row: {0}", cache.GetStatus(row));
 ### PXTrace severity levels
 
 | Method | Use when |
-|---|---|
+| --- | --- |
 | `PXTrace.WriteInformation` | Recording normal execution flow, parameter values, record counts |
 | `PXTrace.WriteWarning` | A condition is unusual but recoverable; execution continues |
 | `PXTrace.WriteError` | An error occurred; include the exception message and any relevant identifiers |
@@ -92,19 +88,19 @@ PXTrace.WriteInformation("Cache status for row: {0}", cache.GetStatus(row));
 
 The ERP application stores trace log entries in memory and makes them available through the UI.
 
-1. Navigate to **Tools > Trace** in the ERP application's top navigation bar.
+1. Navigate to **Tools \> Trace** in the ERP application's top navigation bar.
 2. The **Trace** screen shows a time-ordered list of log entries from the current session. Each entry includes a timestamp, severity level, and the message text.
 3. Use the **Filter by Level** dropdown to narrow the display to warnings and errors only, which reduces noise when you are looking for a specific problem.
 4. Click **Download** to export the current log as a text file if you need to share it with a colleague or attach it to a support ticket.
 
-To control the verbosity of the trace log, navigate to **System > System Management > System Configuration** and adjust the **Trace Level** setting. Set it to **Verbose** during active debugging and return it to **Warning** or **Error** for normal operation—verbose logging can generate large log files quickly on a busy instance.
+To control the verbosity of the trace log, navigate to **System \> System Management \> System Configuration** and adjust the **Trace Level** setting. Set it to **Verbose** during active debugging and return it to **Warning** or **Error** for normal operation—verbose logging can generate large log files quickly on a busy instance.
 
 ## Using the Customization Publish Log
 
 The publish log records every step of the publish pipeline and is your first stop when a publish fails.
 
-1. Navigate to **Customization > Customization Projects** and open the project that failed to publish.
-2. Click **Actions > Show Publish Log** (or look for the **Log** tab in the project editor).
+1. Navigate to **Customization \> Customization Projects** and open the project that failed to publish.
+2. Click **Actions \> Show Publish Log** (or look for the **Log** tab in the project editor).
 3. The log is structured in phases: **Compile**, **DB Schema**, **Sitemap**, and **Screen Deploy**. Find the first phase that shows errors—earlier errors in the pipeline prevent later phases from running, so start with the earliest failure.
 4. Each compile error includes the source file name, line number, and the C# error code. Open the corresponding file in the Customization Project editor, navigate to the indicated line, and apply the fix.
 
